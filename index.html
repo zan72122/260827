@@ -345,6 +345,8 @@ const LEVELS = [
 ];
 
 /* ---------- world state ---------- */
+const RIG_X = 90;           /* rig hangs seaward of the bow */
+const FISH_FWD = 21;        /* fish sits forward in the cradle so gear stays off its face */
 const G = {
   state: 'intro',      // intro | ready | descend | release | afterglow | ascend
   t: 0,                // global time (seconds, scaled)
@@ -353,15 +355,15 @@ const G = {
   playCount: 0,
   level: null,
   rng: Math.random,
-  fish: { x: 60, y: 0, vy: 0, phase: 0, stress: 1, pitch: 0, dir: 1, alpha: 1,
+  fish: { x: RIG_X, y: 0, vy: 0, phase: 0, stress: 1, pitch: 0, dir: 1, alpha: 1,
           tx: 0, ty: 0, swimT: 0 },
-  rig:  { x: 60, y: 0, open: 0, alpha: 1 },  // open: 0 closed .. 1 released
-  cam:  { cy: 0, zoom: 1, targetCy: 0, targetZoom: 1, shake: 0 },
+  rig:  { x: RIG_X, y: 0, open: 0, alpha: 1 },  // open: 0 closed .. 1 released
+  cam:  { cx: 0, cy: 0, zoom: 1, targetCx: 0, targetCy: 0, targetZoom: 1, shake: 0 },
   speed: 0, boost: 0,
   releaseY: 0, bottomY: 3400,
   bubbles: [], drops: [], jellies: [], schools: [], greeters: [], sparks: [],
   seabedShape: null, props: [],
-  hintT: 0, titleT: 0, swipeFxT: -9, splashDone: false,
+  hintT: 0, titleT: 0, swipeFxT: -9, splashDone: false, flash: 0, readyTaps: 0,
   lastBubble: 0, lastDrip: 0,
 };
 
@@ -391,13 +393,14 @@ function cyForWaterFrac(frac, zoom){
   return (0.5 - frac) * H / zoom;
 }
 function worldToScreen(wx, wy){
-  return [ (wx - 0) * G.cam.zoom + W/2, (wy - G.cam.cy) * G.cam.zoom + H/2 ];
+  return [ (wx - G.cam.cx) * G.cam.zoom + W/2, (wy - G.cam.cy) * G.cam.zoom + H/2 ];
 }
 function layoutCamera(){
   if (G.state === 'intro' || G.state === 'ready'){
     const frac = H > W ? 0.42 : 0.38;
     G.cam.targetZoom = baseZoom() * (H > W ? 1.1 : 0.98);
     G.cam.targetCy = cyForWaterFrac(frac, G.cam.targetZoom);
+    G.cam.targetCx = 0;
   }
 }
 
@@ -410,11 +413,11 @@ function setupLevel(idx){
   G.rng = mulberry32(seed);
   G.bottomY = def.bottom + Math.floor(G.rng() * 320);
   G.releaseY = G.bottomY - 300;
-  G.fish.x = 60; G.fish.y = surfY(60, G.t) + 16; G.fish.vy = 0;
+  G.fish.x = RIG_X + FISH_FWD; G.fish.y = surfY(RIG_X, G.t) + 16; G.fish.vy = 0;
   G.fish.stress = 1; G.fish.pitch = 0; G.fish.dir = 1; G.fish.alpha = 0;
   G.fish.swimT = 0;
-  G.rig.x = 60; G.rig.y = G.fish.y; G.rig.open = 0; G.rig.alpha = 1;
-  G.speed = 0; G.boost = 0;
+  G.rig.x = RIG_X; G.rig.y = G.fish.y; G.rig.open = 0; G.rig.alpha = 1;
+  G.speed = 0; G.boost = 0; G.readyTaps = 0;
   G.splashDone = false;
   G.bubbles.length = 0; G.drops.length = 0; G.jellies.length = 0;
   G.schools.length = 0; G.greeters.length = 0; G.sparks.length = 0;
@@ -422,6 +425,7 @@ function setupLevel(idx){
   setState('intro');
   layoutCamera();
   G.cam.cy = G.cam.targetCy; G.cam.zoom = G.cam.targetZoom;
+  G.cam.cx = G.cam.targetCx = 0;
 }
 
 function buildSeabed(type){
@@ -437,6 +441,12 @@ function buildSeabed(type){
     pts.push([x, h]);
   }
   G.seabedShape = pts;
+  const groundAtRel = (x) => {
+    const i = clamp(Math.floor((x + span/2) / 56), 0, pts.length - 2);
+    const t = clamp(((x + span/2) - i*56) / 56, 0, 1);
+    return lerp(pts[i][1], pts[i+1][1], t);
+  };
+  G.groundWorldY = (x) => G.bottomY + groundAtRel(clamp(x, -span/2, span/2));
   /* far hazy ridge with its own gentler noise */
   const far = [];
   let fy = 0;
@@ -462,11 +472,13 @@ function buildSeabed(type){
     if (type === 'garden') kind = ['sponge','soft','anemone','soft'][Math.floor(rng()*4)];
     props.push({ kind, x, gy, s: 0.9 + rng()*1.2, ph: rng()*7 });
   }
-  /* habitat: where the fish will swim to, marked by a small welcoming grove */
-  G.habitat = { x: 60 + rng()*90, y: 0 };
-  G.habitat.y = G.bottomY + groundAt(G.habitat.x) - 120 - rng()*50;
-  const home = { rocky: ['whip','boulder','whip'], sandy: ['seapen','seapen','star'],
-                 garden: ['soft','anemone','soft'] }[type];
+  /* habitat: sideways from the drop point, marked by a soft welcoming grove,
+     so the freed fish clearly swims AWAY from the gear */
+  const hside = rng() < 0.5 ? -1 : 1;
+  G.habitat = { x: RIG_X + hside * (240 + rng()*90), y: 0 };
+  G.habitat.y = G.bottomY + groundAt(G.habitat.x) - 110 - rng()*40;
+  const home = { rocky: ['whip','homeglow','boulder'], sandy: ['seapen','homeglow','star'],
+                 garden: ['soft','homeglow','anemone'] }[type];
   home.forEach((kind, i) => {
     const hx = G.habitat.x + (i - 1) * (46 + rng()*26);
     props.push({ kind, x: hx, gy: groundAt(hx), s: 1.2 + rng()*0.8, ph: rng()*7 });
@@ -510,6 +522,11 @@ function onUp(x, y){
   if (!pdown.used && dt < 500 && dist < 14) handleTap(x, y);
   pdown = null;
 }
+function startDescend(){
+  setState('descend');
+  G.swipeFxT = G.t;
+  AudioSys.bubble();
+}
 function handleTap(x, y){
   if (G.state === 'intro'){
     setState('ready');
@@ -517,6 +534,8 @@ function handleTap(x, y){
     G.hintT = 0;
   } else if (G.state === 'ready'){
     G.hintT = Math.max(G.hintT, 2.2);  /* re-show swipe hint promptly */
+    G.readyTaps++;
+    if (G.readyTaps >= 3) startDescend();   /* tap-only players still get to go */
   } else if (G.state === 'afterglow' && G.stateT > 2.0){
     startAscend();
   }
@@ -524,9 +543,7 @@ function handleTap(x, y){
 function handleSwipeDown(){
   if (G.state === 'intro'){ setState('ready'); AudioSys.clip(); }
   if (G.state === 'ready'){
-    setState('descend');
-    G.swipeFxT = G.t;
-    AudioSys.bubble();
+    startDescend();
   } else if (G.state === 'descend'){
     G.boost = Math.min(G.boost + 85, 210);
     G.swipeFxT = G.t;
@@ -583,7 +600,8 @@ function maybeSpawnCreatures(dt){
   for (const e of G.encounters){
     if (!e.done && f >= e.f){
       e.done = true;
-      const ahead = y + H/G.cam.zoom * (0.55 + Math.random()*0.35);
+      let ahead = y + H/G.cam.zoom * (0.55 + Math.random()*0.35);
+      if (G.groundWorldY) ahead = Math.min(ahead, G.groundWorldY(0) - 260);
       if (e.type === 'school') spawnSchool(ahead);
       else spawnJelly(ahead);
     }
@@ -592,9 +610,10 @@ function maybeSpawnCreatures(dt){
   G.schools = G.schools.filter(s => s.y > y - H/G.cam.zoom * 1.6 && Math.abs(s.x) < 2400);
   /* deep blinking plankton sparks */
   if (f > 0.62 && G.sparks.length < 26 && Math.random() < dt*7){
-    G.sparks.push({ x: (Math.random()-0.5) * W/G.cam.zoom * 1.3,
-                    y: y + (Math.random()*1.3 - 0.1) * H/G.cam.zoom,
-                    ph: Math.random()*7, life: 0 });
+    const sx2 = (Math.random()-0.5) * W/G.cam.zoom * 1.3;
+    let sy2 = y + (Math.random()*1.3 - 0.1) * H/G.cam.zoom;
+    if (G.groundWorldY) sy2 = Math.min(sy2, G.groundWorldY(sx2) - 50);
+    G.sparks.push({ x: sx2, y: sy2, ph: Math.random()*7, life: 0 });
   }
   G.sparks = G.sparks.filter(s => s.y > y - H/G.cam.zoom);
 }
@@ -608,10 +627,12 @@ function update(dt){
   switch (G.state){
   case 'intro': {
     fish.alpha = Math.min(1, fish.alpha + dt * 1.4);
-    /* fish rests half-submerged in the cradle, bobbing with waves */
+    /* fish rests half-submerged in the cradle, bobbing with waves.
+       held gently: a little restless, never thrashing */
     rig.y = wl + 16;
-    fish.y = rig.y; fish.x = rig.x;
-    fish.stress = 1;
+    fish.y = rig.y; fish.x = rig.x + FISH_FWD;
+    fish.stress = 0.55;
+    fish.pitch = 0.05;          /* gazing slightly downward, toward home */
     G.hintT += dt;
     if (G.playCount === 0) G.titleT += dt;
     layoutCamera();
@@ -619,9 +640,11 @@ function update(dt){
   }
   case 'ready': {
     fish.alpha = 1;
-    rig.y = wl + 16; fish.y = rig.y; fish.x = rig.x;
-    fish.stress = 0.92;
+    rig.y = wl + 16; fish.y = rig.y; fish.x = rig.x + FISH_FWD;
+    fish.stress = 0.5;
+    fish.pitch = 0.06;
     G.hintT += dt;
+    if (G.stateT > 8) startDescend();   /* nobody gets stuck at the surface */
     layoutCamera();
     break;
   }
@@ -631,11 +654,11 @@ function update(dt){
     G.boost = Math.max(0, G.boost - dt * 52);
     G.speed = (94 * ramp) + G.boost;
     rig.y += G.speed * dt;
-    fish.y = rig.y; fish.x = rig.x + Math.sin(G.t * 0.7) * 6;
-    rig.x = 60 + Math.sin(G.t * 0.31) * 9;
+    fish.y = rig.y; fish.x = rig.x + FISH_FWD + Math.sin(G.t * 0.7) * 5;
+    rig.x = RIG_X + Math.sin(G.t * 0.31) * 9;
     const f = journeyFrac();
-    fish.stress = clamp(1 - f * 1.45, 0, 1);
-    fish.pitch = lerp(-0.14, 0.06, smooth(clamp(f*1.6, 0, 1)));
+    fish.stress = clamp(0.6 - f * 1.0, 0, 1);
+    fish.pitch = lerp(0.03, 0.06, smooth(clamp(f*1.6, 0, 1)));
     /* breach */
     if (!G.splashDone && fish.y > wl + 4){
       G.splashDone = true;
@@ -663,10 +686,16 @@ function update(dt){
     break;
   }
   case 'release': {
-    /* clip opens, fish drifts free, swims home */
+    /* cradle opens, fish drifts free, swims home */
     rig.open = Math.min(1, rig.open + dt * 1.6);
     G.speed = Math.max(0, G.speed - dt * 120);
     rig.y += G.speed * dt * 0.3;
+    /* once the fish is free, the empty gear is gently drawn back up
+       and out of the picture — the fish is on its own now */
+    if (rig.open > 0.85){
+      rig.y -= Math.min(90, (G.stateT - 1) * 40) * dt;
+      rig.alpha = Math.max(0, rig.alpha - dt * 0.25);
+    }
     fish.stress = 0;
     fish.swimT += dt;
     const hx = G.habitat.x, hy = G.habitat.y;
@@ -677,44 +706,53 @@ function update(dt){
       fish.y = lerp(fish.y, hy, dt * (0.22 + k * 0.8));
       fish.dir = hx > fish.x ? 1 : -1;
       fish.pitch = lerp(fish.pitch, Math.atan2(hy - fish.y, Math.abs(hx - fish.x) + 60) * 0.5, dt*2);
-      /* greeting fish come out */
+      /* greeting fish come out of the grove to meet it */
       if (G.greeters.length === 0 && fish.swimT > 1.1){
         for (let i = 0; i < 5; i++){
-          G.greeters.push({ x: hx + (Math.random()-0.5)*60, y: hy + 40 + Math.random()*50,
-                            ph: Math.random()*7, r: 34 + Math.random()*40, sp: 0.5 + Math.random()*0.7,
+          const gx = hx + (Math.random()-0.5)*70, gy = hy + 30 + Math.random()*50;
+          G.greeters.push({ x: gx, y: gy,
+                            ph: Math.random()*7, r: 44 + Math.random()*40, sp: 0.5 + Math.random()*0.7,
                             a: Math.random()*7 });
+          for (let b = 0; b < 2; b++) spawnBubble(gx, gy, 0);
         }
         AudioSys.bubble();
       }
     }
-    /* camera: hold, then pull back wide */
+    /* camera: hold on the fish, then pull back and pan toward its home */
     const pull = smooth(clamp((G.stateT - 1.6) / 2.6, 0, 1));
     cam.targetZoom = baseZoom() * lerp(1.12, 0.72, pull) * (H > W ? 1 : 0.9);
     cam.targetCy = lerp(fish.y, (fish.y + hy) / 2 + 30, pull);
+    cam.targetCx = lerp(0, (RIG_X + hx) / 2, pull);
     if (G.stateT > 5.2) setState('afterglow');
     break;
   }
   case 'afterglow': {
     fish.swimT += dt;
-    /* fish settles near home, gentle hover */
+    /* fish settles near home, gentle hover; friends draw close */
     fish.x = lerp(fish.x, G.habitat.x, dt * 0.8);
     fish.y = lerp(fish.y, G.habitat.y + Math.sin(G.t*0.8)*8, dt * 0.8);
     fish.pitch = lerp(fish.pitch, 0, dt * 2);
+    for (const g of G.greeters) g.r = Math.max(30, g.r - dt * 7);
+    rig.alpha = Math.max(0, rig.alpha - dt * 0.4);
     cam.targetZoom = baseZoom() * 0.72 * (H > W ? 1 : 0.9);
     cam.targetCy = G.habitat.y - 40;
+    cam.targetCx = (RIG_X + G.habitat.x) / 2;
     break;
   }
   case 'ascend': {
-    /* the empty rig (and camera) hurries back to the surface */
-    const sp = 950 * smooth(clamp(G.stateT / 1.2, 0.15, 1));
+    /* the camera (and the unseen line) glides back to the surface */
+    const sp = 760 * smooth(clamp(G.stateT / 1.4, 0.15, 1));
     rig.y -= sp * dt;
-    rig.x = 60;
+    rig.x = RIG_X;
     rig.open = Math.max(0, rig.open - dt*2);
+    rig.alpha = Math.min(1, rig.alpha + dt*1.2);
+    cam.targetCx = 0;
     cam.targetZoom = baseZoom() * (H > W ? 1.0 : 0.92);
     cam.targetCy = rig.y - H * 0.06 / cam.targetZoom;
     if (rig.y < wl - 2){
       spawnSplash(rig.x, wl, 16);
       AudioSys.splash();
+      G.flash = 1;             /* soft white beat masks the reset to the boat */
       G.playCount++;
       setupLevel(G.levelIndex + 1);
       return;
@@ -726,8 +764,10 @@ function update(dt){
   /* camera easing */
   const ck = 1 - Math.exp(-dt * 3.2);
   cam.cy += (cam.targetCy - cam.cy) * ck;
+  cam.cx += (cam.targetCx - cam.cx) * (1 - Math.exp(-dt * 1.6));
   cam.zoom += (cam.targetZoom - cam.zoom) * (1 - Math.exp(-dt * 2.2));
   cam.shake = Math.max(0, cam.shake - dt * 9);
+  G.flash = Math.max(0, G.flash - dt * 1.1);
 
   /* audio depth follows camera */
   const cwl = surfY(0, G.t);
@@ -750,10 +790,16 @@ function update(dt){
     d.life += dt; d.x += d.vx * dt; d.y += d.vy * dt; d.vy += 560 * dt;
   }
   G.drops = G.drops.filter(d => d.life < 1.6 && d.y < surfY(d.x, G.t) + 8);
-  /* jellies drift */
-  for (const j of G.jellies){ j.ph += dt; j.y -= dt * 7 * j.s; j.x += j.vx * dt; }
-  /* schools swim */
-  for (const s of G.schools){ s.x += s.vx * dt; s.y += Math.sin(G.t*0.5 + s.mem[0].ph) * 4 * dt; }
+  /* jellies drift (never inside the seabed) */
+  for (const j of G.jellies){
+    j.ph += dt; j.y -= dt * 7 * j.s; j.x += j.vx * dt;
+    if (G.groundWorldY) j.y = Math.min(j.y, G.groundWorldY(j.x) - 150);
+  }
+  /* schools swim (never inside the seabed) */
+  for (const s of G.schools){
+    s.x += s.vx * dt; s.y += Math.sin(G.t*0.5 + s.mem[0].ph) * 4 * dt;
+    if (G.groundWorldY) s.y = Math.min(s.y, G.groundWorldY(s.x) - 130);
+  }
   /* greeters circle near habitat */
   for (const g of G.greeters){ g.a += dt * g.sp; }
   for (const s of G.sparks){ s.life += dt; }
@@ -801,7 +847,7 @@ function drawFish(c, spKey, o){
     const u = i / (N - 1);                 /* 0 head .. 1 tail-root */
     const x = lerp(L*0.45, -L*0.42, u);
     const env = 0.12 + 0.88 * u * u;
-    const arch = stress * Math.sin(G.t * 7 + (o.ph||0)) * L * 0.02 * u; /* restless arching */
+    const arch = stress * stress * Math.sin(G.t * 6 + (o.ph||0)) * L * 0.013 * u; /* mild restlessness */
     const sway = Math.sin(-x * kWave * Math.PI - o.phase) * amp * env + arch;
     spine.push([x, sway]);
     /* body half-width from species profile */
@@ -979,7 +1025,7 @@ function drawFish(c, spKey, o){
   /* --- mouth: slightly open when stressed, soft line when calm --- */
   c.strokeStyle = rgba(depthTint([60,30,34], k), 0.7);
   c.lineWidth = L*0.010; c.lineCap = 'round';
-  const mo = stress * (0.5 + 0.5*Math.sin(G.t*3.1)) * L * 0.022;
+  const mo = stress * (0.5 + 0.5*Math.sin(G.t*2.4)) * L * 0.011;
   c.beginPath();
   c.moveTo(L*0.455, hw[0]*0.4);
   c.quadraticCurveTo(L*0.40, hw[0]*0.55 + mo, L*0.345, hw[0]*0.62 + mo*0.5);
@@ -1015,7 +1061,7 @@ function drawRig(c, o){
   c.globalAlpha *= (o.alpha != null ? o.alpha : 1);
   c.lineCap = 'round';
 
-  const w = 96 * s, hh = 46 * s;
+  const w = 86 * s, hh = 46 * s;
   const open = o.open || 0;
 
   /* metal: dull stainless gradient */
@@ -1043,46 +1089,30 @@ function drawRig(c, o){
     c.moveTo(0, -hh*0.5);
     c.quadraticCurveTo(sd * w * 0.62, 0, sd * w * 0.30, hh*1.15);
     c.stroke();
-    /* soft padded cradle straps (dark green webbing) */
+    /* soft padded cradle straps (dark green webbing), mid-body only */
     c.strokeStyle = 'rgba(38,66,52,0.85)';
     c.lineWidth = 9*s;
     c.beginPath();
-    c.moveTo(sd * w * 0.42, hh*0.16);
-    c.quadraticCurveTo(sd * w * 0.2, hh*0.78, sd * w * 0.26, hh*1.05);
+    c.moveTo(sd * w * 0.36, hh*0.20);
+    c.quadraticCurveTo(sd * w * 0.17, hh*0.78, sd * w * 0.22, hh*1.02);
     c.stroke();
     c.strokeStyle = 'rgba(58,92,74,0.5)';
     c.lineWidth = 3*s;
     c.beginPath();
-    c.moveTo(sd * w * 0.44, hh*0.2);
-    c.quadraticCurveTo(sd * w * 0.22, hh*0.74, sd * w * 0.28, hh*1.0);
+    c.moveTo(sd * w * 0.38, hh*0.24);
+    c.quadraticCurveTo(sd * w * 0.19, hh*0.74, sd * w * 0.24, hh*0.98);
     c.stroke();
     c.restore();
   }
 
-  /* spring release clip at top of frame */
-  c.save();
-  c.translate(10*s, -hh*0.62);
-  c.rotate(open * 0.9);
-  c.strokeStyle = metal(0, 0, 14*s, 10*s); c.lineWidth = 3.6*s;
-  c.beginPath(); c.moveTo(0, 0); c.lineTo(15*s, 7*s); c.stroke();
-  c.beginPath(); c.moveTo(15*s, 7*s); c.lineTo(11*s, 13*s); c.stroke();
-  c.fillStyle = '#3c4348';
-  c.beginPath(); c.arc(0, 0, 2.8*s, 0, 7); c.fill();
-  c.restore();
-
-  /* lead drop-weight below (hangs slightly with sway) */
-  const wy = hh * 1.5, sway = Math.sin(G.t * 1.1) * 3 * s * (1 - open);
-  c.strokeStyle = 'rgba(120,128,132,0.9)'; c.lineWidth = 2.4*s;
-  c.beginPath(); c.moveTo(0, hh*0.9); c.lineTo(sway, wy); c.stroke();
-  const wg = c.createRadialGradient(sway - 4*s, wy + 8*s, 2*s, sway, wy + 12*s, 15*s);
-  wg.addColorStop(0, '#8d9499'); wg.addColorStop(0.6, '#5a6166'); wg.addColorStop(1, '#33383c');
+  /* round ballast tucked right under the frame (a working weight, not a lure) */
+  const wy = hh * 1.14;
+  c.strokeStyle = 'rgba(120,128,132,0.9)'; c.lineWidth = 2.6*s;
+  c.beginPath(); c.moveTo(0, hh*0.92); c.lineTo(0, wy); c.stroke();
+  const wg = c.createRadialGradient(-3*s, wy + 6*s, 2*s, 0, wy + 9*s, 12*s);
+  wg.addColorStop(0, '#868d92'); wg.addColorStop(0.6, '#565d62'); wg.addColorStop(1, '#31363a');
   c.fillStyle = wg;
-  c.beginPath();
-  c.moveTo(sway, wy);
-  c.quadraticCurveTo(sway - 10*s, wy + 10*s, sway - 7*s, wy + 20*s);
-  c.quadraticCurveTo(sway, wy + 27*s, sway + 7*s, wy + 20*s);
-  c.quadraticCurveTo(sway + 10*s, wy + 10*s, sway, wy);
-  c.fill();
+  c.beginPath(); c.arc(0, wy + 9*s, 9.5*s, 0, 7); c.fill();
 
   c.restore();
 }
@@ -1090,6 +1120,7 @@ function drawRig(c, o){
 /* line from rig up to the boat davit */
 function drawLine(c, rig){
   c.save();
+  c.globalAlpha *= (rig.alpha != null ? rig.alpha : 1);
   const topY = Math.min(G.cam.cy - H / G.cam.zoom, -160);
   const davitX = 36, davitY = surfY(-140, G.t) - 124;
   c.strokeStyle = 'rgba(226,230,224,0.55)';
@@ -1278,22 +1309,64 @@ function drawProp(c, p, by){
     const g = c.createRadialGradient(-8*s, -22*s, 4*s, 0, -14*s, 42*s);
     g.addColorStop(0, '#25384e'); g.addColorStop(1, '#0c1826');
     c.fillStyle = g;
+    const rr = mulberry32(Math.floor(p.ph * 1000));
     c.beginPath();
     c.moveTo(-38*s, 2);
-    c.quadraticCurveTo(-40*s, -34*s, -10*s, -40*s);
-    c.quadraticCurveTo(26*s, -44*s, 36*s, -16*s);
-    c.quadraticCurveTo(42*s, 2, 30*s, 4);
+    for (let i = 0; i <= 8; i++){
+      const a = Math.PI - (i / 8) * Math.PI;
+      const rad = (34 + rr()*10) * s;
+      c.lineTo(Math.cos(a)*rad, -Math.sin(a)*rad*1.05 + 2);
+    }
     c.closePath(); c.fill();
+    /* mineral speckles + a hint of encrusting growth on top */
+    c.fillStyle = 'rgba(90,120,150,0.18)';
+    for (let i = 0; i < 6; i++){
+      c.beginPath();
+      c.arc((rr()-0.5)*54*s, -rr()*30*s, (0.9 + rr()*1.6)*s, 0, 7); c.fill();
+    }
+    c.fillStyle = 'rgba(70,100,90,0.30)';
+    c.beginPath(); c.ellipse(-8*s, -34*s, 12*s, 3.4*s, -0.2, 0, 7); c.fill();
     break;
   }
-  case 'whip': {   /* sea whip coral, sways */
-    c.strokeStyle = 'rgba(96,78,110,0.85)'; c.lineWidth = 3.2*s; c.lineCap = 'round';
+  case 'whip': {   /* sea whip coral: tapered, swaying, with tiny polyps */
+    c.lineCap = 'round';
     for (let i = 0; i < 3; i++){
       const sw = Math.sin(t*0.7 + p.ph + i) * 12 * s;
-      c.beginPath();
-      c.moveTo(i*6*s - 6*s, 2);
-      c.quadraticCurveTo(i*6*s - 6*s + sw*0.5, -46*s, i*6*s - 4*s + sw, -88*s - i*10*s);
+      const bx = i*6*s - 6*s, tipX = bx + 2*s + sw, tipY = -88*s - i*10*s;
+      const midX = bx + sw*0.45, midY = -46*s;
+      c.strokeStyle = 'rgba(76,62,92,0.9)'; c.lineWidth = 3.4*s;
+      c.beginPath(); c.moveTo(bx, 2); c.quadraticCurveTo(bx + sw*0.2, -24*s, midX, midY); c.stroke();
+      c.strokeStyle = 'rgba(96,80,116,0.8)'; c.lineWidth = 1.6*s;
+      c.beginPath(); c.moveTo(midX, midY); c.quadraticCurveTo(bx + sw*0.8, -68*s, tipX, tipY); c.stroke();
+      /* polyps along the upper half */
+      c.fillStyle = 'rgba(168,158,190,0.55)';
+      for (let k2 = 0; k2 < 4; k2++){
+        const tt = 0.3 + k2*0.2;
+        const px2 = lerp(midX, tipX, tt) + Math.sin(k2*3+i)*1.5*s;
+        const py2 = lerp(midY, tipY, tt);
+        c.beginPath(); c.arc(px2, py2, 0.9*s, 0, 7); c.fill();
+      }
+    }
+    break;
+  }
+  case 'homeglow': {  /* soft bioluminescent grove marking "home" */
+    const pu = 0.6 + 0.4 * Math.sin(t*1.1 + p.ph);
+    const gg2 = c.createRadialGradient(0, -20*s, 2*s, 0, -16*s, 46*s);
+    gg2.addColorStop(0, `rgba(120,200,190,${0.14*pu + 0.10})`);
+    gg2.addColorStop(1, 'rgba(120,200,190,0)');
+    c.fillStyle = gg2;
+    c.beginPath(); c.arc(0, -16*s, 46*s, 0, 7); c.fill();
+    for (let i = 0; i < 6; i++){
+      const a = (i - 2.5) * 0.32;
+      const sw = Math.sin(t*0.9 + p.ph + i) * 4 * s;
+      c.strokeStyle = `rgba(110,180,170,0.75)`;
+      c.lineWidth = 2.6*s; c.lineCap = 'round';
+      c.beginPath(); c.moveTo(0, 2);
+      c.quadraticCurveTo(Math.sin(a)*10*s + sw*0.5, -16*s, Math.sin(a)*20*s + sw, -30*s - (i%3)*5*s);
       c.stroke();
+      c.fillStyle = `rgba(170,235,225,${0.35 + 0.3*pu})`;
+      c.beginPath();
+      c.arc(Math.sin(a)*20*s + sw, -30*s - (i%3)*5*s, 1.4*s, 0, 7); c.fill();
     }
     break;
   }
@@ -1417,14 +1490,21 @@ function drawSchool(c, s, depthK){
 }
 
 function drawGreeters(c){
-  const depthK = fishDepthK(G.habitat.y);
+  /* the welcome party: same-family colors, big enough for small eyes to find */
+  const depthK = fishDepthK(G.habitat.y) * 0.7;
   const spCol = SPECIES[G.level.sp].back;
-  const col = rgba(depthTint([spCol[0]*0.8+40, spCol[1]*0.8+40, spCol[2]*0.8+40], depthK), 0.8);
+  const col = rgba(depthTint([spCol[0]*0.9+70, spCol[1]*0.9+60, spCol[2]*0.9+55], depthK), 0.95);
+  const glow = rgba(depthTint([spCol[0]+120, spCol[1]+110, spCol[2]+100], depthK*0.5), 0.12);
   for (const g of G.greeters){
     const gx = G.habitat.x + Math.cos(g.a) * g.r;
-    const gy = G.habitat.y + 26 + Math.sin(g.a) * g.r * 0.4;
+    const gy = G.habitat.y + 20 + Math.sin(g.a) * g.r * 0.4;
     const dir = -Math.sin(g.a) >= 0 ? 1 : -1;
-    drawSmallFish(c, gx, gy, 22, dir, G.t*8 + g.ph, col, 0.9);
+    const len = 38 + 8 * Math.sin(g.ph * 3.3);
+    c.save();
+    c.fillStyle = glow;
+    c.beginPath(); c.ellipse(gx, gy, len*0.7, len*0.4, 0, 0, 7); c.fill();
+    c.restore();
+    drawSmallFish(c, gx, gy, len, dir, G.t*8 + g.ph, col, 1);
   }
 }
 
@@ -1463,8 +1543,9 @@ function drawHints(c){
     const alpha = cyc < 0.75 ? Math.min(1, cyc*8) * (1 - smooth(clamp((cyc-0.55)/0.2, 0, 1))) : 0;
     if (alpha > 0.02){
       c.save();
+      const [rigSx] = worldToScreen(G.rig.x, 0);
       c.setTransform(DPR, 0, 0, DPR, 0, 0);
-      const hx = W * 0.5, hy0 = H * 0.54, hy1 = H * 0.80;
+      const hx = rigSx, hy0 = H * 0.54, hy1 = H * 0.80;
       const hy = lerp(hy0, hy1, k);
       /* trail */
       const tg = c.createLinearGradient(hx, hy0, hx, hy);
@@ -1540,7 +1621,7 @@ function render(){
   const cam = G.cam;
   const shakeY = cam.shake > 0 ? Math.sin(G.t*46) * cam.shake : 0;
   const camTop  = cam.cy - (H/2)/cam.zoom + shakeY/cam.zoom;
-  const camLeft = 0 - (W/2)/cam.zoom;
+  const camLeft = cam.cx - (W/2)/cam.zoom;
 
   /* --- GL ocean --- */
   if (gl){
@@ -1566,7 +1647,7 @@ function render(){
   ctx.save();
   ctx.translate(W/2, H/2);
   ctx.scale(cam.zoom, cam.zoom);
-  ctx.translate(0, -(cam.cy + shakeY/cam.zoom));
+  ctx.translate(-cam.cx, -(cam.cy + shakeY/cam.zoom));
 
   const viewTop = cam.cy - (H/2)/cam.zoom;
   const viewBot = cam.cy + (H/2)/cam.zoom;
@@ -1639,6 +1720,13 @@ function render(){
   /* screen-space layers */
   drawHints(ctx);
   drawSwipeFx(ctx);
+
+  /* soft white beat when the view returns to the boat */
+  if (G.flash > 0.01){
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    ctx.fillStyle = `rgba(240,250,252,${Math.min(1, G.flash) * 0.85})`;
+    ctx.fillRect(0, 0, W, H);
+  }
 }
 
 /* ---------- main loop ---------- */
