@@ -171,6 +171,10 @@ export function buildTerminal(): Segment {
   g.add(chev);
 
   // rubber strip curtain in the opening — crossing plane #1
+  const throatMat = new THREE.MeshStandardMaterial({ color: 0x0b0d0f, roughness: 1, side: THREE.BackSide });
+  const throat = new THREE.Mesh(new THREE.BoxGeometry(1.9, 1.35, 1.6), throatMat);
+  throat.position.set(5.6, 0.95, 0);
+  g.add(throat);
   const curtain = stripCurtain(1.44, 1.06, { stripW: 0.11 });
   curtain.group.position.set(4.2, 0.42, 0);
   g.add(curtain.group);

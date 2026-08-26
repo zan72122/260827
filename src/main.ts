@@ -218,6 +218,8 @@ declare global {
       getProgress(): number;
       getTarget(): number;
       bagScreenPosition(): { x: number; y: number };
+      cameraDebug(): { pos: number[]; dir: number[]; bag: number[] };
+      probe(): { dist: number; geo: string; size: number[]; world: number[] }[];
       rendererInfo(): { geometries: number; textures: number; calls: number; triangles: number };
     };
   }
@@ -245,6 +247,35 @@ window.__BAGGAGE_GAME__ = {
     return {
       x: ((_proj.x + 1) / 2) * window.innerWidth,
       y: ((1 - _proj.y) / 2) * window.innerHeight,
+    };
+  },
+  probe() {
+    const rc = new THREE.Raycaster();
+    rc.setFromCamera(new THREE.Vector2(0, 0), rig.camera);
+    return rc
+      .intersectObjects(scene.children, true)
+      .slice(0, 4)
+      .map((h) => {
+        const m = h.object as THREE.Mesh;
+        const geo = m.geometry as THREE.BufferGeometry;
+        geo.computeBoundingBox();
+        const size = new THREE.Vector3();
+        geo.boundingBox!.getSize(size);
+        return {
+          dist: +h.distance.toFixed(2),
+          geo: geo.type,
+          size: size.toArray().map((v) => +v.toFixed(2)),
+          world: m.getWorldPosition(new THREE.Vector3()).toArray().map((v) => +v.toFixed(2)),
+        };
+      });
+  },
+  cameraDebug() {
+    const d = new THREE.Vector3();
+    rig.camera.getWorldDirection(d);
+    return {
+      pos: rig.camera.position.toArray(),
+      dir: d.toArray(),
+      bag: bag.group.position.toArray(),
     };
   },
   rendererInfo() {

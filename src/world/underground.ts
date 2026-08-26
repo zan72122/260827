@@ -115,12 +115,12 @@ export function buildUnderground(): Segment {
     g.add(f);
   }
   for (const lx of [9, 15, 21, 27]) {
-    const pl = new THREE.PointLight(0xe8ecda, 14, 11, 2);
+    const pl = new THREE.PointLight(0xe8ecda, 7, 11, 2);
     pl.position.set(lx, CEIL - 0.25, 1.2);
     g.add(pl);
   }
   // one light in the decline shaft
-  const shaftLight = new THREE.PointLight(0xe8ecda, 10, 8, 2);
+  const shaftLight = new THREE.PointLight(0xe8ecda, 5, 8, 2);
   shaftLight.position.set(6.2, 1.7, 0);
   g.add(shaftLight);
 

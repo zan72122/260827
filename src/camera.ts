@@ -25,6 +25,9 @@ interface RigKey {
 const LANDSCAPE: RigKey[] = [
   { p: 0.0, side: 3.5, back: 0.1, up: 1.35, lookAhead: 0.9, lookUp: 0.3, fov: 56 },
   { p: 0.1, side: 3.5, back: 0.2, up: 1.35, lookAhead: 0.5, lookUp: 0.3, fov: 56 },
+  // move in close for the curtain crossing (highlight moment #1)
+  { p: 0.135, side: 2.3, back: 0.3, up: 0.95, lookAhead: 0.3, lookUp: 0.35, fov: 55 },
+  { p: 0.195, side: 2.5, back: 0.35, up: 1.0, lookAhead: 0.1, lookUp: 0.3, fov: 55 },
   { p: 0.24, side: 3.3, back: 0.35, up: 1.3, lookAhead: -0.5, lookUp: 0.28, fov: 55 },
   { p: 0.38, side: 3.3, back: 0.35, up: 1.3, lookAhead: -0.5, lookUp: 0.28, fov: 55 },
   { p: 0.418, side: 0.3, back: 1.45, up: 0.52, lookAhead: 0.6, lookUp: 0.12, fov: 60 },
@@ -32,11 +35,12 @@ const LANDSCAPE: RigKey[] = [
   { p: 0.56, side: 3.3, back: 0.35, up: 1.3, lookAhead: -0.5, lookUp: 0.28, fov: 55 },
   { p: 0.74, side: 3.4, back: 0.4, up: 1.25, lookAhead: -0.4, lookUp: 0.35, fov: 55 },
   // swing to a trailing camera while still inside the hall, then follow the
-  // bag out through the doorway so the aircraft belly rises ahead of it
-  { p: 0.764, side: 0.6, back: 3.0, up: 1.1, lookAhead: 2.6, lookUp: 0.35, fov: 55 },
-  { p: 0.805, side: 0.6, back: 3.2, up: 1.1, lookAhead: 3.0, lookUp: 0.55, fov: 55 },
-  { p: 0.86, side: 1.5, back: 3.7, up: 1.6, lookAhead: 3.4, lookUp: 0.95, fov: 55 },
-  { p: 0.94, side: 1.2, back: 3.0, up: 1.15, lookAhead: 2.4, lookUp: 0.55, fov: 55 },
+  // bag out through the doorway (staying inside the door opening) so the
+  // aircraft belly rises ahead of it instead of behind the viewer
+  { p: 0.764, side: 0.35, back: 3.0, up: 1.05, lookAhead: 2.6, lookUp: 0.35, fov: 55 },
+  { p: 0.87, side: 0.35, back: 3.2, up: 1.05, lookAhead: 3.2, lookUp: 0.75, fov: 55 },
+  { p: 0.905, side: 1.4, back: 3.6, up: 1.5, lookAhead: 3.2, lookUp: 0.9, fov: 55 },
+  { p: 0.945, side: 1.1, back: 2.9, up: 1.15, lookAhead: 2.2, lookUp: 0.5, fov: 55 },
   { p: 0.975, side: 0.7, back: 2.6, up: 0.85, lookAhead: 0.8, lookUp: 0.15, fov: 58 },
   { p: 1.0, side: 0.75, back: 2.7, up: 0.75, lookAhead: 0.6, lookUp: 0.1, fov: 58 },
 ];
@@ -49,7 +53,9 @@ const PORTRAIT: RigKey[] = [
   { p: 0.525, side: 0.14, back: 1.5, up: 0.5, lookAhead: 1.6, lookUp: 0.05, fov: 64 },
   { p: 0.57, side: 0.5, back: 2.7, up: 1.05, lookAhead: 2.2, lookUp: 0.15, fov: 62 },
   { p: 0.77, side: 0.5, back: 2.7, up: 1.05, lookAhead: 2.2, lookUp: 0.15, fov: 62 },
-  { p: 0.82, side: 0.5, back: 3.5, up: 1.65, lookAhead: 3.4, lookUp: 0.9, fov: 62 },
+  { p: 0.82, side: 0.4, back: 3.4, up: 1.05, lookAhead: 3.4, lookUp: 0.75, fov: 62 },
+  { p: 0.885, side: 0.4, back: 3.4, up: 1.05, lookAhead: 3.4, lookUp: 0.9, fov: 62 },
+  { p: 0.915, side: 0.6, back: 3.2, up: 1.6, lookAhead: 3.0, lookUp: 0.9, fov: 62 },
   { p: 0.95, side: 0.5, back: 2.6, up: 1.0, lookAhead: 2.2, lookUp: 0.7, fov: 62 },
   { p: 0.978, side: 0.3, back: 2.1, up: 0.6, lookAhead: 1.2, lookUp: 0.12, fov: 64 },
   { p: 1.0, side: 0.35, back: 2.3, up: 0.65, lookAhead: 1.0, lookUp: 0.1, fov: 64 },

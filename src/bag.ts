@@ -65,7 +65,7 @@ export class Bag {
     // short top handle (bag lies flat → handle on the top face, leading end)
     const handleMat = new THREE.MeshStandardMaterial({ color: 0x1c1e20, roughness: 0.7 });
     const handle = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.016, 8, 20, Math.PI), handleMat);
-    handle.position.set(Bag.L * 0.3, Bag.H / 2 + 0.005, 0);
+    handle.position.set(-Bag.L * 0.3, Bag.H / 2 + 0.005, 0);
     handle.rotation.z = 0; // arch up
     this.body.add(handle);
     // side carry handle
@@ -121,7 +121,7 @@ export class Bag {
     this.loop.add(loopMesh);
     // tied to the top handle, dangling over the leading top edge on the
     // camera side so the white tag stays readable the whole journey
-    this.loop.position.set(Bag.L * 0.36, Bag.H + 0.045, 0.14);
+    this.loop.position.set(-Bag.L * 0.36, Bag.H + 0.045, 0.14);
     this.loop.rotation.x = -0.35; // drape outward
     this.group.add(this.loop);
 

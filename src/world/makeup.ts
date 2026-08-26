@@ -114,7 +114,7 @@ export function buildMakeup(): Segment {
     m.receiveShadow = true;
     g.add(m);
   };
-  endWall(-0.55, 5.3, 1.45, 3.4);
+  endWall(-0.4, 5.7, 1.45, 3.4);
   endWall(5.85, 3.8, 1.45, 3.4);
   endWall(3.2, 1.5, 2.45, 1.4); // header above door
   // door frame
@@ -126,16 +126,6 @@ export function buildMakeup(): Segment {
   exitCurtain.group.position.set(40.6, 0.44, 3.2);
   g.add(exitCurtain.group);
   const sExit = journey.sAtWaypoint[12];
-  // daylight glare panel just beyond the door (fades once outside)
-  const glareMat = new THREE.MeshBasicMaterial({
-    color: 0xeaf4fa,
-    transparent: true,
-    opacity: 0.95,
-  });
-  const glare = new THREE.Mesh(new THREE.PlaneGeometry(1.55, 1.5), glareMat);
-  glare.position.set(41.35, 1.15, 3.2);
-  glare.rotation.y = -Math.PI / 2;
-  g.add(glare);
 
   // ---- conveyors through the hall ----
   g.add(beltRun(wp(10), wp(11), { width: 0.85, legsTo: H_FLOOR }));
@@ -224,7 +214,7 @@ export function buildMakeup(): Segment {
 
   // hall lights
   for (const lx of [33.5, 38.5]) {
-    const pl = new THREE.PointLight(0xe6ead6, 18, 12, 2);
+    const pl = new THREE.PointLight(0xe6ead6, 9, 12, 2);
     pl.position.set(lx, 2.75, 1.8);
     g.add(pl);
   }
@@ -238,8 +228,6 @@ export function buildMakeup(): Segment {
         : THREE.MathUtils.clamp(1 - (-d - 0.7) / 1.6, 0, 1);
     shutter.position.y = 0.1 + open * 1.62;
     exitCurtain.update(st.s - sExit);
-    // daylight glare fades once the bag is outside
-    glareMat.opacity = 0.95 * (1 - THREE.MathUtils.smoothstep(st.p, 0.78, 0.815));
   };
 
   return { group: g, range: [0.6, 0.85], update };

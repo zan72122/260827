@@ -97,10 +97,13 @@ export function buildAirside(): Segment {
   const parapet = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.4, 22), M.steelDark);
   parapet.position.set(41.15, 5.3, 1.9);
   g.add(parapet);
-  // long facade continuing into the distance both ways
-  const facade = new THREE.Mesh(new THREE.BoxGeometry(0.4, 6.5, 70), cladMat);
-  facade.position.set(40.6, 3.2, -24);
-  g.add(facade);
+  // long facade continuing into the distance on both sides of the stand
+  const facadeL = new THREE.Mesh(new THREE.BoxGeometry(0.4, 6.5, 35), cladMat);
+  facadeL.position.set(41.35, 3.2, -26.5);
+  g.add(facadeL);
+  const facadeR = new THREE.Mesh(new THREE.BoxGeometry(0.4, 6.5, 29), cladMat);
+  facadeR.position.set(41.35, 3.2, 25.5);
+  g.add(facadeR);
 
   // ---- outdoor transfer conveyor to the loader ----
   const dir14 = wp(14).clone().sub(wp(13)).normalize();
