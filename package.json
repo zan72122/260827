@@ -1,0 +1,20 @@
+{
+  "name": "glass-atelier",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A realistic plate-glass score-and-snap mobile web game for small children guiding an adult artisan's hands",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "shots": "node test/screenshots.mjs"
+  },
+  "dependencies": {
+    "three": "0.169.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.47.2",
+    "vite": "^5.4.21"
+  }
+}
