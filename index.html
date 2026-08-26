@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#87a6c4" />
+  <title>いっぴつ コンクリート</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: 100%;
+      height: 100dvh;
+      overflow: hidden;
+      overscroll-behavior: none;
+      touch-action: none;
+      background: #87a6c4;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+      -webkit-tap-highlight-color: transparent;
+      position: fixed;
+    }
+    #app { width: 100%; height: 100%; position: relative; }
+    canvas.game {
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+    /* ---- hint hand (no text onboarding) ---- */
+    #hint {
+      position: absolute;
+      left: 50%; top: 50%;
+      width: 46vmin; height: 46vmin;
+      margin-left: -23vmin; margin-top: -21vmin;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.6s ease;
+    }
+    #hint.show { opacity: 1; }
+    /* ---- replay button ---- */
+    #replay {
+      position: absolute;
+      left: 50%;
+      bottom: calc(24px + env(safe-area-inset-bottom));
+      transform: translateX(-50%) scale(0);
+      width: 92px; height: 92px;
+      border-radius: 50%;
+      border: none;
+      background: #f7f3ea;
+      box-shadow: 0 6px 18px rgba(30,40,50,0.35), inset 0 -4px 0 rgba(0,0,0,0.08);
+      transition: transform 0.35s cubic-bezier(.34,1.56,.64,1);
+      pointer-events: none;
+      touch-action: manipulation;
+    }
+    #replay.show { transform: translateX(-50%) scale(1); pointer-events: auto; }
+    #replay:active { transform: translateX(-50%) scale(0.92); }
+    #replay svg { width: 56px; height: 56px; display: block; margin: auto; }
+    /* ---- stroke comparison card ---- */
+    #compareCard {
+      position: absolute;
+      top: calc(16px + env(safe-area-inset-top));
+      left: 50%;
+      transform: translateX(-50%) translateY(-140%);
+      width: 132px; height: 132px;
+      border-radius: 20px;
+      background: #f7f3ea;
+      box-shadow: 0 6px 18px rgba(30,40,50,0.35);
+      padding: 10px;
+      transition: transform 0.5s cubic-bezier(.34,1.56,.64,1);
+      pointer-events: none;
+    }
+    #compareCard.show { transform: translateX(-50%) translateY(0); }
+    #compareCard canvas { width: 100%; height: 100%; }
+    #fallback {
+      position: absolute; inset: 0;
+      display: none;
+      align-items: center; justify-content: center;
+      background: #87a6c4;
+      font: 600 20px/1.6 -apple-system, sans-serif;
+      color: #223;
+      text-align: center;
+      padding: 24px;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <canvas class="game" id="game"></canvas>
+    <svg id="hint" viewBox="0 0 200 200">
+      <path id="hintPath" d="M 100 40 C 150 40 168 78 160 108 C 152 140 120 160 96 158 C 64 156 38 134 40 100 C 42 68 66 42 100 40"
+            fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-dasharray="8 10" opacity="0.85"/>
+      <g id="hintHand">
+        <circle cx="0" cy="0" r="13" fill="#f4c9a3" stroke="#c99b70" stroke-width="2"/>
+        <ellipse cx="0" cy="18" rx="17" ry="14" fill="#f4c9a3" stroke="#c99b70" stroke-width="2"/>
+      </g>
+      <animateMotion xlink:href="#hintHand" dur="3.2s" repeatCount="indefinite" rotate="0">
+        <mpath xlink:href="#hintPath"/>
+      </animateMotion>
+    </svg>
+    <button id="replay" aria-label="replay">
+      <svg viewBox="0 0 48 48" fill="none">
+        <path d="M24 8 a16 16 0 1 1 -13.8 8" stroke="#4a7c59" stroke-width="5.5" stroke-linecap="round"/>
+        <path d="M4 10 L11.5 18.5 L16.5 8 Z" fill="#4a7c59"/>
+      </svg>
+    </button>
+    <div id="compareCard"><canvas id="compareCanvas" width="224" height="224"></canvas></div>
+    <div id="fallback">この あそびは あたらしい ブラウザで ひらいてね 🐘</div>
+  </div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

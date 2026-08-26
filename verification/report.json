@@ -1,0 +1,56 @@
+{
+  "runs": [
+    {
+      "device": "shape",
+      "shape": "sCurve",
+      "stages": {
+        "firstLayer": {
+          "phase": "printing:first:L1",
+          "layer": 1,
+          "layersTotal": 90,
+          "closed": false,
+          "isBench": false,
+          "totalLen": 4.812768816943589,
+          "rings": 2,
+          "baked": 0,
+          "geoCount": 196,
+          "tris": 4512,
+          "ema": 351.6091070671531
+        },
+        "stacking": {
+          "phase": "printing:lapse:L5",
+          "layer": 5,
+          "layersTotal": 90,
+          "closed": false,
+          "isBench": false,
+          "totalLen": 4.812768816943589,
+          "rings": 438,
+          "baked": 0,
+          "geoCount": 218,
+          "tris": 4838,
+          "ema": 253.5097668434315
+        },
+        "complete": {
+          "phase": "compare",
+          "layer": 90,
+          "layersTotal": 90,
+          "closed": false,
+          "isBench": false,
+          "totalLen": 4.812768816943589,
+          "rings": 9810,
+          "baked": 12,
+          "geoCount": 253,
+          "tris": 199686,
+          "ema": 275.25051352319
+        }
+      }
+    }
+  ],
+  "errors": [
+    {
+      "device": "iphone-portrait",
+      "shape": "circleish",
+      "error": "timeout waiting phase (last=reveal)"
+    }
+  ]
+}
