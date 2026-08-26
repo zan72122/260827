@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#071c30" />
+  <title>氷のずっと奥から</title>
+  <style>
+    html, body {
+      margin: 0; padding: 0; width: 100%; height: 100%;
+      overflow: hidden; background: #071c30;
+      overscroll-behavior: none;
+      -webkit-user-select: none; user-select: none;
+      -webkit-touch-callout: none;
+      position: fixed; inset: 0;
+    }
+    #app { width: 100%; height: 100%; touch-action: none; }
+    canvas { display: block; touch-action: none; }
+    #replay {
+      position: absolute; bottom: calc(24px + env(safe-area-inset-bottom)); left: 50%;
+      transform: translateX(-50%) scale(0.6);
+      width: 76px; height: 76px; border-radius: 50%;
+      border: none; background: rgba(255,255,255,0.88);
+      box-shadow: 0 4px 18px rgba(20,40,70,0.35);
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.6s ease, transform 0.6s ease;
+      display: flex; align-items: center; justify-content: center;
+    }
+    #replay.show { opacity: 1; pointer-events: auto; transform: translateX(-50%) scale(1); }
+    #replay svg { width: 40px; height: 40px; }
+    #debug {
+      position: absolute; top: calc(8px + env(safe-area-inset-top)); left: 8px; right: 8px;
+      background: rgba(0,0,0,0.55); color: #cfe6ff; font: 12px monospace;
+      padding: 8px; border-radius: 8px; display: none; z-index: 10;
+    }
+    #debug.show { display: block; }
+    #debug input[type=range] { width: 100%; }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <button id="replay" aria-label="もういちど">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#1c5a8a" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 12a9 9 0 1 0 3.5-7.1"/>
+      <polyline points="3 4 3 9 8 9"/>
+    </svg>
+  </button>
+  <div id="debug">
+    <div id="dbg-info">p=0.000 fps=0 q=1.0</div>
+    <input id="dbg-slider" type="range" min="0" max="1000" value="0" />
+  </div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
