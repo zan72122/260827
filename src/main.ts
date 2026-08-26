@@ -96,6 +96,7 @@ function boot(): void {
     timeScale: (v: number) => game.setTimeScale(v),
     reset: () => game.reset(),
   };
+  (window as unknown as Record<string, unknown>).__oscDebug = () => game.getDebug();
 }
 
 boot();

@@ -1,6 +1,79 @@
 {
   "runs": [
     {
+      "device": "iphone-portrait",
+      "shape": "circleish",
+      "stages": {
+        "firstLayer": {
+          "phase": "printing:first:L1",
+          "layer": 1,
+          "layersTotal": 90,
+          "closed": true,
+          "isBench": false,
+          "totalLen": 7.987906216132734,
+          "rings": 51,
+          "baked": 0,
+          "geoCount": 200,
+          "tris": 6182,
+          "ema": 235.4184700929943
+        },
+        "stacking": {
+          "phase": "printing:lapse:L13",
+          "layer": 13,
+          "layersTotal": 90,
+          "closed": true,
+          "isBench": false,
+          "totalLen": 7.987906216132734,
+          "rings": 2340,
+          "baked": 1,
+          "geoCount": 247,
+          "tris": 35094,
+          "ema": 107.5384864704989
+        },
+        "complete": {
+          "phase": "compare",
+          "layer": 90,
+          "layersTotal": 90,
+          "closed": true,
+          "isBench": false,
+          "totalLen": 7.987906216132734,
+          "rings": 16200,
+          "baked": 12,
+          "geoCount": 262,
+          "tris": 329126,
+          "ema": 384.30599002700944
+        }
+      },
+      "replay": {
+        "before": {
+          "phase": "compare",
+          "layer": 90,
+          "layersTotal": 90,
+          "closed": true,
+          "isBench": false,
+          "totalLen": 7.987906216132734,
+          "rings": 16200,
+          "baked": 12,
+          "geoCount": 262,
+          "tris": 329050,
+          "ema": 387.42563062540563
+        },
+        "after": {
+          "phase": "draw",
+          "layer": 0,
+          "layersTotal": 0,
+          "closed": false,
+          "isBench": false,
+          "totalLen": 0,
+          "rings": 0,
+          "baked": 0,
+          "geoCount": 247,
+          "tris": 5552,
+          "ema": 233.49796241598202
+        }
+      }
+    },
+    {
       "device": "shape",
       "shape": "sCurve",
       "stages": {
@@ -13,9 +86,9 @@
           "totalLen": 4.812768816943589,
           "rings": 2,
           "baked": 0,
-          "geoCount": 196,
-          "tris": 4512,
-          "ema": 351.6091070671531
+          "geoCount": 195,
+          "tris": 4500,
+          "ema": 326.24158562998923
         },
         "stacking": {
           "phase": "printing:lapse:L5",
@@ -26,9 +99,9 @@
           "totalLen": 4.812768816943589,
           "rings": 438,
           "baked": 0,
-          "geoCount": 218,
-          "tris": 4838,
-          "ema": 253.5097668434315
+          "geoCount": 217,
+          "tris": 4826,
+          "ema": 228.0343851549208
         },
         "complete": {
           "phase": "compare",
@@ -39,18 +112,12 @@
           "totalLen": 4.812768816943589,
           "rings": 9810,
           "baked": 12,
-          "geoCount": 253,
-          "tris": 199686,
-          "ema": 275.25051352319
+          "geoCount": 252,
+          "tris": 199674,
+          "ema": 276.3892350187266
         }
       }
     }
   ],
-  "errors": [
-    {
-      "device": "iphone-portrait",
-      "shape": "circleish",
-      "error": "timeout waiting phase (last=reveal)"
-    }
-  ]
+  "errors": []
 }

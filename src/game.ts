@@ -297,6 +297,9 @@ export class Game {
       baked: this.builder.bakedCount,
     };
   }
+  getDebug(): unknown {
+    return this.builder.debugExtents();
+  }
   async testStroke(pts: [number, number][], durMs = 1600): Promise<void> {
     if (this.phase !== 'draw') return;
     await this.stroke.simulateStroke(pts, durMs);

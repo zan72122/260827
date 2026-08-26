@@ -284,6 +284,27 @@ export class BeadBuilder {
   }
 
   get bakedCount(): number { return this.bakedMeshes.length; }
+
+  /** デバッグ: 末尾リング数個の実寸（幅・高さ・下端） */
+  debugExtents(count = 5): { rings: number; extents: { w: number; h: number; y0: number; y1: number }[] } {
+    const out: { w: number; h: number; y0: number; y1: number }[] = [];
+    const n = Math.min(count, this.ringCount);
+    for (let k = this.ringCount - n; k < this.ringCount; k++) {
+      let minY = 1e9, maxY = -1e9, minX = 1e9, maxX = -1e9, minZ = 1e9, maxZ = -1e9;
+      for (let i = 0; i < NP; i++) {
+        const o = (k * NP + i) * 3;
+        minX = Math.min(minX, this.aPos[o]); maxX = Math.max(maxX, this.aPos[o]);
+        minY = Math.min(minY, this.aPos[o + 1]); maxY = Math.max(maxY, this.aPos[o + 1]);
+        minZ = Math.min(minZ, this.aPos[o + 2]); maxZ = Math.max(maxZ, this.aPos[o + 2]);
+      }
+      out.push({
+        w: Math.hypot(maxX - minX, maxZ - minZ),
+        h: maxY - minY,
+        y0: minY, y1: maxY,
+      });
+    }
+    return { rings: this.ringCount, extents: out };
+  }
 }
 
 function fract(v: number): number { return v - Math.floor(v); }
