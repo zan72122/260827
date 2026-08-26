@@ -180,6 +180,11 @@ export function buildAirside(): Segment {
     eng.position.set(56.8, 1.55, FUSELAGE.z + 4.0 * sz);
     eng.castShadow = true;
     g.add(eng);
+    // exhaust cone closes the nacelle rear
+    const exhaust = new THREE.Mesh(new THREE.CylinderGeometry(0.76, 0.3, 1.0, 16), M.steelDark);
+    exhaust.rotation.z = -Math.PI / 2;
+    exhaust.position.set(54.9, 1.55, FUSELAGE.z + 4.0 * sz);
+    g.add(exhaust);
     const lip = new THREE.Mesh(new THREE.TorusGeometry(0.83, 0.07, 8, 24), M.steelDark);
     lip.rotation.y = Math.PI / 2;
     lip.position.set(58.25, 1.55, FUSELAGE.z + 4.0 * sz);
