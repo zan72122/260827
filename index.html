@@ -7,6 +7,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="theme-color" content="#87a6c4" />
   <title>いっぴつ コンクリート</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='4' y='18' width='24' height='4' rx='2' fill='%23888478'/%3E%3Crect x='6' y='13' width='20' height='4' rx='2' fill='%23999588'/%3E%3Crect x='8' y='8' width='16' height='4' rx='2' fill='%23aaa699'/%3E%3C/svg%3E"/>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body {
@@ -95,10 +96,10 @@
       <g id="hintHand">
         <circle cx="0" cy="0" r="13" fill="#f4c9a3" stroke="#c99b70" stroke-width="2"/>
         <ellipse cx="0" cy="18" rx="17" ry="14" fill="#f4c9a3" stroke="#c99b70" stroke-width="2"/>
+        <animateMotion dur="3.2s" repeatCount="indefinite" rotate="0">
+          <mpath href="#hintPath"/>
+        </animateMotion>
       </g>
-      <animateMotion xlink:href="#hintHand" dur="3.2s" repeatCount="indefinite" rotate="0">
-        <mpath xlink:href="#hintPath"/>
-      </animateMotion>
     </svg>
     <button id="replay" aria-label="replay">
       <svg viewBox="0 0 48 48" fill="none">

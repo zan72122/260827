@@ -109,8 +109,8 @@ export class BeadBuilder {
       for (let i = 0; i < NP; i++) {
         const i2 = (i + 1) % NP;
         const a = r * NP + i, b = (r + 1) * NP + i, c = (r + 1) * NP + i2, d = r * NP + i2;
-        idx[k++] = a; idx[k++] = b; idx[k++] = c;
-        idx[k++] = a; idx[k++] = c; idx[k++] = d;
+        idx[k++] = a; idx[k++] = c; idx[k++] = b;
+        idx[k++] = a; idx[k++] = d; idx[k++] = c;
       }
     }
     this.activeGeom.setIndex(new THREE.BufferAttribute(idx, 1));
@@ -219,7 +219,7 @@ export class BeadBuilder {
         const i2 = (i + 1) % NP;
         const a = vertBase + r * NP + i, b = vertBase + (r + 1) * NP + i;
         const c = vertBase + (r + 1) * NP + i2, d = vertBase + r * NP + i2;
-        this.pendingIdx.push(a, b, c, a, c, d);
+        this.pendingIdx.push(a, c, b, a, d, c);
       }
     }
     this.pendingLayers++;
@@ -235,7 +235,7 @@ export class BeadBuilder {
       for (let i = 0; i < NP; i++) {
         const i2 = (i + 1) % NP;
         const a = r * NP + i, b = (r + 1) * NP + i, c = (r + 1) * NP + i2, d = r * NP + i2;
-        lIdx.push(a, b, c, a, c, d);
+        lIdx.push(a, c, b, a, d, c);
       }
     }
     lg.setIndex(lIdx);

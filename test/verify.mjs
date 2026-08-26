@@ -153,7 +153,7 @@ try {
       // circleish は上のデバイス通しで取得済みだが、統一条件でも取り直す
     }
     await fullPlaythrough(browser, 'shape', DEVICES['iphone-portrait'], SHAPES[sn], sn, {
-      timeScale: 40, strokeMs: 1500,
+      timeScale: 40, strokeMs: 4000,
     });
   }
 } finally {

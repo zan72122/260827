@@ -47,7 +47,7 @@ class HoseTube {
       for (let j = 0; j < nRad; j++) {
         const j2 = (j + 1) % nRad;
         const a = i * nRad + j, b = (i + 1) * nRad + j, c = (i + 1) * nRad + j2, d = i * nRad + j2;
-        idx.push(a, b, c, a, c, d);
+        idx.push(a, c, b, a, d, c);
       }
     }
     geom.setIndex(idx);
