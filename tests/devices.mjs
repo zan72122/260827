@@ -24,17 +24,17 @@ for (const dev of DEVICES) {
   const { ctx, page } = await openGame(browser, dev);
 
   if (dev.name === 'phone-large-430x932') {
-    // capture the wordless intro on one device
+    // capture the wordless intro on one device (timed by in-game clock)
     fs.mkdirSync('screenshots/intro', { recursive: true });
-    await page.waitForTimeout(1200);
-    await page.screenshot({ path: 'screenshots/intro/1-rough-ice-closeup.png' });
-    await page.waitForTimeout(2200);
-    await page.screenshot({ path: 'screenshots/intro/2-waiting-skater.png' });
-    await page.waitForTimeout(2200);
-    await page.screenshot({ path: 'screenshots/intro/3-conditioner-lowering.png' });
-    await page.waitForTimeout(2100);
-    await page.screenshot({ path: 'screenshots/intro/4-facing-down-rink.png' });
-    await waitPhase(page, 'draw', 20000);
+    const atIntroT = async (t, path) => {
+      await page.waitForFunction((tt) => window.__test.introT() >= tt || window.__test.phase() !== 'intro', t, { timeout: 60000 });
+      await page.screenshot({ path });
+    };
+    await atIntroT(1.3, 'screenshots/intro/1-rough-ice-closeup.png');
+    await atIntroT(3.4, 'screenshots/intro/2-waiting-skater.png');
+    await atIntroT(5.9, 'screenshots/intro/3-conditioner-lowering.png');
+    await atIntroT(7.9, 'screenshots/intro/4-facing-down-rink.png');
+    await waitPhase(page, 'draw', 30000);
   } else {
     await skipIntro(page);
   }
@@ -57,7 +57,9 @@ for (const dev of DEVICES) {
   await page.evaluate(() => window.__test.setTimeScale(2.5));
   await waitPhase(page, 'bandview', 240000);
   await page.evaluate(() => window.__test.setTimeScale(1));
-  await page.waitForTimeout(2400);
+  // headless renders slowly (game time < real time) — give the camera time
+  // to settle on the wide shot before capturing
+  await page.waitForTimeout(7000);
   await page.screenshot({ path: `${dir}/4-complete-band.png` });
 
   if (dev.name === 'phone-large-430x932') {

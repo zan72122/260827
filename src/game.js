@@ -621,6 +621,7 @@ export class Game {
     return {
       version: 1,
       phase: () => this.phase,
+      introT: () => this.introT,
       skipIntro: () => this.skipIntro(),
       reset: () => this.fullReset(),
       setTimeScale: (s) => { this.timeScale = Math.max(0.25, Math.min(5, s)); },
