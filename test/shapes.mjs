@@ -51,6 +51,14 @@ export const SHAPES = {
       return [Math.cos(a) * 1.05 * bulge, Math.sin(a) * 1.15];
     }), 0.03, 19),
 
+  // 短い弧（庭園ベンチになる開放軌跡・検証契約外の追加確認用）
+  shortArc: jitter(
+    Array.from({ length: 26 }, (_, i) => {
+      const t = i / 25;
+      const a = -0.5 + t * 1.0;
+      return [Math.sin(a) * 1.6, -Math.cos(a) * 1.6 + 0.9];
+    }), 0.02, 29),
+
   // 丸い角を持つ四角形
   roundedSquare: (() => {
     const pts = [];
