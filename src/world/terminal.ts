@@ -160,8 +160,8 @@ export function buildTerminal(): Segment {
     new THREE.BoxGeometry(0.34, 0.14, 0.05),
     new THREE.MeshStandardMaterial({ color: 0x101512, emissive: 0x2fae52, emissiveIntensity: 1.4 }),
   );
-  disp.position.set(-0.9, 0.62, 0.56);
-  disp.rotation.x = -0.35;
+  disp.position.set(-0.45, 0.24, 0.548);
+  disp.rotation.x = 0;
   g.add(disp);
 
   // flow chevron above the opening (shape-only guidance, points into the wall)

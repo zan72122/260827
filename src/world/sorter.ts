@@ -74,6 +74,9 @@ export function buildSorter(): Segment {
   );
   armFace.position.set(0.75, 0.23, 0.075);
   arm.add(armFace);
+  const armEdge = new THREE.Mesh(new THREE.BoxGeometry(1.55, 0.05, 0.13), M.hazard);
+  armEdge.position.set(0.75, 0.47, 0);
+  arm.add(armEdge);
   const hub = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.55, 12), M.steelDark);
   hub.position.y = 0.26;
   arm.add(hub);

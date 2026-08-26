@@ -85,7 +85,7 @@ export function buildScreening(): Segment {
   // dark tunnel interior with a quiet inspection band
   const tunnel = new THREE.Mesh(
     new THREE.BoxGeometry(OUT_X - IN_X - 0.2, 0.75, 0.98),
-    new THREE.MeshStandardMaterial({ color: 0x0c0e10, roughness: 1, side: THREE.BackSide }),
+    new THREE.MeshStandardMaterial({ color: 0x17191c, roughness: 1, side: THREE.BackSide }),
   );
   tunnel.position.set(MID, BELT + 0.36, 0);
   g.add(tunnel);
@@ -165,8 +165,8 @@ export function buildScreening(): Segment {
     // bag inside window 0..1
     const inside = THREE.MathUtils.smoothstep(st.s, sIn - 0.2, sIn + 0.3) *
       (1 - THREE.MathUtils.smoothstep(st.s, sOut - 0.3, sOut + 0.2));
-    scanMat.emissiveIntensity = inside * (1.1 + Math.sin(st.time * 7) * 0.25);
-    scanLight.intensity = inside * 1.3;
+    scanMat.emissiveIntensity = inside * (0.45 + Math.sin(st.time * 7) * 0.1);
+    scanLight.intensity = inside * 0.4;
     lampAmberMat.emissiveIntensity = 0.15 + inside * 1.5;
     lampGreenMat.emissiveIntensity = 1.4 - inside * 1.1;
     // tag reader blink while the tag passes underneath

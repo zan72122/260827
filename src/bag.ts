@@ -41,12 +41,12 @@ export class Bag {
     this.group.add(this.body);
 
     // crushed / scuffed corners: darker rubbed caps on two corners (asymmetric)
-    const scuffMat = new THREE.MeshStandardMaterial({ color: 0x9aa8a2, roughness: 0.95 });
+    const scuffMat = new THREE.MeshStandardMaterial({ color: 0x5f6a66, roughness: 0.95 });
     for (const [sx, sz] of [
       [-1, 1],
       [-1, -1],
     ] as const) {
-      const cap = new THREE.Mesh(new THREE.SphereGeometry(0.055, 8, 6), scuffMat);
+      const cap = new THREE.Mesh(new THREE.SphereGeometry(0.038, 8, 6), scuffMat);
       cap.position.set((Bag.L / 2 - 0.045) * sx, 0.055, (Bag.W / 2 - 0.045) * sz);
       cap.scale.set(1, 0.8, 1);
       this.body.add(
@@ -121,8 +121,8 @@ export class Bag {
     this.loop.add(loopMesh);
     // tied to the top handle, dangling over the leading top edge on the
     // camera side so the white tag stays readable the whole journey
-    this.loop.position.set(-Bag.L * 0.36, Bag.H + 0.045, 0.14);
-    this.loop.rotation.x = -0.35; // drape outward
+    this.loop.position.set(-Bag.L * 0.36, Bag.H + 0.045, 0.19);
+    this.loop.rotation.x = -0.55; // drape outward, clear of the shell
     this.group.add(this.loop);
 
     const cardMesh = new THREE.Mesh(
@@ -165,7 +165,7 @@ export class Bag {
       this.tagSideV * 5 * dt;
     this.tagSide += this.tagSideV * dt;
     this.loop.rotation.z = THREE.MathUtils.clamp(this.tagSwing, -1.2, 1.2) * 0.65;
-    this.loop.rotation.x = -0.35 + this.tagSide * 0.5;
+    this.loop.rotation.x = -0.55 + this.tagSide * 0.5;
     this.card.rotation.z = THREE.MathUtils.clamp(this.tagSwing, -1.2, 1.2) * 0.55;
     this.card.rotation.y = Math.sin(time * 2.9) * (0.06 + wind * 0.3 + Math.abs(speed) * 0.05);
 
