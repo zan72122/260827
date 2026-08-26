@@ -231,6 +231,12 @@ export class Resurfacer {
     dHead.position.set(0, 1.66, 1.05);
     const dHat = new THREE.Mesh(new THREE.SphereGeometry(0.15, 12, 8, 0, Math.PI * 2, 0, 1.4), new THREE.MeshStandardMaterial({ color: 0x33506b, roughness: 0.9 }));
     dHat.position.set(0, 1.7, 1.05);
+    const dEyeMat = new THREE.MeshStandardMaterial({ color: 0x2a2320, roughness: 0.4 });
+    for (const sx of [-1, 1]) {
+      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.018, 8, 6), dEyeMat);
+      eye.position.set(sx * 0.05, 1.68, 1.175);
+      driver.add(eye);
+    }
     driver.add(dTorso, dHead, dHat);
     for (const sx of [-1, 1]) {
       const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.055, 0.4, 3, 8), new THREE.MeshStandardMaterial({ color: 0xc9772e, roughness: 0.85 }));

@@ -138,16 +138,18 @@ export function buildArena(scene) {
     group.add(housing, panel, rod);
   }
 
-  // end walls: concrete with the resurfacer garage door at the far end
+  // arena shell walls. The near-side walls (behind the play cameras: +z in
+  // portrait, +x in landscape) sit far outside so no camera is ever walled off.
   const wallMat = new THREE.MeshStandardMaterial({ color: 0x3f464d, roughness: 0.9 });
-  for (const zEnd of [-L - 6, L + 6]) {
-    const w = new THREE.Mesh(new THREE.BoxGeometry(60, 12, 0.6), wallMat);
-    w.position.set(0, 6, zEnd);
-    group.add(w);
-  }
-  for (const xEnd of [-W - 12, W + 8]) {
-    const w = new THREE.Mesh(new THREE.BoxGeometry(0.6, 12, 2 * L + 14), wallMat);
-    w.position.set(xEnd, 6, 0);
+  const shellWalls = [
+    { size: [90, 12, 0.6], pos: [0, 6, -L - 6] },   // far end (garage backdrop)
+    { size: [90, 12, 0.6], pos: [0, 6, 46] },        // near end, behind portrait camera
+    { size: [0.6, 12, 100], pos: [-W - 12, 6, 0] },  // stands side
+    { size: [0.6, 12, 100], pos: [40, 6, 0] }        // bench side, behind landscape camera
+  ];
+  for (const wdef of shellWalls) {
+    const w = new THREE.Mesh(new THREE.BoxGeometry(...wdef.size), wallMat);
+    w.position.set(...wdef.pos);
     group.add(w);
   }
   const garageDoor = new THREE.Mesh(

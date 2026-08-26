@@ -391,8 +391,8 @@ export class Game {
     } else if (t < 6.5) {
       // the conditioner drops onto the ice
       return seg(4.3, 6.5,
-        new THREE.Vector3(2.1, 1.5, 16.6), new THREE.Vector3(1.6, 1.05, 15.4),
-        new THREE.Vector3(0, 0.5, 13.9), new THREE.Vector3(0, 0.25, 13.9));
+        new THREE.Vector3(3.2, 1.9, 17.8), new THREE.Vector3(2.5, 1.35, 16.9),
+        new THREE.Vector3(-0.3, 0.5, 13.6), new THREE.Vector3(-0.3, 0.25, 13.6));
     }
     // pull up over the vehicle, facing down the rink
     const iv = this._inputView();
@@ -622,6 +622,11 @@ export class Game {
       version: 1,
       phase: () => this.phase,
       introT: () => this.introT,
+      debugCam: () => ({
+        pos: this.camPos.toArray(), look: this.camLook.toArray(), fov: this.camFov,
+        desired: (() => { const d = this._desiredCamera(); return { pos: d.pos.toArray(), look: d.look.toArray(), fov: d.fov }; })(),
+        portrait: this.portrait
+      }),
       skipIntro: () => this.skipIntro(),
       reset: () => this.fullReset(),
       setTimeScale: (s) => { this.timeScale = Math.max(0.25, Math.min(5, s)); },

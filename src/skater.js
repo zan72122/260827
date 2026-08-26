@@ -31,6 +31,18 @@ export class Skater {
     const scarf = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.035, 8, 14), hat);
     scarf.rotation.x = Math.PI / 2;
     scarf.position.y = 0.82;
+    const eyeMat = new THREE.MeshStandardMaterial({ color: 0x2a2320, roughness: 0.4 });
+    for (const sx of [-1, 1]) {
+      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.016, 8, 6), eyeMat);
+      eye.position.set(sx * 0.045, 0.955, 0.103);
+      this.body.add(eye);
+    }
+    const cheekMat = new THREE.MeshStandardMaterial({ color: 0xe89a8a, roughness: 0.8 });
+    for (const sx of [-1, 1]) {
+      const cheek = new THREE.Mesh(new THREE.SphereGeometry(0.02, 8, 6), cheekMat);
+      cheek.position.set(sx * 0.075, 0.915, 0.085);
+      this.body.add(cheek);
+    }
     this.body.add(torso, head, cap, pom, scarf);
 
     this.armL = new THREE.Mesh(new THREE.CapsuleGeometry(0.04, 0.26, 3, 8), jacket);

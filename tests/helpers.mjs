@@ -37,18 +37,32 @@ export async function skipIntro(page) {
   await page.waitForTimeout(400);
 }
 
-// stroke: array of world {x,z}; draws it with real pointer events via mouse
-export async function drawStroke(page, worldPts, { durationMs = 900 } = {}) {
-  const screenPts = await page.evaluate(
-    (pts) => pts.map(p => window.__test.worldToScreen(p.x, p.z)), worldPts);
-  await page.mouse.move(screenPts[0].x, screenPts[0].y);
-  await page.mouse.down();
-  const stepDelay = durationMs / screenPts.length;
-  for (let i = 1; i < screenPts.length; i++) {
-    await page.mouse.move(screenPts[i].x, screenPts[i].y, { steps: 3 });
-    await page.waitForTimeout(stepDelay);
+// stroke: array of world {x,z}; draws it with real pointer events via mouse.
+// Under software rendering the browser occasionally drops a whole gesture, so
+// verify the stroke registered and retry (the game itself is unaffected —
+// this is headless input flakiness).
+export async function drawStroke(page, worldPts, { durationMs = 900, retries = 2 } = {}) {
+  for (let attempt = 0; ; attempt++) {
+    // an evaluate round-trip settles the page main thread before the gesture
+    await page.evaluate(() => window.__test.phase());
+    await page.waitForTimeout(150);
+    const screenPts = await page.evaluate(
+      (pts) => pts.map(p => window.__test.worldToScreen(p.x, p.z)), worldPts);
+    await page.mouse.move(screenPts[0].x, screenPts[0].y);
+    await page.mouse.down();
+    const stepDelay = durationMs / screenPts.length;
+    for (let i = 1; i < screenPts.length; i++) {
+      await page.mouse.move(screenPts[i].x, screenPts[i].y, { steps: 3 });
+      await page.waitForTimeout(stepDelay);
+    }
+    await page.mouse.up();
+    await page.waitForTimeout(400);
+    const started = await page.evaluate(() => window.__test.phase() !== 'draw' || !!window.__test.lastStroke());
+    if (started || attempt >= retries) {
+      if (!started) throw new Error('stroke never registered after retries');
+      return;
+    }
   }
-  await page.mouse.up();
 }
 
 // interpolate helper to densify a polyline of world points
