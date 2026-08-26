@@ -4,7 +4,7 @@ import { spawn } from 'node:child_process';
 import { SHAPES } from './shapes.mjs';
 
 const PORT = 4174;
-const proc = spawn('npx', ['vite', 'preview', '--port', String(PORT), '--strictPort'], {
+const proc = spawn('./node_modules/.bin/vite', ['preview', '--port', String(PORT), '--strictPort'], {
   stdio: 'pipe', cwd: new URL('..', import.meta.url).pathname,
 });
 await new Promise((res, rej) => {

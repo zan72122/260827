@@ -33,7 +33,7 @@ export function buildSite(scene: THREE.Scene): SiteRefs {
   scene.fog = new THREE.Fog(COLORS.fog, 30, 90);
   const hemi = new THREE.HemisphereLight(0xcfe0f0, 0x8a7c66, 1.15);
   scene.add(hemi);
-  const sun = new THREE.DirectionalLight(0xfff2dd, 2.1);
+  const sun = new THREE.DirectionalLight(0xfff2dd, 1.75);
   sun.position.set(-9, 14, 7);
   sun.castShadow = true;
   sun.shadow.mapSize.set(2048, 2048);

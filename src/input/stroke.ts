@@ -57,8 +57,10 @@ export class StrokeInput {
     this.chalkGeom.setDrawRange(0, 0);
     const tex = chalkTexture();
     tex.wrapS = THREE.RepeatWrapping;
+    // 建設用マーキングクレヨン（ケール）の赤: 明るいスラブ上でも読める
     const mat = new THREE.MeshBasicMaterial({
-      color: 0xf5f2e8, alphaMap: tex, transparent: true, depthWrite: false,
+      color: 0xc84f2e, alphaMap: tex, transparent: true, depthWrite: false,
+      side: THREE.DoubleSide,
       polygonOffset: true, polygonOffsetFactor: -2,
     });
     this.chalkMesh = new THREE.Mesh(this.chalkGeom, mat);
@@ -195,7 +197,8 @@ export class StrokeInput {
     geom.setAttribute('position', new THREE.BufferAttribute(pos, 3));
     geom.setIndex(idx);
     const mat = new THREE.MeshBasicMaterial({
-      color: 0x39506b, transparent: true, opacity: 0.65, depthWrite: false,
+      color: 0x2c4360, transparent: true, opacity: 0.85, depthWrite: false,
+      side: THREE.DoubleSide,
       polygonOffset: true, polygonOffsetFactor: -3,
     });
     this.inkMesh = new THREE.Mesh(geom, mat);
@@ -233,4 +236,17 @@ export class StrokeInput {
   }
 
   get isDrawing(): boolean { return this.drawing; }
+
+  /** デバッグ用 */
+  debugInfo(): Record<string, unknown> {
+    return {
+      chalkCount: this.chalkCount,
+      chalkRange: this.chalkGeom.drawRange.count,
+      chalkFirst: Array.from(this.chalkPos.slice(0, 6)),
+      chalkVisible: this.chalkMesh.visible,
+      groupVisible: this.group.visible,
+      parent: this.group.parent ? this.group.parent.type : null,
+      ink: this.inkMesh ? (this.inkMesh.geometry.getAttribute('position') as THREE.BufferAttribute).count : -1,
+    };
+  }
 }

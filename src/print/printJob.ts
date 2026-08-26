@@ -37,7 +37,7 @@ export interface HeadState {
 
 const TAPER_OPEN = 0.075;  // 開放端テーパー長
 const TAPER_SEAM = 0.05;   // 閉曲線シームのテーパー長
-const STANDOFF = 0.005;    // ノズル先端と押出面の隙間
+const STANDOFF = 0.003;    // ノズル先端と押出面の隙間
 
 export class PrintJob {
   private path: WallPath;

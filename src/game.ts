@@ -70,19 +70,19 @@ export class Game {
     // 開始点マーカー（機械的な床マーカー: 鋼板 + 白ペイント）
     this.startMarker = new THREE.Group();
     const plate = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.07, 0.075, 0.012, 16),
+      new THREE.CylinderGeometry(0.055, 0.06, 0.006, 16),
       new THREE.MeshStandardMaterial({ color: 0x8a9096, roughness: 0.5, metalness: 0.6 }),
     );
     plate.castShadow = true;
     this.startMarker.add(plate);
     const paintMat = new THREE.MeshBasicMaterial({ color: 0xf2efe4 });
     for (const rot of [0, Math.PI / 2]) {
-      const bar = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.004, 0.018), paintMat);
-      bar.position.y = 0.008;
+      const bar = new THREE.Mesh(new THREE.BoxGeometry(0.085, 0.003, 0.015), paintMat);
+      bar.position.y = 0.004;
       bar.rotation.y = rot;
       this.startMarker.add(bar);
     }
-    this.startMarker.position.set(-0.9, DIM.slabTop + 0.007, 0.9);
+    this.startMarker.position.set(-0.9, DIM.slabTop + 0.004, 0.9);
     this.scene.add(this.startMarker);
 
     this.stroke.onStart = () => this.overlay.cancelHint();
@@ -298,7 +298,7 @@ export class Game {
     };
   }
   getDebug(): unknown {
-    return this.builder.debugExtents();
+    return { bead: this.builder.debugExtents(), stroke: this.stroke.debugInfo() };
   }
   async testStroke(pts: [number, number][], durMs = 1600): Promise<void> {
     if (this.phase !== 'draw') return;

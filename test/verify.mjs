@@ -25,7 +25,7 @@ const DEVICES = {
 };
 
 function startServer() {
-  const proc = spawn('npx', ['vite', 'preview', '--port', String(PORT), '--strictPort'], {
+  const proc = spawn('./node_modules/.bin/vite', ['preview', '--port', String(PORT), '--strictPort'], {
     stdio: 'pipe', cwd: new URL('..', import.meta.url).pathname,
   });
   return new Promise((resolve, reject) => {

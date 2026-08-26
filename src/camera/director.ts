@@ -103,36 +103,36 @@ export class CameraDirector {
         if (!head) break;
         const layerY = DIM.slabTop + head.layer * DIM.layerH;
         this.wallTopY = layerY;
+        // カメラ追従遅れの先読み補償（低フレームレート時もヘッドを画面内に）
+        const la = Math.min(0.9, head.v * 0.45);
+        const hx = head.x + head.tx * la;
+        const hz = head.z + head.tz * la;
         if (head.phase === 'first') {
-          // 低い接写: ノズル・湿ったビード・床の線を同時に見る
-          const back = 1.15, side = 0.85, hgt = 0.62;
-          const bx = -head.tx * back + head.tz * side;
-          const bz = -head.tz * back - head.tx * side;
-          if (P) {
-            g.pos.set(head.x + bx * 0.9, layerY + hgt * 0.9, head.z + bz * 0.9);
-            g.look.set(head.x + head.tx * 0.45, layerY - 0.06, head.z + head.tz * 0.45);
-            g.fov = 58;
-          } else {
-            g.pos.set(head.x + bx, layerY + hgt, head.z + bz);
-            g.look.set(head.x + head.tx * 0.5, layerY - 0.04, head.z + head.tz * 0.5);
-            g.fov = 50;
-          }
-          g.stiffness = 3.0;
+          // 低い接写: ほぼ真横から。ノズルを画面の進行方向側に置き、
+          // 押出直後の湿ったビードが横へ流れていくのを見せる
+          const side = P ? 0.88 : 1.15;
+          const ahead = 0.3, hgt = P ? 0.42 : 0.4;
+          const bx = head.tz * side + head.tx * ahead;
+          const bz = -head.tx * side + head.tz * ahead;
+          g.pos.set(hx + bx, layerY + hgt, hz + bz);
+          g.look.set(hx - head.tx * 0.42, layerY - 0.01, hz - head.tz * 0.42);
+          g.fov = P ? 54 : 47;
+          g.stiffness = 4.2;
         } else if (head.phase === 'early') {
           // 中距離: 追従して積層を理解させる
-          const back = 2.6, side = 1.5, hgt = 1.35;
+          const back = 2.2, side = 1.4, hgt = 1.1;
           const bx = -head.tx * back + head.tz * side;
           const bz = -head.tz * back - head.tx * side;
           if (P) {
-            g.pos.set(head.x + bx * 0.85, layerY + hgt * 0.85, head.z + bz * 0.85);
-            g.look.set(head.x, layerY - 0.05, head.z);
+            g.pos.set(hx + bx * 0.85, layerY + hgt * 0.85, hz + bz * 0.85);
+            g.look.set(hx, layerY - 0.05, hz);
             g.fov = 56;
           } else {
-            g.pos.set(head.x + bx, layerY + hgt, head.z + bz);
-            g.look.set(head.x, layerY - 0.02, head.z);
+            g.pos.set(hx + bx, layerY + hgt, hz + bz);
+            g.look.set(hx, layerY - 0.02, hz);
             g.fov = 46;
           }
-          g.stiffness = 2.2;
+          g.stiffness = 2.4;
         } else {
           // タイムラプス: 壁の側面が下から上へ育つ中距離。ゆっくり周回
           this.orbitT += dt * 0.05;

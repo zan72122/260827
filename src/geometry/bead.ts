@@ -80,6 +80,7 @@ export class BeadBuilder {
 
   // 結合バッチ
   private bakedMeshes: THREE.Mesh[] = [];
+  private layerMeshes: THREE.Mesh[] = [];
   private pendingPos: number[] = [];
   private pendingNrm: number[] = [];
   private pendingBirth: number[] = [];
@@ -135,7 +136,7 @@ export class BeadBuilder {
     const cz = rin.z + rz * (shift + wob);
     // taper→0 で断面がほぼ点に収束し、端面が閉じる（材料の切れ方）
     const tScale = 0.05 + 0.95 * rin.taper;
-    const hMen = rin.height * (1 + rin.meniscus * 0.30);
+    const hMen = rin.height * (1 + rin.meniscus * 0.45);
     const sag = (1 - rin.taper) * rin.height * 0.22;
     const base = ringIdx * NP;
     for (let i = 0; i < NP; i++) {
@@ -192,8 +193,10 @@ export class BeadBuilder {
   }
 
   /**
-   * 層完了時: アクティブリングを結合バッファへ退避。
-   * keepTail=true なら最後のリングを次層の起点として残す（連続らせん用）。
+   * 層完了時: アクティブリングを層メッシュとして確定表示し、
+   * 同時に結合バッファへも蓄積。BATCH_LAYERS 層ごとに
+   * 層メッシュ群を1つの結合メッシュへ置き換えて draw call を抑える。
+   * keepTail=true なら最後のリングを次層の起点として残す。
    */
   flushActive(keepTail: boolean): void {
     const rings = this.ringCount;
@@ -221,6 +224,28 @@ export class BeadBuilder {
     }
     this.pendingLayers++;
 
+    // この層単体の表示メッシュ（結合までのつなぎ）
+    const lg = new THREE.BufferGeometry();
+    lg.setAttribute('position', new THREE.BufferAttribute(this.aPos.slice(0, rings * NP * 3), 3));
+    lg.setAttribute('normal', new THREE.BufferAttribute(this.aNrm.slice(0, rings * NP * 3), 3));
+    lg.setAttribute('aBirth', new THREE.BufferAttribute(this.aBirth.slice(0, rings * NP), 1));
+    lg.setAttribute('aRand', new THREE.BufferAttribute(this.aRand.slice(0, rings * NP), 1));
+    const lIdx: number[] = [];
+    for (let r = 0; r < rings - 1; r++) {
+      for (let i = 0; i < NP; i++) {
+        const i2 = (i + 1) % NP;
+        const a = r * NP + i, b = (r + 1) * NP + i, c = (r + 1) * NP + i2, d = r * NP + i2;
+        lIdx.push(a, b, c, a, c, d);
+      }
+    }
+    lg.setIndex(lIdx);
+    const lm = new THREE.Mesh(lg, this.mat);
+    lm.castShadow = true;
+    lm.receiveShadow = false;
+    lm.frustumCulled = false;
+    this.layerMeshes.push(lm);
+    this.group.add(lm);
+
     // アクティブをリセット（末尾リングを引き継ぎ）
     const tail = keepTail ? this.ringInputs[this.ringInputs.length - 1] : null;
     this.ringCount = 0;
@@ -237,6 +262,12 @@ export class BeadBuilder {
 
   private bakeBatch(): void {
     if (this.pendingIdx.length === 0) return;
+    // つなぎの層メッシュを破棄して結合メッシュへ置き換え
+    for (const m of this.layerMeshes) {
+      m.geometry.dispose();
+      this.group.remove(m);
+    }
+    this.layerMeshes.length = 0;
     const geom = new THREE.BufferGeometry();
     geom.setAttribute('position', new THREE.BufferAttribute(new Float32Array(this.pendingPos), 3));
     geom.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(this.pendingNrm), 3));
@@ -271,6 +302,11 @@ export class BeadBuilder {
       this.group.remove(m);
     }
     this.bakedMeshes.length = 0;
+    for (const m of this.layerMeshes) {
+      m.geometry.dispose();
+      this.group.remove(m);
+    }
+    this.layerMeshes.length = 0;
     this.pendingPos.length = 0;
     this.pendingNrm.length = 0;
     this.pendingBirth.length = 0;

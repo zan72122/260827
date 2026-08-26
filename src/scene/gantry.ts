@@ -527,9 +527,9 @@ export class Gantry {
     const hopperIn = new THREE.Vector3(this.posX, this.beamY - DIM.beamH / 2 - 0.5, this.posZ);
     const cd = this.hoseCtrlDrop;
     cd[0].copy(carTop);
-    cd[1].set(this.posX + 0.28 + this.swayX * 0.5, carTop.y - 0.1, this.posZ + 0.42);
-    cd[2].set(this.posX + 0.4 + this.swayX, (carTop.y + hopperIn.y) / 2, this.posZ + 0.34 + this.swayZ);
-    cd[3].set(this.posX + 0.2 + this.swayX * 0.7, hopperIn.y + 0.22, this.posZ + 0.12 + this.swayZ * 0.5);
+    cd[1].set(this.posX + 0.3 + this.swayX * 0.5, carTop.y - 0.06, this.posZ + 0.56);
+    cd[2].set(this.posX + 0.46 + this.swayX, (carTop.y + hopperIn.y) / 2, this.posZ + 0.6 + this.swayZ);
+    cd[3].set(this.posX + 0.24 + this.swayX * 0.7, hopperIn.y + 0.24, this.posZ + 0.3 + this.swayZ * 0.5);
     cd[4].copy(hopperIn);
     this.hoseDrop.update(cd);
   }
