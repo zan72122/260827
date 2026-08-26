@@ -1,0 +1,422 @@
+[
+ {
+  "name": "straight: no film before pass",
+  "ok": true,
+  "detail": "[{\"smooth\":0,\"wet\":0},{\"smooth\":0,\"wet\":0},{\"smooth\":0,\"wet\":0}]"
+ },
+ {
+  "name": "straight: drive starts",
+  "ok": true,
+  "detail": "drive"
+ },
+ {
+  "name": "straight: nothing resurfaced ahead of vehicle",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "straight: band never ahead of front",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "straight: no snap/teleport onto the line",
+  "ok": true,
+  "detail": "0.000"
+ },
+ {
+  "name": "straight: a smooth band always exists",
+  "ok": true,
+  "detail": "53"
+ },
+ {
+  "name": "straight: band continuous along drive",
+  "ok": true,
+  "detail": "1.00"
+ },
+ {
+  "name": "straight: band width matches conditioner (2.2m)",
+  "ok": true,
+  "detail": "1.92m"
+ },
+ {
+  "name": "straight: undrawn ice stays rough",
+  "ok": true,
+  "detail": "{\"smooth\":0,\"wet\":0}"
+ },
+ {
+  "name": "straight: previous band kept for additive strokes",
+  "ok": true,
+  "detail": "{\"smooth\":1,\"wet\":0.4745098039215686}"
+ },
+ {
+  "name": "replay: mask fully re-initialized",
+  "ok": true,
+  "detail": "{\"a\":{\"smooth\":0,\"wet\":0},\"b\":{\"smooth\":0,\"wet\":0}}"
+ },
+ {
+  "name": "bulge-right: no film before pass",
+  "ok": true,
+  "detail": "[{\"smooth\":0,\"wet\":0},{\"smooth\":0,\"wet\":0},{\"smooth\":0,\"wet\":0}]"
+ },
+ {
+  "name": "bulge-right: drive starts",
+  "ok": true,
+  "detail": "drive"
+ },
+ {
+  "name": "bulge-right: nothing resurfaced ahead of vehicle",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "bulge-right: band never ahead of front",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "bulge-right: no snap/teleport onto the line",
+  "ok": true,
+  "detail": "0.000"
+ },
+ {
+  "name": "bulge-right: a smooth band always exists",
+  "ok": true,
+  "detail": "61"
+ },
+ {
+  "name": "bulge-right: band continuous along drive",
+  "ok": true,
+  "detail": "1.00"
+ },
+ {
+  "name": "bulge-right: band width matches conditioner (2.2m)",
+  "ok": true,
+  "detail": "1.92m"
+ },
+ {
+  "name": "bulge-right: undrawn ice stays rough",
+  "ok": true,
+  "detail": "{\"smooth\":0,\"wet\":0}"
+ },
+ {
+  "name": "bulge-right: curve preserved in path",
+  "ok": true,
+  "detail": "5.50"
+ },
+ {
+  "name": "bulge-right: band bulges right, not left",
+  "ok": true,
+  "detail": "{\"there\":{\"smooth\":1,\"wet\":0.6352941176470588},\"mirror\":{\"smooth\":0,\"wet\":0}}"
+ },
+ {
+  "name": "bulge-left: no film before pass",
+  "ok": true,
+  "detail": "[{\"smooth\":0,\"wet\":0},{\"smooth\":0,\"wet\":0},{\"smooth\":0,\"wet\":0}]"
+ },
+ {
+  "name": "bulge-left: drive starts",
+  "ok": true,
+  "detail": "drive"
+ },
+ {
+  "name": "bulge-left: nothing resurfaced ahead of vehicle",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "bulge-left: band never ahead of front",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "bulge-left: no snap/teleport onto the line",
+  "ok": true,
+  "detail": "0.000"
+ },
+ {
+  "name": "bulge-left: a smooth band always exists",
+  "ok": true,
+  "detail": "61"
+ },
+ {
+  "name": "bulge-left: band continuous along drive",
+  "ok": true,
+  "detail": "1.00"
+ },
+ {
+  "name": "bulge-left: band width matches conditioner (2.2m)",
+  "ok": true,
+  "detail": "1.92m"
+ },
+ {
+  "name": "bulge-left: undrawn ice stays rough",
+  "ok": true,
+  "detail": "{\"smooth\":0,\"wet\":0}"
+ },
+ {
+  "name": "bulge-left: curve preserved in path",
+  "ok": true,
+  "detail": "-5.50"
+ },
+ {
+  "name": "gentle-s: no film before pass",
+  "ok": true,
+  "detail": "[{\"smooth\":0,\"wet\":0},{\"smooth\":0,\"wet\":0},{\"smooth\":0,\"wet\":0}]"
+ },
+ {
+  "name": "gentle-s: drive starts",
+  "ok": true,
+  "detail": "drive"
+ },
+ {
+  "name": "gentle-s: nothing resurfaced ahead of vehicle",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "gentle-s: band never ahead of front",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "gentle-s: no snap/teleport onto the line",
+  "ok": true,
+  "detail": "0.000"
+ },
+ {
+  "name": "gentle-s: a smooth band always exists",
+  "ok": true,
+  "detail": "62"
+ },
+ {
+  "name": "gentle-s: band continuous along drive",
+  "ok": true,
+  "detail": "1.00"
+ },
+ {
+  "name": "gentle-s: band width matches conditioner (2.2m)",
+  "ok": true,
+  "detail": "2.00m"
+ },
+ {
+  "name": "gentle-s: undrawn ice stays rough",
+  "ok": true,
+  "detail": "{\"smooth\":0,\"wet\":0}"
+ },
+ {
+  "name": "gentle-s: S shape survives smoothing",
+  "ok": true,
+  "detail": "-3.1..3.0"
+ },
+ {
+  "name": "gentle-s: band curvature within turn radius",
+  "ok": true,
+  "detail": "1/R=0.321"
+ },
+ {
+  "name": "short: no film before pass",
+  "ok": true,
+  "detail": "[{\"smooth\":0,\"wet\":0},{\"smooth\":0,\"wet\":0},{\"smooth\":0,\"wet\":0}]"
+ },
+ {
+  "name": "short: drive starts",
+  "ok": true,
+  "detail": "drive"
+ },
+ {
+  "name": "short: nothing resurfaced ahead of vehicle",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "short: band never ahead of front",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "short: no snap/teleport onto the line",
+  "ok": true,
+  "detail": "0.000"
+ },
+ {
+  "name": "short: a smooth band always exists",
+  "ok": true,
+  "detail": "16"
+ },
+ {
+  "name": "short: band continuous along drive",
+  "ok": true,
+  "detail": "1.00"
+ },
+ {
+  "name": "short: band width matches conditioner (2.2m)",
+  "ok": true,
+  "detail": "1.92m"
+ },
+ {
+  "name": "short: undrawn ice stays rough",
+  "ok": true,
+  "detail": "{\"smooth\":0,\"wet\":0}"
+ },
+ {
+  "name": "short: even a short stroke makes a band",
+  "ok": true,
+  "detail": "16, total=7.0"
+ },
+ {
+  "name": "back-forth: no film before pass",
+  "ok": true,
+  "detail": "[{\"smooth\":0,\"wet\":0},{\"smooth\":0,\"wet\":0},{\"smooth\":0,\"wet\":0}]"
+ },
+ {
+  "name": "back-forth: drive starts",
+  "ok": true,
+  "detail": "drive"
+ },
+ {
+  "name": "back-forth: nothing resurfaced ahead of vehicle",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "back-forth: band never ahead of front",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "back-forth: no snap/teleport onto the line",
+  "ok": true,
+  "detail": "0.000"
+ },
+ {
+  "name": "back-forth: a smooth band always exists",
+  "ok": true,
+  "detail": "78"
+ },
+ {
+  "name": "back-forth: band continuous along drive",
+  "ok": true,
+  "detail": "1.00"
+ },
+ {
+  "name": "back-forth: band width matches conditioner (2.2m)",
+  "ok": true,
+  "detail": "1.76m"
+ },
+ {
+  "name": "back-forth: undrawn ice stays rough",
+  "ok": true,
+  "detail": "{\"smooth\":0,\"wet\":0}"
+ },
+ {
+  "name": "release-mid: no film before pass",
+  "ok": true,
+  "detail": "[{\"smooth\":0,\"wet\":0},{\"smooth\":0,\"wet\":0},{\"smooth\":0,\"wet\":0}]"
+ },
+ {
+  "name": "release-mid: drive starts",
+  "ok": true,
+  "detail": "drive"
+ },
+ {
+  "name": "release-mid: nothing resurfaced ahead of vehicle",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "release-mid: band never ahead of front",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "release-mid: no snap/teleport onto the line",
+  "ok": true,
+  "detail": "0.000"
+ },
+ {
+  "name": "release-mid: a smooth band always exists",
+  "ok": true,
+  "detail": "24"
+ },
+ {
+  "name": "release-mid: band continuous along drive",
+  "ok": true,
+  "detail": "1.00"
+ },
+ {
+  "name": "release-mid: band width matches conditioner (2.2m)",
+  "ok": true,
+  "detail": "2.00m"
+ },
+ {
+  "name": "release-mid: undrawn ice stays rough",
+  "ok": true,
+  "detail": "{\"smooth\":0,\"wet\":0}"
+ },
+ {
+  "name": "edge-approach: no film before pass",
+  "ok": true,
+  "detail": "[{\"smooth\":0,\"wet\":0},{\"smooth\":0,\"wet\":0},{\"smooth\":0,\"wet\":0}]"
+ },
+ {
+  "name": "edge-approach: drive starts",
+  "ok": true,
+  "detail": "drive"
+ },
+ {
+  "name": "edge-approach: nothing resurfaced ahead of vehicle",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "edge-approach: band never ahead of front",
+  "ok": true,
+  "detail": "0"
+ },
+ {
+  "name": "edge-approach: no snap/teleport onto the line",
+  "ok": true,
+  "detail": "0.000"
+ },
+ {
+  "name": "edge-approach: a smooth band always exists",
+  "ok": true,
+  "detail": "57"
+ },
+ {
+  "name": "edge-approach: band continuous along drive",
+  "ok": true,
+  "detail": "1.00"
+ },
+ {
+  "name": "edge-approach: band width matches conditioner (2.2m)",
+  "ok": true,
+  "detail": "1.92m"
+ },
+ {
+  "name": "edge-approach: undrawn ice stays rough",
+  "ok": true,
+  "detail": "{\"smooth\":0,\"wet\":0}"
+ },
+ {
+  "name": "edge-approach: vehicle eases off the boards",
+  "ok": true,
+  "detail": "7.57"
+ },
+ {
+  "name": "rotate: game continues after rotation",
+  "ok": true,
+  "detail": "\"drive\""
+ },
+ {
+  "name": "rotate: band completed after rotation",
+  "ok": true,
+  "detail": "53"
+ },
+ {
+  "name": "rotate: next stroke works in landscape",
+  "ok": true,
+  "detail": "drive"
+ }
+]
