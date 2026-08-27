@@ -1,0 +1,14 @@
+{
+  "name": "satellite-cleanroom",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node tools/dev-server.mjs",
+    "verify": "node tools/verify.mjs",
+    "check": "node --check src/main.js && node --check tools/verify.mjs"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.62.1"
+  }
+}

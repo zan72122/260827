@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>はなかざり</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8C%B8%3C/text%3E%3C/svg%3E">
+<style>
+  html, body {
+    margin: 0; padding: 0; width: 100%; height: 100%;
+    overflow: hidden; background: #241f2b;
+    touch-action: none; overscroll-behavior: none;
+    -webkit-user-select: none; user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #app { position: fixed; inset: 0; }
+  canvas { display: block; width: 100%; height: 100%; }
+  /* 文字なしローダー：花型のパルス */
+  #loader {
+    position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+    background: #241f2b; z-index: 10; transition: opacity .6s ease; pointer-events: none;
+  }
+  #loader.gone { opacity: 0; }
+  .bloom { width: 84px; height: 84px; position: relative; animation: spin 6s linear infinite; }
+  .bloom span {
+    position: absolute; left: 50%; top: 50%; width: 30px; height: 44px;
+    margin: -38px 0 0 -15px; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+    background: #ff9cbe; transform-origin: 50% 38px; opacity: .9;
+    animation: puls 1.4s ease-in-out infinite;
+  }
+  .bloom i {
+    position: absolute; left: 50%; top: 50%; width: 26px; height: 26px;
+    margin: -13px 0 0 -13px; border-radius: 50%; background: #ffd76e;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes puls { 0%,100% { transform: rotate(var(--r)) scale(1); } 50% { transform: rotate(var(--r)) scale(1.12); } }
+  #replay {
+    position: fixed; left: 50%; bottom: max(24px, env(safe-area-inset-bottom)); z-index: 12;
+    width: 82px; height: 82px; margin-left: -41px; border: 4px solid rgba(255,255,255,.9);
+    border-radius: 50%; background: linear-gradient(#ffd47a, #d79a35); color: #fff;
+    box-shadow: 0 7px 0 #9b6423, 0 12px 30px rgba(70,35,10,.34);
+    font: 700 50px/1 sans-serif; opacity: 0; transform: translateY(18px) scale(.72);
+    pointer-events: none; transition: opacity .45s ease, transform .45s ease;
+  }
+  #replay.show { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+  #replay:active { transform: translateY(5px) scale(.96); box-shadow: 0 2px 0 #9b6423; }
+  #completion-card {
+    position: fixed; left: 50%; bottom: max(12px, env(safe-area-inset-bottom)); z-index: 11;
+    width: 190px; height: 152px; margin-left: -95px; border: 3px solid rgba(255,255,255,.88);
+    border-radius: 30px; background: linear-gradient(160deg, rgba(255,250,225,.94), rgba(241,198,126,.92));
+    box-shadow: 0 14px 42px rgba(70,35,10,.28); opacity: 0; transform: translateY(24px) scale(.82);
+    pointer-events: none; transition: opacity .45s ease, transform .45s ease;
+  }
+  #completion-card::before, #completion-card::after {
+    content: "✿"; position: absolute; top: 15px; color: #d26f98; font: 36px/1 serif;
+  }
+  #completion-card::before { left: 26px; transform: rotate(-18deg); }
+  #completion-card::after { right: 26px; transform: rotate(18deg); }
+  #completion-card .seal {
+    display: grid; place-items: center; width: 58px; height: 58px; margin: 10px auto 0;
+    border-radius: 50%; background: #fff8df; color: #bd8530; font: 700 42px/1 sans-serif;
+    box-shadow: inset 0 0 0 3px #d9aa56;
+  }
+  #completion-card.show { opacity: 1; transform: translateY(0) scale(1); }
+  #audio-toggle {
+    position: fixed; top: max(14px, env(safe-area-inset-top)); right: max(14px, env(safe-area-inset-right));
+    z-index: 14; width: 58px; height: 58px; padding: 0; border: 3px solid rgba(255,255,255,.86);
+    border-radius: 50%; background: rgba(65,42,48,.76); color: #fff; box-shadow: 0 5px 16px rgba(30,18,20,.28);
+    font: 30px/1 sans-serif; display: grid; place-items: center; cursor: pointer;
+  }
+  #audio-toggle[aria-pressed="true"] { background: rgba(98,82,87,.68); filter: saturate(.55); }
+  #audio-toggle:focus-visible { outline: 4px solid #ffe084; outline-offset: 3px; }
+  @media (prefers-reduced-motion: reduce) {
+    .bloom { animation: none; }
+    .bloom span { animation: none; }
+    #replay { transition: none; }
+    #completion-card { transition: none; }
+    #audio-toggle { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="loader">
+  <div class="bloom">
+    <span style="--r:0deg"></span><span style="--r:60deg"></span><span style="--r:120deg"></span>
+    <span style="--r:180deg"></span><span style="--r:240deg"></span><span style="--r:300deg"></span>
+    <i></i>
+  </div>
+</div>
+<div id="completion-card" role="status" aria-label="会場が完成しました" aria-hidden="true"><div class="seal" aria-hidden="true">✓</div></div>
+<button id="replay" type="button" aria-label="もういちど遊ぶ">↻</button>
+<button id="audio-toggle" type="button" aria-label="おとを けす" aria-pressed="false">🔊</button>
+<script type="importmap">
+  { "imports": { "three": "./vendor/three.module.min.js" } }
+</script>
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>

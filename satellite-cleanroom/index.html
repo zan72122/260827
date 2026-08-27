@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <meta name="theme-color" content="#eaf4f7">
+  <title>おおきな うちゅうの はね</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect x='34' y='34' width='32' height='32' rx='5' fill='%23d2a538'/%3E%3Cpath d='M5 40h29v20H5zm61 0h29v20H66z' fill='%23143150'/%3E%3C/svg%3E">
+  <style>
+    :root { color-scheme: light; }
+    * { box-sizing: border-box; }
+    html, body, #app { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+    body {
+      background: #dce9ed;
+      touch-action: none;
+      overscroll-behavior: none;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      font-family: ui-rounded, "Hiragino Maru Gothic ProN", system-ui, sans-serif;
+    }
+    canvas { width: 100%; height: 100%; display: block; outline: none; }
+    #loader {
+      position: fixed; inset: 0; z-index: 30; display: grid; place-items: center;
+      background: radial-gradient(circle at 50% 42%, #fafdff 0 12%, #e9f4f7 45%, #c9dce2 100%);
+      transition: opacity .45s ease; pointer-events: none;
+    }
+    #loader.gone { opacity: 0; }
+    .loader-orbit {
+      width: 104px; height: 104px; border-radius: 50%; border: 3px solid rgba(42,101,126,.16);
+      position: relative; animation: loader-spin 1.8s linear infinite;
+    }
+    .loader-orbit::before {
+      content: ""; position: absolute; width: 18px; height: 18px; border-radius: 5px;
+      left: 3px; top: 15px; background: #dcae42; box-shadow: 0 0 18px rgba(45,152,204,.55);
+    }
+    .loader-orbit::after {
+      content: ""; position: absolute; inset: 29px; border-radius: 50%;
+      background: linear-gradient(145deg,#a9d8ef,#347da0); box-shadow: inset -8px -7px 0 rgba(8,53,80,.15);
+    }
+    @keyframes loader-spin { to { transform: rotate(360deg); } }
+    .round-control {
+      position: fixed; z-index: 20; width: 58px; height: 58px; padding: 0;
+      display: grid; place-items: center; border: 3px solid rgba(255,255,255,.92);
+      border-radius: 50%; color: #fff; background: rgba(25,60,75,.74);
+      box-shadow: 0 5px 0 rgba(12,40,54,.28), 0 8px 22px rgba(10,38,53,.2);
+      font: 29px/1 system-ui; cursor: pointer;
+    }
+    .round-control:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(12,40,54,.28); }
+    .round-control:focus-visible { outline: 4px solid #70d8ff; outline-offset: 3px; }
+    #audio-toggle {
+      right: max(13px, env(safe-area-inset-right)); top: max(13px, env(safe-area-inset-top));
+    }
+    #audio-toggle[aria-pressed="true"] { background: rgba(91,103,108,.72); }
+    #replay {
+      left: 50%; bottom: max(18px, env(safe-area-inset-bottom));
+      width: 76px; height: 76px; margin-left: -38px; font-size: 40px;
+      background: linear-gradient(160deg,#36a9d2,#226f9b);
+      opacity: 0; transform: translateY(22px) scale(.75); pointer-events: none;
+      transition: opacity .35s ease, transform .35s ease;
+    }
+    #replay.show { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+    #phase-beads {
+      position: fixed; z-index: 18; left: 50%; bottom: max(9px, env(safe-area-inset-bottom));
+      transform: translateX(-50%); display: flex; gap: 5px; align-items: center;
+      padding: 6px 9px; border-radius: 18px; background: rgba(225,243,248,.52);
+      opacity: .82; pointer-events: none; transition: opacity .25s ease;
+    }
+    #phase-beads.hidden { opacity: 0; }
+    #phase-beads i { width: 6px; height: 6px; border-radius: 50%; background: rgba(35,82,101,.22); transition: .25s; }
+    #phase-beads i.done { background: #2aa9d0; }
+    #phase-beads i.now { width: 11px; height: 11px; background: #f3c64c; box-shadow: 0 0 0 3px rgba(255,255,255,.8); }
+    #pause-shade {
+      position: fixed; inset: 0; z-index: 16; pointer-events: none; opacity: 0;
+      background: rgba(225,241,246,.08); transition: opacity .2s;
+    }
+    #pause-shade.show { opacity: 1; }
+    @media (max-width: 560px) {
+      .round-control { width: 52px; height: 52px; font-size: 26px; }
+      #replay { width: 68px; height: 68px; margin-left: -34px; font-size: 36px; }
+      #phase-beads { gap: 4px; padding: 5px 7px; }
+      #phase-beads i { width: 5px; height: 5px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .loader-orbit { animation: none; }
+      #replay, #loader, #phase-beads i { transition: none; }
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <div id="loader" role="status" aria-label="よみこみちゅう"><div class="loader-orbit" aria-hidden="true"></div></div>
+  <button id="audio-toggle" class="round-control" type="button" aria-label="おとを けす" aria-pressed="false">♪</button>
+  <button id="replay" class="round-control" type="button" aria-label="もういちど あそぶ">↻</button>
+  <div id="phase-beads" aria-hidden="true"></div>
+  <div id="pause-shade" aria-hidden="true"></div>
+  <script type="importmap">{"imports":{"three":"./vendor/three.module.min.js"}}</script>
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
