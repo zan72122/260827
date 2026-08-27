@@ -487,9 +487,10 @@ export class Game {
   private layTraceOut(unit: DeerUnit): void {
     unit.trace.setEndA(unit.wearable.dRing);
     unit.trace.releaseB();
+    // そりへ向けて途中まで（そり側の線とははっきり離しておく）
     const a = unit.wearable.dRing.getWorldPosition(this.tmpV);
     const toward = this.sled.group.position.clone().setY(GROUND_Y + 0.05);
-    const b = a.clone().lerp(toward, 0.55);
+    const b = a.clone().lerp(toward, 0.42);
     b.y = GROUND_Y + 0.05;
     unit.trace.layout(a, b, GROUND_Y);
   }
@@ -1021,11 +1022,11 @@ export class Game {
       // 対角の低い3/4: トナカイ全身を下側に大きく、そりを右上に残す。
       // 「離れている」「線が届いていない」が縦でも一目で読めるように。
       out.pos.set(
-        dp.x - dir.x * 5.5 + perpX * 4.2, 1.5,
-        dp.z - dir.z * 5.5 + perpZ * 4.2);
+        dp.x - dir.x * 6.0 + perpX * 4.4, 1.5,
+        dp.z - dir.z * 6.0 + perpZ * 4.4);
       out.look.set(
-        dp.x + (sp.x - dp.x) * 0.33, 0.75,
-        dp.z + (sp.z - dp.z) * 0.33);
+        dp.x + (sp.x - dp.x) * 0.27, 0.75,
+        dp.z + (sp.z - dp.z) * 0.27);
       out.fov = 58;
     } else {
       // 低めの3/4: トナカイ全身・手元・そり方向を同時に

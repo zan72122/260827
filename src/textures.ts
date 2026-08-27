@@ -129,7 +129,7 @@ export function furBodyTextures(p: FurPalette, withRuff = false): FurMaps {
     const rr255 = (ruffCol.r * 255) | 0, rg255 = (ruffCol.g * 255) | 0, rb255 = (ruffCol.b * 255) | 0;
     const ruffRand = mulberry(p.seed + 3);
     for (let x = 0; x < W; x += 2) {
-      const len = H * (0.30 + ruffRand() * 0.35);
+      const len = H * (0.24 + ruffRand() * 0.22);
       const grad = ctx.createLinearGradient(0, H, 0, H - len);
       grad.addColorStop(0, `rgba(${rr255},${rg255},${rb255},0.8)`);
       grad.addColorStop(0.6, `rgba(${rr255},${rg255},${rb255},0.45)`);
