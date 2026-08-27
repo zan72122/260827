@@ -35,15 +35,20 @@ function makeCableBump(): THREE.Texture {
   return tex;
 }
 
+let cableMat: THREE.MeshStandardMaterial | null = null;
+
+/** Shared singleton: the whole game shows ONE physical cable material. */
 export function makeCableMaterial(): THREE.MeshStandardMaterial {
+  if (cableMat) return cableMat;
   if (!cableBump) cableBump = makeCableBump();
-  return new THREE.MeshStandardMaterial({
+  cableMat = new THREE.MeshStandardMaterial({
     color: 0x181a1d,
     roughness: 0.62,
     metalness: 0.2,
     bumpMap: cableBump,
     bumpScale: 0.6
   });
+  return cableMat;
 }
 
 export function makeHazardTexture(): THREE.Texture {

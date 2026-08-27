@@ -32,11 +32,13 @@ export class CameraRig {
     this.apply();
   }
 
+  private acc = new THREE.Vector3();
+
   update(target: CamTarget, dt: number): void {
     // Critically damped spring.
     const k = this.stiffness;
     const damp = 2 * Math.sqrt(k);
-    const acc = new THREE.Vector3();
+    const acc = this.acc;
     acc.subVectors(target.pos, this.pos).multiplyScalar(k).addScaledVector(this.velP, -damp);
     this.velP.addScaledVector(acc, dt);
     this.pos.addScaledVector(this.velP, dt);

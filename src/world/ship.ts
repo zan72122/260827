@@ -150,10 +150,11 @@ export class Ship {
     this.group.add(floor);
 
     // Coiled cable: concentric torus rings (cable-diameter true to the rest
-    // of the game), 3 visible layers x 4 radii. Pay-out order is top layer
-    // outside-in, then the layer below.
+    // of the game), 3 layers x 4 radii. The array is ordered so the LAST
+    // remaining ring is the top inner one - exactly where the deck cable
+    // leaves the tank - so the running cable never floats in empty air.
     const radii = [2.72, 2.1, 1.48, 0.86];
-    const layers = [1.45, 0.85, 0.3];
+    const layers = [0.34, 0.88, 1.42]; // bottom -> top
     for (const y of layers) {
       for (const r of radii) this.coilRings.push({ radius: r, y });
     }
@@ -171,6 +172,19 @@ export class Ship {
       this.group.add(mesh);
       this.coilMeshes.push(mesh);
     }
+
+    // Overhead guide sheave on a post: the cable's high point out of the tank
+    // is supported, not bending in mid-air.
+    const guideMat = new THREE.MeshStandardMaterial({ color: 0x8f979c, roughness: 0.4, metalness: 0.6 });
+    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.16, 3.4, 8), guideMat);
+    post.position.set(-2.0, DECK_Y + 1.7, 0.6);
+    this.group.add(post);
+    const guideArm = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.18, 0.7), guideMat);
+    guideArm.position.set(-2.0, DECK_Y + 3.35, 0.25);
+    this.group.add(guideArm);
+    const guideWheel = new THREE.Mesh(new THREE.TorusGeometry(0.5, 0.1, 8, 18), guideMat);
+    guideWheel.position.set(-2.0, DECK_Y + 3.4, 0);
+    this.group.add(guideWheel);
   }
 
   private buildTensioner(): void {
@@ -198,7 +212,8 @@ export class Ship {
     wheelGeo.rotateX(Math.PI / 2);
     for (let i = 0; i < 4; i++) {
       const x = -1.6 + i * 1.06;
-      for (const dy of [-0.52, 0.52]) {
+      // Nip gap sized so the 0.56 m cable is lightly squeezed, not swallowed.
+      for (const dy of [-0.66, 0.66]) {
         const w = new THREE.Mesh(wheelGeo, wheelMat);
         w.position.set(x, 1.35 + dy, 0);
         g.add(w);
@@ -343,20 +358,24 @@ export class Ship {
     // coil top -> overhead guide -> tensioner (horizontal run) -> stern sheave
     // (over the top) -> down the chute to the overboard point.
     const p = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z);
+    // Sheave wrap: contact angles increase monotonically over the crown.
+    const wrap = (th: number) =>
+      p(-12.3 + 1.45 * Math.cos(th), DECK_Y + 2.2 + 1.45 * Math.sin(th), 0);
     const pts = [
-      p(-1, DECK_Y + 1.45, 0.95),
+      p(-1, DECK_Y + 1.42, 0.95),
       p(-1.4, DECK_Y + 2.6, 0.4),
       p(-2.0, DECK_Y + 3.4, 0),
-      p(-3.4, DECK_Y + 2.4, 0),
+      p(-3.4, DECK_Y + 2.6, 0),
+      p(-4.1, DECK_Y + 2.15, 0), // clears the tank rim before dropping
       p(-4.9, DECK_Y + 1.35, 0),
       p(-6.6, DECK_Y + 1.35, 0),
       p(-8.3, DECK_Y + 1.35, 0),
-      p(-10.6, DECK_Y + 1.7, 0),
-      // wrap over the sheave (center x=STERN+0.7=-12.3, y=DECK_Y+2.2, r=1.45)
-      p(-12.3 + 1.45 * Math.cos(1.9), DECK_Y + 2.2 + 1.45 * Math.sin(1.9), 0),
-      p(-12.3, DECK_Y + 2.2 + 1.45, 0),
-      p(-12.3 + 1.45 * Math.cos(2.9) - 0.4, DECK_Y + 2.2 + 1.45 * Math.sin(2.9), 0),
-      p(-13.5, DECK_Y + 0.6, 0),
+      p(-10.6, DECK_Y + 1.9, 0),
+      wrap(0.9),
+      wrap(Math.PI / 2),
+      wrap(2.2),
+      wrap(2.9),
+      p(-13.8, DECK_Y + 0.6, 0),
       this.overboardLocal.clone()
     ];
     const curve = new THREE.CatmullRomCurve3(pts, false, 'catmullrom', 0.2);

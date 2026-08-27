@@ -7,6 +7,14 @@ export const BURY_LAG = 8; // metres the burial closes behind the touchdown
 
 // --- shared tube writer (parallel-transport frames) -------------------------
 
+// Module-level scratch: writeTube runs every frame for the catenary.
+const _tangent = new THREE.Vector3();
+const _normal = new THREE.Vector3();
+const _binormal = new THREE.Vector3();
+const _prevTangent = new THREE.Vector3();
+const _tmp = new THREE.Vector3();
+const _q = new THREE.Quaternion();
+
 function writeTube(
   centers: THREE.Vector3[],
   radius: number,
@@ -14,12 +22,12 @@ function writeTube(
   normals: Float32Array
 ): void {
   const n = centers.length;
-  const tangent = new THREE.Vector3();
-  const normal = new THREE.Vector3();
-  const binormal = new THREE.Vector3();
-  const prevTangent = new THREE.Vector3();
-  const tmp = new THREE.Vector3();
-  const q = new THREE.Quaternion();
+  const tangent = _tangent;
+  const normal = _normal;
+  const binormal = _binormal;
+  const prevTangent = _prevTangent;
+  const tmp = _tmp;
+  const q = _q;
 
   for (let i = 0; i < n; i++) {
     const prev = centers[Math.max(0, i - 1)];
@@ -124,10 +132,20 @@ function buildRibbon(
   geo.setIndex(index);
   geo.computeVertexNormals();
   geo.setDrawRange(0, 0);
-  const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.95 });
-  const mesh = new THREE.Mesh(geo, mat);
+  const mesh = new THREE.Mesh(geo, ribbonMaterial(color));
   mesh.frustumCulled = false;
   return mesh;
+}
+
+// Shared per-colour ribbon materials so rebuilds never leak materials.
+const ribbonMats = new Map<number, THREE.MeshStandardMaterial>();
+function ribbonMaterial(color: number): THREE.MeshStandardMaterial {
+  let m = ribbonMats.get(color);
+  if (!m) {
+    m = new THREE.MeshStandardMaterial({ color, roughness: 0.95 });
+    ribbonMats.set(color, m);
+  }
+  return m;
 }
 
 // --- the cable system -------------------------------------------------------
@@ -158,6 +176,9 @@ export class CableSystem {
   private lastGap = 0;
   gapSeabed = 0;
   gapStern = 0;
+  private scratchHto = new THREE.Vector3();
+  private scratchM0 = new THREE.Vector3();
+  private scratchM1 = new THREE.Vector3();
 
   constructor() {
     for (let i = 0; i < this.CAT_RINGS; i++) this.catCenters.push(new THREE.Vector3());
@@ -288,10 +309,15 @@ export class CableSystem {
     // Hermite: leaves the seabed along the route tangent, arrives at the stern
     // moving up + forward (so it continues over the sheave without a kink).
     const d = Math.max(chord * 0.55, 2);
-    const hto = new THREE.Vector3(P1.x - P0.x, 0, P1.z - P0.z);
+    const hto = this.scratchHto.set(P1.x - P0.x, 0, P1.z - P0.z);
     if (hto.lengthSq() > 1e-6) hto.normalize();
-    const m0 = new THREE.Vector3().copy(this.touchdownTangent).lerp(hto, landingBlend).normalize().multiplyScalar(d);
-    const m1 = new THREE.Vector3(shipForward.x * 0.6, 1.0, shipForward.z * 0.6).normalize().multiplyScalar(d);
+    const m0 = this.scratchM0.copy(this.touchdownTangent).lerp(hto, landingBlend);
+    // During the shore landing the touchdown can pass the parked ship; if the
+    // blend cancels out or points away from the stern, fall back to the
+    // direct horizontal so the span never hairpins.
+    if (m0.lengthSq() < 0.1 || m0.dot(hto) < 0) m0.copy(hto);
+    m0.normalize().multiplyScalar(d);
+    const m1 = this.scratchM1.set(shipForward.x * 0.6, 1.0, shipForward.z * 0.6).normalize().multiplyScalar(d);
 
     for (let i = 0; i < this.CAT_RINGS; i++) {
       const t = i / (this.CAT_RINGS - 1);

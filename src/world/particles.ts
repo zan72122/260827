@@ -74,11 +74,13 @@ export class EntrySplash {
 
   setActive(v: boolean): void {
     this.active = v;
-    this.points.visible = true;
+    if (v) this.points.visible = true;
   }
 
   update(origin: THREE.Vector3, dt: number): void {
+    if (!this.active && !this.points.visible) return;
     let budget = this.active ? Math.max(1, Math.round(dt * 60)) : 0;
+    let anyAlive = false;
     for (let i = 0; i < this.n; i++) {
       if (this.life[i] < 0) {
         if (budget > 0) {
@@ -96,14 +98,23 @@ export class EntrySplash {
         continue;
       }
       this.life[i] -= dt;
+      anyAlive = true;
       this.pos[i * 3] += this.vel[i * 3] * dt;
       this.pos[i * 3 + 1] += this.vel[i * 3 + 1] * dt;
       this.pos[i * 3 + 2] += this.vel[i * 3 + 2] * dt;
       this.vel[i * 3 + 1] -= 6 * dt;
     }
+    if (!this.active && !anyAlive) this.points.visible = false;
     (this.points.geometry.getAttribute('position') as THREE.BufferAttribute).needsUpdate = true;
   }
 }
+
+// Scratch objects for the per-frame fish update (no allocation in the loop).
+const _fm = new THREE.Matrix4();
+const _fp = new THREE.Vector3();
+const _fq = new THREE.Quaternion();
+const _fe = new THREE.Euler();
+const _fone = new THREE.Vector3(1, 1, 1);
 
 // A few small fish groups mid-water - deliberately sparse.
 export class Fish {
@@ -127,10 +138,10 @@ export class Fish {
   }
 
   update(t: number): void {
-    const m = new THREE.Matrix4();
-    const p = new THREE.Vector3();
-    const q = new THREE.Quaternion();
-    const e = new THREE.Euler();
+    const m = _fm;
+    const p = _fp;
+    const q = _fq;
+    const e = _fe;
     for (let i = 0; i < this.n; i++) {
       const c = this.centers[i];
       const ph = this.phases[i];
@@ -139,7 +150,7 @@ export class Fish {
       p.set(c.x + Math.cos(a) * r, c.y + Math.sin(t * 0.8 + ph) * 0.6, c.z + Math.sin(a) * r);
       e.set(0, -a - Math.PI / 2 + Math.PI, 0);
       q.setFromEuler(e);
-      m.compose(p, q, new THREE.Vector3(1, 1, 1));
+      m.compose(p, q, _fone);
       this.mesh.setMatrixAt(i, m);
     }
     this.mesh.instanceMatrix.needsUpdate = true;

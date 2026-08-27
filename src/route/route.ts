@@ -66,9 +66,12 @@ export class LayRoute {
     return out;
   }
 
+  private scratchA = new THREE.Vector3();
+  private scratchB = new THREE.Vector3();
+
   tangentAt(s: number, out: THREE.Vector3): THREE.Vector3 {
-    const a = this.surfaceAt(Math.max(0, s - 1), new THREE.Vector3());
-    const b = this.surfaceAt(Math.min(this.length, s + 1), new THREE.Vector3());
+    const a = this.surfaceAt(Math.max(0, s - 1), this.scratchA);
+    const b = this.surfaceAt(Math.min(this.length, s + 1), this.scratchB);
     out.subVectors(b, a);
     out.y = 0;
     if (out.lengthSq() < 1e-8) out.set(1, 0, 0);
@@ -76,7 +79,7 @@ export class LayRoute {
   }
 
   depthAt(s: number): number {
-    const p = this.surfaceAt(s, new THREE.Vector3());
+    const p = this.surfaceAt(s, this.scratchA);
     return this.seabed.height(p.x, p.z);
   }
 
@@ -105,7 +108,9 @@ export class LayRoute {
         s,
         pos: new THREE.Vector3(p.x, h + CABLE_RADIUS - 0.12, p.z),
         tangent: tan,
-        buriable: this.seabed.buriable(p.x, p.z) && h < -6
+        // Same depth gate as the ROV's visibility so the trench is never dug
+        // by an invisible machine.
+        buriable: this.seabed.buriable(p.x, p.z) && h < -8
       });
       const k = this.curvatureAt(s);
       let ds = THREE.MathUtils.clamp(4.8 / (1 + k * 40), 1.4, 4.8);

@@ -18,6 +18,27 @@ type Phase = 'opening' | 'planning' | 'laying' | 'arrival' | 'result';
 
 const BASE_SEED = 1234;
 
+/** Free GPU resources of a subtree (textures are shared and kept). */
+function disposeDeep(root: THREE.Object3D): void {
+  root.traverse((o) => {
+    const m = o as THREE.Mesh;
+    if (m.geometry) m.geometry.dispose();
+    const mat = m.material as THREE.Material | THREE.Material[] | undefined;
+    if (Array.isArray(mat)) mat.forEach((x) => x.dispose());
+    else if (mat) mat.dispose();
+  });
+}
+
+// Opening deck-tour keyframes (ship-local), built once.
+const OPENING_KEYS: { t: number; p: THREE.Vector3; l: THREE.Vector3 }[] = [
+  { t: 0.0, p: new THREE.Vector3(2.5, DECK_Y + 7.5, 7.0), l: new THREE.Vector3(-1, DECK_Y + 1, 0) },
+  { t: 2.6, p: new THREE.Vector3(1.5, DECK_Y + 4.0, 5.6), l: new THREE.Vector3(-1.8, DECK_Y + 2.6, 0) },
+  { t: 5.2, p: new THREE.Vector3(-4.4, DECK_Y + 2.8, 4.8), l: new THREE.Vector3(-6.6, DECK_Y + 1.3, 0) },
+  { t: 7.6, p: new THREE.Vector3(-10.6, DECK_Y + 3.4, 4.4), l: new THREE.Vector3(-12.3, DECK_Y + 2.3, 0) },
+  { t: 10.0, p: new THREE.Vector3(-18.5, DECK_Y + 1.8, 5.0), l: new THREE.Vector3(-14.2, 0.0, 0) },
+  { t: 12.4, p: new THREE.Vector3(-24, DECK_Y + 14, 16), l: new THREE.Vector3(-6, 0, 0) }
+];
+
 export class Game {
   readonly renderer: THREE.WebGLRenderer;
   readonly scene = new THREE.Scene();
@@ -78,6 +99,7 @@ export class Game {
   private firstPlanShown = false;
   private raycaster = new THREE.Raycaster();
   private drawPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+  private ndc = new THREE.Vector2();
 
   // perf probe (for the verification harness)
   private frameMs: number[] = [];
@@ -87,8 +109,11 @@ export class Game {
   private v1 = new THREE.Vector3();
   private v2 = new THREE.Vector3();
   private v3 = new THREE.Vector3();
-  private v4 = new THREE.Vector3();
   private camTarget: CamTarget = { pos: new THREE.Vector3(), look: new THREE.Vector3() };
+  private prevShot: CamTarget = { pos: new THREE.Vector3(), look: new THREE.Vector3() };
+  private layQ = 0;
+  private laySide = new THREE.Vector3();
+  private layShots: { q0: number; q1: number; fn: (o: CamTarget) => void }[] | null = null;
   private shipPos = new THREE.Vector3();
   private shipFwd = new THREE.Vector3(1, 0, 0);
   private openingShipPos = new THREE.Vector3();
@@ -141,7 +166,10 @@ export class Game {
   // ---------------------------------------------------------------- world
 
   private buildWorld(seed: number): void {
-    for (const c of [...this.worldGroup.children]) this.worldGroup.remove(c);
+    for (const c of [...this.worldGroup.children]) {
+      this.worldGroup.remove(c);
+      disposeDeep(c);
+    }
     this.seabed?.dispose();
 
     this.seabed = new Seabed(seed, this.quality);
@@ -179,6 +207,9 @@ export class Game {
     // aid - NOT the physical cable (no glow).
     const planGeo = new THREE.BufferGeometry();
     planGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(600 * 3), 3));
+    // Preallocated dash distances - avoids computeLineDistances() re-creating
+    // a new attribute (and GL buffer) on every pointermove.
+    planGeo.setAttribute('lineDistance', new THREE.BufferAttribute(new Float32Array(600), 1));
     const planMat = new THREE.LineDashedMaterial({
       color: 0xf3ede0, dashSize: 1.6, gapSize: 1.1, transparent: true, opacity: 0.85
     });
@@ -335,6 +366,7 @@ export class Game {
   }
 
   private replay(): void {
+    if (this.phase !== 'result') return;
     this.playCount++;
     this.overlay.hideResult();
     // Vary valley / rocks / seagrass so a new curve is worth trying.
@@ -350,14 +382,32 @@ export class Game {
     el.addEventListener('pointerdown', (e) => this.onPointerDown(e));
     el.addEventListener('pointermove', (e) => this.onPointerMove(e));
     el.addEventListener('pointerup', (e) => this.onPointerUp(e));
-    el.addEventListener('pointercancel', (e) => this.onPointerUp(e));
+    // A cancelled system gesture must NOT commit the stroke.
+    el.addEventListener('pointercancel', (e) => this.cancelStroke(e.pointerId));
+    el.addEventListener('lostpointercapture', (e) => this.cancelStroke(e.pointerId));
   }
 
-  /** Pointer -> normalized -> ray -> sea-plane world point. */
+  /** Abort an in-progress stroke without judging it (system gesture etc.). */
+  private cancelStroke(pointerId: number): void {
+    if (!this.drawing || pointerId !== this.activePointer) return;
+    this.drawing = false;
+    this.activePointer = -1;
+    this.planFade = 1;
+  }
+
+  /**
+   * Pointer -> normalized -> ray -> sea-plane world point.
+   * Uses the canvas rect (not window size): on iOS Safari the two can diverge
+   * under pinch-zoom or during URL-bar animation.
+   */
   private pointerToSea(e: PointerEvent, out: THREE.Vector3): boolean {
-    const nx = (e.clientX / innerWidth) * 2 - 1;
-    const ny = -(e.clientY / innerHeight) * 2 + 1;
-    this.raycaster.setFromCamera(new THREE.Vector2(nx, ny), this.rig.camera);
+    const r = this.renderer.domElement.getBoundingClientRect();
+    if (r.width < 1 || r.height < 1) return false;
+    this.ndc.set(
+      ((e.clientX - r.left) / r.width) * 2 - 1,
+      -((e.clientY - r.top) / r.height) * 2 + 1
+    );
+    this.raycaster.setFromCamera(this.ndc, this.rig.camera);
     const hit = this.raycaster.ray.intersectPlane(this.drawPlane, out);
     return !!hit;
   }
@@ -432,14 +482,18 @@ export class Game {
 
   private updatePlanLine(): void {
     const attr = this.planLine.geometry.getAttribute('position') as THREE.BufferAttribute;
+    const dist = this.planLine.geometry.getAttribute('lineDistance') as THREE.BufferAttribute;
     const n = Math.min(this.strokeWorld.length, 600);
+    let acc = 0;
     for (let i = 0; i < n; i++) {
       const p = this.strokeWorld[i];
       attr.setXYZ(i, p.x, 0.55, p.z);
+      if (i > 0) acc += p.distanceTo(this.strokeWorld[i - 1]);
+      dist.setX(i, acc);
     }
     attr.needsUpdate = true;
+    dist.needsUpdate = true;
     this.planLine.geometry.setDrawRange(0, n);
-    this.planLine.computeLineDistances();
   }
 
   // ---------------------------------------------------------------- ship pose
@@ -545,14 +599,7 @@ export class Game {
 
   private openingCamTarget(out: CamTarget): void {
     // Deck tour: tank -> tensioner -> sheave -> sea, then rise away.
-    const keys: { t: number; p: THREE.Vector3; l: THREE.Vector3 }[] = [
-      { t: 0.0, p: new THREE.Vector3(2.5, DECK_Y + 7.5, 7.0), l: new THREE.Vector3(-1, DECK_Y + 1, 0) },
-      { t: 2.6, p: new THREE.Vector3(1.5, DECK_Y + 4.0, 5.6), l: new THREE.Vector3(-1.8, DECK_Y + 2.6, 0) },
-      { t: 5.2, p: new THREE.Vector3(-4.4, DECK_Y + 2.8, 4.8), l: new THREE.Vector3(-6.6, DECK_Y + 1.3, 0) },
-      { t: 7.6, p: new THREE.Vector3(-10.6, DECK_Y + 3.4, 4.4), l: new THREE.Vector3(-12.3, DECK_Y + 2.3, 0) },
-      { t: 10.0, p: new THREE.Vector3(-18.5, DECK_Y + 1.8, 5.0), l: new THREE.Vector3(-14.2, 0.0, 0) },
-      { t: 12.4, p: new THREE.Vector3(-24, DECK_Y + 14, 16), l: new THREE.Vector3(-6, 0, 0) }
-    ];
+    const keys = OPENING_KEYS;
     const t = this.phaseT;
     let i = 0;
     while (i < keys.length - 2 && t > keys[i + 1].t) i++;
@@ -566,19 +613,11 @@ export class Game {
     if (t > 13.6) this.enterPlanning();
   }
 
-  /** The 7-stage laying camera chain, blended continuously by lay progress. */
-  private layCamTarget(out: CamTarget): void {
-    const route = this.route!;
-    const span = Math.max(1, route.shipEndS - route.shipStartS);
-    let q = (this.shipS - route.shipStartS) / span;
-    if (this.landing) {
-      q = 1 + (this.touchdownS - route.shipEndS) / Math.max(8, route.length - route.shipEndS) * 0.2;
-    }
-
-    const side = this.v4.set(-this.cable.touchdownTangent.z, 0, this.cable.touchdownTangent.x);
+  /** Shot table for the laying camera chain, built once (no per-frame allocs). */
+  private buildLayShots(): { q0: number; q1: number; fn: (o: CamTarget) => void }[] {
+    const side = this.laySide;
     const td = this.cable.touchdownPoint;
-
-    const shots: { q0: number; q1: number; fn: (o: CamTarget) => void }[] = [
+    return [
       {
         q0: -1, q1: 0.10, fn: (o) => {
           // 1: high oblique - ship and both islands.
@@ -603,7 +642,7 @@ export class Game {
       {
         q0: 0.36, q1: 0.56, fn: (o) => {
           // 4: descend the water column WITH the cable.
-          const f = THREE.MathUtils.clamp((q - 0.36) / 0.20, 0, 1);
+          const f = THREE.MathUtils.clamp((this.layQ - 0.36) / 0.20, 0, 1);
           const ct = THREE.MathUtils.lerp(0.9, 0.06, f);
           this.cable.catenaryPoint(ct, this.v1);
           o.pos.set(this.v1.x + side.x * 9, this.v1.y + 2.2, this.v1.z + side.z * 9);
@@ -626,30 +665,53 @@ export class Game {
         q0: 0.80, q1: 9, fn: (o) => {
           // 6: pull back - the whole laid path seen from the seabed.
           o.pos.set(td.x + side.x * 26, td.y + 21, td.z + side.z * 26);
-          route.surfaceAt(this.touchdownS * 0.55, this.v2);
+          this.route!.surfaceAt(this.touchdownS * 0.55, this.v2);
           o.look.set(this.v2.x, this.seabed.height(this.v2.x, this.v2.z) + 2, this.v2.z);
         }
       }
     ];
+  }
+
+  /** The 7-stage laying camera chain, blended continuously by lay progress. */
+  private layCamTarget(out: CamTarget): void {
+    const route = this.route!;
+    const span = Math.max(1, route.shipEndS - route.shipStartS);
+    let q = (this.shipS - route.shipStartS) / span;
+    if (this.landing) {
+      // Monotonic: touchdownS lags shipEndS at the flip, so never let q drop
+      // back through the shot chain.
+      q = 1 + Math.max(0, this.touchdownS - route.shipEndS) /
+        Math.max(8, route.length - route.shipEndS) * 0.2;
+    }
+    this.layQ = q;
+    this.laySide.set(-this.cable.touchdownTangent.z, 0, this.cable.touchdownTangent.x);
+    if (!this.layShots) this.layShots = this.buildLayShots();
+    const shots = this.layShots;
 
     // Piecewise with smooth cross-fade near boundaries.
     let active = shots[0];
-    for (const s of shots) if (q >= s.q0 && q < s.q1) { active = s; break; }
-    active.fn(out);
-    // Never let an underwater shot sink into a dune.
-    if (out.pos.y < 0) {
-      const g = this.seabed.height(out.pos.x, out.pos.z);
-      out.pos.y = Math.max(out.pos.y, g + 3.2);
+    let idx = 0;
+    for (let i = 0; i < shots.length; i++) {
+      if (q >= shots[i].q0 && q < shots[i].q1) { active = shots[i]; idx = i; break; }
     }
+    active.fn(out);
+    this.clampCamAboveGround(out);
     const W = 0.03;
-    const idx = shots.indexOf(active);
     if (idx > 0 && q - active.q0 < W) {
-      const prev = { pos: this.v1.clone(), look: this.v2.clone() } as CamTarget;
-      shots[idx - 1].fn(prev);
+      shots[idx - 1].fn(this.prevShot);
+      this.clampCamAboveGround(this.prevShot);
       const f = (q - active.q0) / W;
       const sf = f * f * (3 - 2 * f);
-      out.pos.lerpVectors(prev.pos, out.pos, sf);
-      out.look.lerpVectors(prev.look, out.look, sf);
+      out.pos.lerpVectors(this.prevShot.pos, out.pos, sf);
+      out.look.lerpVectors(this.prevShot.look, out.look, sf);
+    }
+  }
+
+  /** Never let an underwater shot sink into a dune. */
+  private clampCamAboveGround(t: CamTarget): void {
+    if (t.pos.y < 0) {
+      const g = this.seabed.height(t.pos.x, t.pos.z);
+      t.pos.y = Math.max(t.pos.y, g + 3.2);
     }
   }
 
@@ -772,6 +834,7 @@ export class Game {
   // ---------------------------------------------------------------- misc
 
   private onResize(): void {
+    this.renderer.setPixelRatio(Math.min(devicePixelRatio || 1, this.quality.pixelRatioCap));
     this.renderer.setSize(innerWidth, innerHeight);
     this.rig.camera.aspect = innerWidth / innerHeight;
     this.rig.camera.updateProjectionMatrix();
