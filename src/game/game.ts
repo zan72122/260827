@@ -82,6 +82,8 @@ export class Game {
   private landing = false;
   private landingBlend = 0;
   private layingDone = false;
+  private planRouteN = 0;
+  private planConsumeIdx = 0;
 
   // planning / input state
   private drawing = false;
@@ -93,6 +95,8 @@ export class Game {
   private hintRingA!: THREE.Mesh;
   private hintRingB!: THREE.Mesh;
   private hazardRing!: THREE.Mesh;
+  private guideDot!: THREE.Mesh;
+  private camLight!: THREE.PointLight;
   private ripple!: THREE.Mesh;
   private rippleT = 99;
   private planFade = 0; // >0 while the rejected line fades out
@@ -141,6 +145,11 @@ export class Game {
     this.scene.add(this.motes.points);
     this.scene.add(this.splash.points);
     this.scene.add(this.cable.group);
+
+    // Soft cool fill that follows the camera underwater, so the black cable
+    // always separates from dark rock in the deep shots.
+    this.camLight = new THREE.PointLight(0xa8c8d8, 0, 55, 1.8);
+    this.scene.add(this.camLight);
 
     this.scene.add(this.worldGroup);
     this.buildWorld(BASE_SEED);
@@ -229,10 +238,12 @@ export class Game {
     this.previewLine.visible = false;
     this.scene.add(this.previewLine);
 
-    const ringGeo = new THREE.RingGeometry(2.2, 3.4, 40);
+    // Start/end rings sized to the real tap-accept zone so the child's eye
+    // lands on the actual affordance, not on the (prettier) ship.
+    const ringGeo = new THREE.RingGeometry(4.4, 6.4, 48);
     ringGeo.rotateX(-Math.PI / 2);
     this.hintRingA = new THREE.Mesh(ringGeo, new THREE.MeshBasicMaterial({
-      color: 0xffe9a8, transparent: true, opacity: 0.9, depthWrite: false, side: THREE.DoubleSide
+      color: 0xffd23f, transparent: true, opacity: 0.9, depthWrite: false, side: THREE.DoubleSide
     }));
     this.hintRingA.visible = false;
     this.scene.add(this.hintRingA);
@@ -248,6 +259,15 @@ export class Game {
       color: 0xffb347, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide
     }));
     this.scene.add(this.hazardRing);
+
+    // Repeating guide dot: hops from the start ring toward the far island -
+    // a wordless "start here, go there" that works on every replay.
+    this.guideDot = new THREE.Mesh(
+      new THREE.SphereGeometry(1.1, 12, 8),
+      new THREE.MeshBasicMaterial({ color: 0xffe9a8, transparent: true, opacity: 0 })
+    );
+    this.guideDot.visible = false;
+    this.scene.add(this.guideDot);
 
     const ripGeo = new THREE.RingGeometry(0.9, 1.25, 32);
     ripGeo.rotateX(-Math.PI / 2);
@@ -295,6 +315,7 @@ export class Game {
     this.landingBlend = 0;
     this.cable.reset();
     this.rov.setVisible(false);
+    this.restorePlanLineStyle();
     this.shipTail.visible = true;
     this.setOpeningShipPose();
     this.hintRingA.visible = true;
@@ -342,10 +363,14 @@ export class Game {
     this.layingDone = false;
     this.shipTail.visible = false;
     this.splash.setActive(true);
-    this.planLine.visible = false;
+    // Identity bridge: the child's stroke stays on the surface as a solid
+    // dark line (same colour family as the cable) and is consumed at the
+    // ship's bow as the ship follows it.
+    this.setPlanLineToRoute(route);
     this.hintRingA.visible = false;
     this.hintRingB.visible = false;
     this.previewLine.visible = false;
+    this.guideDot.visible = false;
     this.rov.setVisible(true);
     this.altRoutePts = alternativeRoute(this.playerRoutePts, this.seabed);
   }
@@ -353,6 +378,7 @@ export class Game {
   private enterArrival(): void {
     this.phase = 'arrival';
     this.phaseT = 0;
+    this.planLine.visible = false;
     this.splash.setActive(false);
     this.cable.hideCatenary();
     this.rov.setVisible(false);
@@ -447,11 +473,20 @@ export class Game {
     this.strokeNorm.push({ x: e.clientX / innerWidth, y: e.clientY / innerHeight });
     this.updatePlanLine();
 
-    // Gentle steering: highlight when the finger is over rock or coral.
+    // Gentle steering: when the finger is over rock or coral, pulse the
+    // PATCH itself (beside the finger - never under it, where it can't be
+    // seen) so "try another place" reads without words.
     const st = this.seabed.surfaceType(this.v1.x, this.v1.z);
     if (st !== 'sand') {
-      this.hazardRing.position.set(this.v1.x, 0.65, this.v1.z);
-      (this.hazardRing.material as THREE.MeshBasicMaterial).opacity = 0.75;
+      const patches = st === 'rock' ? this.seabed.rockPatches : this.seabed.coralPatches;
+      let best = patches[0], bestD = Infinity;
+      for (const p of patches) {
+        const d = (p.x - this.v1.x) ** 2 + (p.z - this.v1.z) ** 2;
+        if (d < bestD) { bestD = d; best = p; }
+      }
+      this.hazardRing.position.set(best.x, 0.65, best.z);
+      this.hazardRing.scale.setScalar(Math.max(best.rx, best.rz) / 2);
+      (this.hazardRing.material as THREE.MeshBasicMaterial).opacity = 0.85;
       (this.hazardRing.material as THREE.MeshBasicMaterial).color.setHex(
         st === 'rock' ? 0xffb347 : 0x7de8a0
       );
@@ -473,6 +508,38 @@ export class Game {
     }
     this.playerRoutePts = result.points.map((p) => p.clone());
     this.startLaying(new LayRoute(result.points, this.seabed));
+  }
+
+  /** Rebuild the plan line from the confirmed route, styled like the cable. */
+  private setPlanLineToRoute(route: LayRoute): void {
+    const attr = this.planLine.geometry.getAttribute('position') as THREE.BufferAttribute;
+    const dist = this.planLine.geometry.getAttribute('lineDistance') as THREE.BufferAttribute;
+    const n = Math.min(route.points.length, 600);
+    for (let i = 0; i < n; i++) {
+      const p = route.points[i];
+      attr.setXYZ(i, p.x, 0.5, p.z);
+      dist.setX(i, route.cum[i]);
+    }
+    attr.needsUpdate = true;
+    dist.needsUpdate = true;
+    this.planLine.geometry.setDrawRange(0, n);
+    this.planRouteN = n;
+    this.planConsumeIdx = 0;
+    const m = this.planLine.material as THREE.LineDashedMaterial;
+    m.color.setHex(0x2b2f34);
+    m.gapSize = 0.06;
+    m.dashSize = 4;
+    m.opacity = 0.9;
+    this.planLine.visible = true;
+  }
+
+  private restorePlanLineStyle(): void {
+    const m = this.planLine.material as THREE.LineDashedMaterial;
+    m.color.setHex(0xf3ede0);
+    m.gapSize = 1.1;
+    m.dashSize = 1.6;
+    m.opacity = 0.85;
+    this.planLine.visible = false;
   }
 
   private spawnRipple(at: THREE.Vector3): void {
@@ -565,6 +632,13 @@ export class Game {
     this.cable.setTouchdown(this.touchdownS);
     const stern = this.shipLocalToWorld(this.ship.overboardLocal, this.v3);
     this.cable.updateCatenary(stern, this.shipFwd, this.landingBlend);
+
+    // The surface plan line is eaten at the bow as the ship follows it.
+    while (
+      this.planConsumeIdx < this.planRouteN &&
+      route.cum[this.planConsumeIdx] < this.shipS + 12
+    ) this.planConsumeIdx++;
+    this.planLine.geometry.setDrawRange(this.planConsumeIdx, this.planRouteN - this.planConsumeIdx);
 
     // Tank empties in proportion to the cable that has left the ship.
     const paidOut = this.touchdownS + (this.shipS - this.touchdownS) * 1.25;
@@ -718,8 +792,9 @@ export class Game {
   private arrivalCamTarget(out: CamTarget): void {
     const t = this.phaseT;
     const b = this.seabed.anchorB;
-    if (t < 4.2) {
-      // 7a: rise to the far shore station as its lamp comes on.
+    if (t < 5.2) {
+      // 7a: rise to the far shore station as its lamp comes on - held long
+      // enough for the green moment to register.
       out.pos.set(b.x - 34, 16, 24);
       out.look.set(b.x + 6, 4, 0);
       if (t > 1.2) this.islands.setConnected(true);
@@ -727,7 +802,7 @@ export class Game {
       // 7b: wide view of both islands, then the chart takes over.
       this.planCamTarget(out);
     }
-    if (t > 7.2 && this.phase === 'arrival') this.enterResult();
+    if (t > 8.8 && this.phase === 'arrival') this.enterResult();
   }
 
   // ---------------------------------------------------------------- frame
@@ -774,6 +849,11 @@ export class Game {
     const sternNow = this.shipLocalToWorld(this.ship.overboardLocal, this.v3);
     this.splash.update(sternNow, dt);
 
+    // Camera-follow fill light: on only underwater, stronger with depth.
+    this.camLight.position.copy(this.rig.position);
+    const depth01 = THREE.MathUtils.clamp(-this.rig.position.y / 35, 0, 1);
+    this.camLight.intensity = this.rig.position.y < 0 ? 6 + depth01 * 22 : 0;
+
     this.envFx.update(this.rig.position.y);
     this.water.update(this.elapsed);
     this.seabed.update(this.elapsed);
@@ -818,9 +898,30 @@ export class Game {
       if (this.planFade === 0) this.planLine.visible = false;
     }
 
-    // Hazard ring decay.
+    // Hazard ring decay (held ~2s so it registers beside the finger).
     const hm = this.hazardRing.material as THREE.MeshBasicMaterial;
-    hm.opacity = Math.max(0, hm.opacity - dt * 1.4);
+    hm.opacity = Math.max(0, hm.opacity - dt * 0.45);
+
+    // Repeating guide dot A -> B (every play, not just the first).
+    if (!this.drawing) {
+      const cyc = this.elapsed % 5.2;
+      if (cyc < 3.0) {
+        const t = cyc / 3.0;
+        const a = this.seabed.anchorA, b = this.seabed.anchorB;
+        this.guideDot.position.set(
+          a.x + (b.x - a.x) * t,
+          0.9,
+          a.z + (b.z - a.z) * t + Math.sin(t * Math.PI) * -14
+        );
+        this.guideDot.visible = true;
+        (this.guideDot.material as THREE.MeshBasicMaterial).opacity =
+          0.85 * Math.min(1, Math.min(t, 1 - t) * 6 + 0.15);
+      } else {
+        this.guideDot.visible = false;
+      }
+    } else {
+      this.guideDot.visible = false;
+    }
 
     // Ripple feedback.
     if (this.rippleT < 1) {

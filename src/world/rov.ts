@@ -16,6 +16,7 @@ export class Rov {
   private sedLife: Float32Array;
   private sedCount: number;
   private emitting = false;
+  private onRock = false;
   private lift = 0; // 0 = ploughing, 1 = lifted over rock
 
   constructor(quality: Quality) {
@@ -102,6 +103,16 @@ export class Rov {
     const targetLift = onSand ? 0 : 1;
     this.lift += (targetLift - this.lift) * Math.min(1, dt * 2.5);
     this.body.position.set(0, this.lift * 1.6, 0);
+    // Over rock the machine visibly struggles - lifts its share and wobbles,
+    // with an amber warning light: a wordless "the line can't tuck in here".
+    this.onRock = !onSand;
+    if (this.onRock) {
+      this.body.rotation.z = Math.sin(performance.now() * 0.012) * 0.07;
+      this.body.rotation.x = Math.sin(performance.now() * 0.009) * 0.05;
+    } else {
+      this.body.rotation.z *= 0.9;
+      this.body.rotation.x *= 0.9;
+    }
     this.group.position.set(pos.x, pos.y - 0.3, pos.z);
     this.group.rotation.y = Math.atan2(-tangent.z, tangent.x);
     this.emitting = onSand;
@@ -138,7 +149,15 @@ export class Rov {
       this.sedVel[i * 3 + 1] *= 1 - dt * 0.8;
     }
     (this.sediment.geometry.getAttribute('position') as THREE.BufferAttribute).needsUpdate = true;
-    const flicker = 0.92 + Math.sin(performance.now() * 0.02) * 0.08;
-    this.workLight.intensity = 55 * flicker;
+    if (this.onRock) {
+      // Amber blink while it cannot bury.
+      const blink = Math.sin(performance.now() * 0.012) > 0 ? 1 : 0.35;
+      this.workLight.color.setHex(0xffb347);
+      this.workLight.intensity = 60 * blink;
+    } else {
+      const flicker = 0.92 + Math.sin(performance.now() * 0.02) * 0.08;
+      this.workLight.color.setHex(0xfff0c8);
+      this.workLight.intensity = 55 * flicker;
+    }
   }
 }

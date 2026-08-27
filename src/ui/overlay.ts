@@ -40,7 +40,10 @@ export class Overlay {
         box-shadow: 0 12px 40px rgba(0,0,0,.4);
         max-width: min(92vw, 720px); max-height: 70vh;
       }
-      .sc-chartwrap canvas { display: block; width: 100%; height: auto; border-radius: 8px; }
+      .sc-chartwrap canvas {
+        display: block; width: auto; height: auto; border-radius: 8px;
+        max-width: min(88vw, 700px); max-height: 62vh;
+      }
       .sc-replay {
         width: 74px; height: 74px; border-radius: 50%; border: none;
         background: #f2b632; box-shadow: 0 6px 18px rgba(0,0,0,.35);
@@ -83,8 +86,11 @@ export class Overlay {
     const wrap = document.createElement('div');
     wrap.className = 'sc-chartwrap';
     const canvas = document.createElement('canvas');
-    canvas.width = 640;
-    canvas.height = 428;
+    // Match the world's on-screen orientation: portrait keeps island A at the
+    // bottom, exactly as the child just saw it.
+    const portrait = innerHeight > innerWidth;
+    canvas.width = portrait ? 428 : 640;
+    canvas.height = portrait ? 640 : 428;
     wrap.appendChild(canvas);
     el.appendChild(wrap);
     const btn = document.createElement('button');
@@ -101,7 +107,7 @@ export class Overlay {
     this.root.appendChild(el);
     this.resultEl = el;
     this.chart = new Chart(canvas);
-    this.chart.prepare(seabed);
+    this.chart.prepare(seabed, portrait);
     this.playerPts = playerPts;
     this.altPts = altPts;
     this.resultT0 = performance.now();
