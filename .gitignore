@@ -1,2 +1,5 @@
 .DS_Store
 **/.DS_Store
+**/node_modules/
+hydro-powerhouse/shots/
+hydro-powerhouse/verify-*/
