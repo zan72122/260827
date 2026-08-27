@@ -67,7 +67,7 @@ for (const dev of DEVICES) {
     await page.waitForTimeout(2500);
     await page.screenshot({ path: 'screenshots/intro/5-skater-on-band.png' });
     await waitPhase(page, 'reveal', 60000);
-    await page.waitForTimeout(2600);
+    await page.waitForTimeout(6500);
     await page.screenshot({ path: 'screenshots/intro/6-snow-tank-reveal.png' });
   }
   await ctx.close();
