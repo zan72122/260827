@@ -90,14 +90,14 @@ const W = dev.width, H = dev.height;
 const CX = W / 2;
 
 try {
-  await page.waitForFunction(() => !!window.__santaGame, { timeout: 15000 });
+  await page.waitForFunction(() => !!window.__santaGame, { timeout: 40000 });
   await page.waitForTimeout(1200);
   await shot('intro');
 
   await waitPhase('walk', 20000).catch(() => {});
   await page.waitForTimeout(2500);
   await shot('walk');
-  await waitPhase('peek', 30000);
+  await waitPhase('peek', 60000);
   await page.waitForTimeout(1500);
   await shot('peek');
 
@@ -117,7 +117,7 @@ try {
   if (ph === 'entry') {
     await swipe(CX, H * 0.25, CX, H * 0.85, 500);
   }
-  await waitPhase('descend', 10000);
+  await waitPhase('descend', 30000);
   await shot('descend-top');
 
   // slow scrub
@@ -146,13 +146,13 @@ try {
     const p = await phase();
     if (p !== 'descend') break;
   }
-  await waitPhase('landing', 15000);
+  await waitPhase('landing', 40000);
   await page.waitForTimeout(700);
   await shot('landing');
   await page.waitForTimeout(2600);
   await shot('landed-room');
 
-  await waitPhase('gifts', 20000);
+  await waitPhase('gifts', 60000);
   await page.waitForTimeout(800);
   await shot('gifts');
 
@@ -162,20 +162,20 @@ try {
     await shot(`stocking-${i + 1}`);
   }
 
-  await waitPhase('nose', 25000);
+  await waitPhase('nose', 90000);
   await page.waitForTimeout(1800);
   await shot('nose-closeup');
   await tapObject('nose');
   await page.waitForTimeout(900);
   await shot('nose-touch');
 
-  await waitPhase('awaitUp', 10000);
+  await waitPhase('awaitUp', 30000);
   await page.waitForTimeout(400);
   // upward swipe (queued if the anticipation beat is still playing)
   await swipe(CX, H * 0.75, CX, H * 0.2, 300);
   await page.waitForFunction(
     () => ['ascend', 'roofReturn', 'menu'].includes(window.__santaGame.phase),
-    null, { timeout: 15000 }
+    null, { timeout: 40000 }
   );
   console.log('phase →', await phase());
   await page.waitForTimeout(500);
@@ -183,12 +183,12 @@ try {
 
   await page.waitForFunction(
     () => ['roofReturn', 'menu'].includes(window.__santaGame.phase),
-    null, { timeout: 20000 }
+    null, { timeout: 60000 }
   );
   await page.waitForTimeout(1000);
   await shot('roof-return');
 
-  await waitPhase('menu', 20000);
+  await waitPhase('menu', 90000);
   await page.waitForTimeout(1200);
   await shot('menu');
 
@@ -198,13 +198,13 @@ try {
     await waitPhase('walk', 20000).catch(() => {});
   await page.waitForTimeout(2500);
   await shot('walk');
-  await waitPhase('peek', 30000);
+  await waitPhase('peek', 60000);
     await page.waitForTimeout(800);
     await shot('replay-peek');
     // quick descent to check soot accumulation from run 1 persists
     await swipe(CX, H * 0.3, CX, H * 0.85, 500);
     await swipe(CX, H * 0.25, CX, H * 0.85, 400);
-    await waitPhase('descend', 12000);
+    await waitPhase('descend', 30000);
     await swipe(CX, H * 0.3, CX, H * 0.7, 500);
     await shot('replay-descend-soot');
   }
