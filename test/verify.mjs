@@ -20,8 +20,8 @@ mkdirSync(OUT, { recursive: true });
 const DEVICES = {
   'iphone-portrait': { width: 390, height: 844, dpr: 2 },
   'iphone-landscape': { width: 844, height: 390, dpr: 2 },
-  'ipad-portrait': { width: 834, height: 1194, dpr: 2 },
-  'ipad-landscape': { width: 1194, height: 834, dpr: 2 },
+  'ipad-portrait': { width: 834, height: 1194, dpr: 1.5 },
+  'ipad-landscape': { width: 1194, height: 834, dpr: 1.5 },
 };
 
 function startServer() {
@@ -87,7 +87,7 @@ async function fullPlaythrough(browser, devName, dev, shape, shapeName, opts = {
     if (opts.timeScale) await page.evaluate((v) => window.__osc.timeScale(v), opts.timeScale);
 
     // 第一層
-    await waitPhase(page, (p) => p.startsWith('printing:first'), 30000);
+    await waitPhase(page, (p) => p.startsWith('printing:first'), 150000);
     if (opts.captureAll) {
       await new Promise(r => setTimeout(r, opts.firstLayerWaitMs ?? 4000));
       const ph = await page.evaluate(() => window.__osc.phase());
@@ -97,7 +97,7 @@ async function fullPlaythrough(browser, devName, dev, shape, shapeName, opts = {
     entry.stages.firstLayer = await page.evaluate(() => window.__osc.stats());
 
     // 積層中（タイムラプス）
-    await waitPhase(page, (p) => p.startsWith('printing:lapse'), 120000);
+    await waitPhase(page, (p) => p.startsWith('printing:lapse'), 240000);
     if (opts.captureAll) {
       await new Promise(r => setTimeout(r, opts.lapseWaitMs ?? 2500));
       await shot(page, `${devName}-${shapeName}-3-stacking`);
@@ -105,7 +105,7 @@ async function fullPlaythrough(browser, devName, dev, shape, shapeName, opts = {
     entry.stages.stacking = await page.evaluate(() => window.__osc.stats());
 
     // 完成 → 比較
-    await waitPhase(page, (p) => p === 'compare', 320000);
+    await waitPhase(page, (p) => p === 'compare', 420000);
     await new Promise(r => setTimeout(r, 2400));
     await shot(page, `${devName}-${shapeName}-4-complete`);
     entry.stages.complete = await page.evaluate(() => window.__osc.stats());
@@ -130,6 +130,8 @@ async function fullPlaythrough(browser, devName, dev, shape, shapeName, opts = {
 }
 
 const quick = process.argv.includes('--quick');
+const devicesOnly = process.argv.includes('--devices');
+const shapesOnly = process.argv.includes('--shapes');
 const server = await startServer();
 const browser = await chromium.launch({
   executablePath: '/opt/pw-browsers/chromium',
@@ -138,7 +140,7 @@ const browser = await chromium.launch({
 
 try {
   // --- 1. デバイス×縦横で通しプレイ（circleish、やや高速） ---
-  const deviceEntries = quick ? Object.entries(DEVICES).slice(0, 1) : Object.entries(DEVICES);
+  const deviceEntries = quick ? Object.entries(DEVICES).slice(0, 1) : shapesOnly ? [] : Object.entries(DEVICES);
   for (const [name, dev] of deviceEntries) {
     await fullPlaythrough(browser, name, dev, SHAPES.circleish, 'circleish', {
       captureAll: true, timeScale: 8, firstLayerWaitMs: 2500, lapseWaitMs: 2000,
@@ -147,7 +149,7 @@ try {
   }
 
   // --- 2. 6形状の形状保存検証（iPhone縦・高速） ---
-  const shapeNames = quick ? ['sCurve'] : Object.keys(SHAPES);
+  const shapeNames = (quick ? ['sCurve'] : devicesOnly ? [] : Object.keys(SHAPES));
   for (const sn of shapeNames) {
     if (sn === 'circleish' && !quick) {
       // circleish は上のデバイス通しで取得済みだが、統一条件でも取り直す

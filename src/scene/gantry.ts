@@ -422,8 +422,8 @@ export class Gantry {
       this.posZ = targetZ;
       this.beamY = targetTipY + this.headHang;
     } else if (park) {
-      // 待機/ homing: 有限速度で移動
-      const vLim = 0.9 * dt;
+      // 待機/ homing: 有限速度で移動（トラベル速度は印刷より速い）
+      const vLim = 1.3 * dt;
       const dx = clamp(park.x - this.posX, -vLim, vLim);
       const dz = clamp(park.z - this.posZ, -vLim, vLim);
       this.posX += dx;

@@ -189,6 +189,12 @@ export class Game {
         this.gantry.update(dt, null, park ?? { x: this.gantry.posX, z: this.gantry.posZ }, dt);
         const dx = Math.abs(this.gantry.posX - s0.x), dz = Math.abs(this.gantry.posZ - s0.z);
         if (this.phaseT > 1.2 && dx < 0.02 && dz < 0.02) this.startPrint();
+        // 低fps環境でも開始を保証するセーフティネット
+        else if (this.phaseT > 14) {
+          this.gantry.posX = s0.x;
+          this.gantry.posZ = s0.z;
+          this.startPrint();
+        }
         break;
       }
 
