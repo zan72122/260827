@@ -37,9 +37,11 @@ export class Game {
     // artisan rigs -----------------------------------------------------------
     this.cutter = makeCutter();
     this.rightHand = makeHand({ mirror: false });
-    this.rightHand.setCurl(0.85);
-    this.rightHand.group.position.set(0.012, 0.085, 0.055);
-    this.rightHand.group.rotation.set(-0.55, 0, 0.08);
+    this.rightHand.setCurl(0.8);
+    // side grip: palm wraps the barrel from screen-right, low, so the barrel,
+    // head, wheel and the fresh score all stay visible from the play camera
+    this.rightHand.group.position.set(0.052, 0.042, 0.062);
+    this.rightHand.group.rotation.set(-0.35, 0.15, -1.15);
     this.cutter.group.add(this.rightHand.group);
     this.cutter.group.visible = false;
     scene.add(this.cutter.group);
@@ -168,6 +170,7 @@ export class Game {
   }
 
   teardownRound() {
+    this.scene.add(this.suction.group); // reparent off any lifted piece
     for (const p of this.pieces) {
       this.sheetGroup.remove(p.mesh);
       p.mesh.geometry.dispose();
@@ -230,10 +233,11 @@ export class Game {
     const target = new THREE.Vector3(0, TABLE_TOP, 0);
     let dir;
     if (portrait) {
-      // from the near edge, tilted well down so the whole pane + start edge show
-      dir = new THREE.Vector3(0.06, Math.tan(1.0), 0.62).normalize();
+      // 3/4 from the near edge: whole pane, its near starting edge and the
+      // approaching cutter all stay on screen with visible depth
+      dir = new THREE.Vector3(0.05, 1.06, 0.62).normalize();
     } else {
-      dir = new THREE.Vector3(0.10, Math.tan(0.94), 0.55).normalize();
+      dir = new THREE.Vector3(0.05, 0.98, 0.55).normalize();
     }
     const d = this.director.fitDistance(target, dir, this._sheetCorners(0.075), 0.8);
     const eye = target.clone().addScaledVector(dir, d);
@@ -267,8 +271,10 @@ export class Game {
   }
 
   _frameShowcase(dur = 1.4) {
-    const eye = new THREE.Vector3(0.62, 1.42, 0.95);
-    const target = new THREE.Vector3(-0.3, 1.12, -0.18);
+    // from the right: held piece and window light on the left, the tinted
+    // pool it casts on the felt below it
+    const eye = new THREE.Vector3(0.8, 1.34, 0.98);
+    const target = new THREE.Vector3(-0.22, 1.02, -0.02);
     this.director.moveTo(eye, target, dur);
   }
 
@@ -382,16 +388,22 @@ export class Game {
       const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, yaw, 0));
       this.cutter.group.quaternion.slerp(q, 0.3);
     }
-    // steadying hand rests flat beyond the line's far side
+    // the gripping hand's forearm always trails toward the artisan (near
+    // side) instead of sweeping across the pane with the tool's heading
+    const rigYaw = new THREE.Euler().setFromQuaternion(this.cutter.group.quaternion, 'YXZ').y;
+    this.rightHand.group.rotation.y = 0.35 - rigYaw * 0.75;
+    // the other hand steadies the pane from the far side, clear of the line
     const sh = this.steadyHand.group;
     sh.visible = true;
-    const side = tip.x < 0 ? 1 : -1;
-    const sx = THREE.MathUtils.clamp(tip.x + side * this.rect.hw * 0.7, -this.rect.hw + 0.05, this.rect.hw - 0.05);
-    const sy = THREE.MathUtils.clamp(tip.y - this.rect.hh * 0.45, -this.rect.hh + 0.06, this.rect.hh - 0.06);
+    const sx = THREE.MathUtils.clamp(
+      tip.x >= 0 ? -this.rect.hw * 0.5 : this.rect.hw * 0.5,
+      -this.rect.hw + 0.06, this.rect.hw - 0.06
+    );
+    const sy = -this.rect.hh + 0.06;
     const target = this._toWorld({ x: sx, y: sy });
     target.y += 0.012;
     sh.position.lerp(target, 0.08);
-    sh.rotation.set(0, side > 0 ? -0.5 : 0.5, 0);
+    sh.rotation.set(0, Math.PI, 0); // fingers toward the camera, arm reaching over the far edge
   }
 
   _strokeFinished() {
@@ -421,6 +433,7 @@ export class Game {
     this.pliers.group.visible = true;
     this.pliers.setSqueeze(0);
     this.cutter.group.visible = false;
+    this.steadyHand.group.visible = false;
   }
 
   _startCrack() {
@@ -497,23 +510,28 @@ export class Game {
     const small = this.pieces.reduce((m, p) => (p.area < m.area ? p : m), this.pieces[0]);
     this.lifted = small;
     this.liftStart = small.mesh.position.clone();
+    // the cup rides on the piece's face while it is carried
+    small.mesh.add(this.suction.group);
+    this.suction.group.position.set(0, THICK + 0.001, 0);
+    this.suction.group.rotation.set(0, 0, 0);
     this.suction.group.visible = true;
     this.audio.suctionPop();
     this._frameShowcase(1.4);
 
-    // colored light pool: the cut silhouette as tinted daylight on the floor
+    // colored light pool: window daylight through the held piece drops its
+    // cut silhouette as tinted light onto the felt beside it
     const pal = GLASS_PALETTE[this.colorIdx];
     const tex = lightPoolTexture(small.poly, pal.css);
     const mat = new THREE.MeshBasicMaterial({
       map: tex, transparent: true, opacity: 0,
       blending: THREE.AdditiveBlending, depthWrite: false
     });
-    const quad = new THREE.Mesh(new THREE.PlaneGeometry(0.85, 0.62), mat);
+    const quad = new THREE.Mesh(new THREE.PlaneGeometry(0.62, 0.46), mat);
     quad.rotation.x = -Math.PI / 2;
-    quad.rotation.z = -0.35 + rand() * 0.25;
+    quad.rotation.z = -0.2 + rand() * 0.3;
     // stretched away from the window (light comes from -x)
     quad.scale.x = 1.35;
-    quad.position.set(0.32, 0.004, 0.28);
+    quad.position.set(0.16, TABLE_TOP + 0.0025, 0.1);
     quad.renderOrder = 3;
     this.scene.add(quad);
     this.lightPool = quad;
@@ -537,6 +555,7 @@ export class Game {
         sc.rotation.copy(this.sheetGroup.rotation);
         const shg = this.steadyHand.group;
         shg.position.copy(this.sheetGroup.position).add(new THREE.Vector3(-this.rect.hw * 0.8, 0.02, 0.05));
+        shg.rotation.set(0, 0.6, 0);
         if (k >= 1) {
           this.audio.thud();
           this.suction.group.visible = false;
@@ -666,22 +685,19 @@ export class Game {
         const k = Math.min(1, t / 1.6);
         const e = k * k * (3 - 2 * k);
         const m = this.lifted.mesh;
-        // up off the felt, then held tilted toward the window light
-        const holdLocal = new THREE.Vector3(-0.42, 0.5, -0.28); // relative to sheetGroup
+        // up off the felt, then held upright with its face toward the window
+        const holdLocal = new THREE.Vector3(-0.3, 0.4, 0.02); // relative to sheetGroup
         m.position.lerpVectors(this.liftStart, holdLocal, e);
-        m.rotation.x = -1.15 * e;
-        m.rotation.y = 0.35 * e;
-        const sc = this.suction.group;
-        sc.visible = true;
-        sc.position.copy(this.sheetGroup.localToWorld(m.position.clone()));
-        sc.position.y += 0.02;
-        sc.rotation.set(m.rotation.x, m.rotation.y, 0);
+        m.rotation.z = 1.2 * e;   // face normal swings toward the window (-x)
+        m.rotation.y = 0.25 * e;
+        // supporting gloved hand cradles the lower edge, palm up
         const shg = this.steadyHand.group;
         shg.visible = true;
-        shg.position.copy(sc.position).add(new THREE.Vector3(-0.05, -0.16, 0.06));
-        shg.rotation.set(-0.9 * e, 0.3, 0);
+        const w = this.sheetGroup.localToWorld(m.position.clone());
+        shg.position.set(w.x - 0.05, w.y - 0.17, w.z + 0.04);
+        shg.rotation.set(Math.PI * 0.92, 0, 0.15);
         if (this.lightPool) {
-          this.lightPool.material.opacity = Math.max(0, (k - 0.45) / 0.55) * 0.62;
+          this.lightPool.material.opacity = Math.max(0, (k - 0.45) / 0.55) * 0.75;
         }
         if (k >= 1 && this.phaseT > 2.6) {
           this.audio.chime();

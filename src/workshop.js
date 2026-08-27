@@ -13,7 +13,7 @@ import {
 export const TABLE_TOP = 0.92;
 const ROOM_X = 2.7, ROOM_Z = 2.1, ROOM_H = 2.9;
 
-export function buildWorkshop(scene, renderer) {
+export function buildWorkshop(scene, renderer, envMap) {
   const group = new THREE.Group();
   scene.add(group);
 
@@ -86,6 +86,15 @@ export function buildWorkshop(scene, renderer) {
   sky.position.set(-ROOM_X - 0.25, winC.y, winC.z);
   leftWall.add(sky);
   group.add(leftWall);
+
+  // ceiling so no camera angle ever shows raw void
+  const ceiling = new THREE.Mesh(
+    new THREE.PlaneGeometry(ROOM_X * 2.6, ROOM_Z * 3.4),
+    new THREE.MeshStandardMaterial({ color: 0xcfc7b8, roughness: 1 })
+  );
+  ceiling.rotation.x = Math.PI / 2;
+  ceiling.position.y = ROOM_H;
+  group.add(ceiling);
 
   // near/right walls so low camera angles never see out of the room
   const frontWall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_X * 2.4, ROOM_H), matPlaster);
@@ -164,8 +173,8 @@ export function buildWorkshop(scene, renderer) {
   // opaque, so cheap non-transmissive materials keep overdraw low.
   const paneGeo = new THREE.BoxGeometry(1.1, 1.15, 0.006);
   const paneMat = new THREE.MeshStandardMaterial({
-    color: 0xbcd6c8, metalness: 0.05, roughness: 0.12,
-    envMapIntensity: 1.0, transparent: false
+    color: 0x5f7d6f, metalness: 0.1, roughness: 0.3,
+    envMap: envMap || null, envMapIntensity: 0.35, transparent: false
   });
   const paneEdgeMat = new THREE.MeshStandardMaterial({ color: 0x35584a, roughness: 0.35 });
   const paneMats = [paneEdgeMat, paneEdgeMat, paneEdgeMat, paneEdgeMat, paneMat, paneMat];

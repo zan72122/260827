@@ -8,7 +8,7 @@ const GLOVE = new THREE.MeshStandardMaterial({ color: 0x9fa8ad, roughness: 0.92 
 const GLOVE_DARK = new THREE.MeshStandardMaterial({ color: 0x6b7478, roughness: 0.95 }); // palm coating
 const CUFF = new THREE.MeshStandardMaterial({ color: 0x4a5560, roughness: 0.95 });
 const SLEEVE = new THREE.MeshStandardMaterial({ color: 0x37475a, roughness: 1.0 });
-const BRASS = new THREE.MeshStandardMaterial({ color: 0xb08d3f, metalness: 0.8, roughness: 0.35 });
+const BRASS = new THREE.MeshStandardMaterial({ color: 0xd0a850, metalness: 0.7, roughness: 0.3 });
 const STEEL = new THREE.MeshStandardMaterial({ color: 0x9aa0a6, metalness: 0.85, roughness: 0.3 });
 const STEEL_WORN = new THREE.MeshStandardMaterial({ color: 0x777d84, metalness: 0.7, roughness: 0.55 });
 const GRIP = new THREE.MeshStandardMaterial({ color: 0x23262a, roughness: 0.8 });
@@ -78,14 +78,16 @@ export function makeHand({ mirror = false } = {}) {
   g.add(thumbRoot);
 
   // cuff + long sleeve toward the artisan (up and back)
-  const cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.036, 0.041, 0.05, 12), CUFF);
-  cuff.rotation.x = Math.PI / 2 - 0.35;
-  cuff.position.set(0, 0.014, 0.062);
+  // cuff + sleeve rising steeply away from the work so the forearm never
+  // blocks the view of the pane
+  const cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.034, 0.038, 0.045, 12), CUFF);
+  cuff.rotation.x = Math.PI / 2 - 0.85;
+  cuff.position.set(0, 0.03, 0.058);
   cuff.castShadow = true;
   g.add(cuff);
-  const sleeve = new THREE.Mesh(new THREE.CylinderGeometry(0.043, 0.058, 0.34, 12), SLEEVE);
-  sleeve.rotation.x = Math.PI / 2 - 0.35;
-  sleeve.position.set(0, 0.078, 0.23);
+  const sleeve = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.05, 0.2, 12), SLEEVE);
+  sleeve.rotation.x = Math.PI / 2 - 0.85;
+  sleeve.position.set(0, 0.115, 0.115);
   sleeve.castShadow = true;
   g.add(sleeve);
 
@@ -119,19 +121,23 @@ export function makeCutter() {
   head.position.y = 0.015;
   g.add(head);
 
-  // tilted brass barrel (oil reservoir) with a dark grip
+  // tilted brass barrel (oil reservoir) with a dark grip; leaned enough to
+  // read as a pencil-held tool from the play camera
   const lean = new THREE.Group();
   lean.position.y = 0.02;
-  lean.rotation.x = 0.42; // leans back over +z (opposite travel)
-  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.0062, 0.0056, 0.085, 12), BRASS);
-  barrel.position.y = 0.045;
+  // leans back against the travel plus a sideways cant, so the barrel shows
+  // a clear silhouette instead of pointing straight at the play camera
+  lean.rotation.set(0.3, 0, -0.45);
+  const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.0075, 0.0066, 0.095, 12), BRASS);
+  barrel.position.y = 0.05;
   barrel.castShadow = true;
   lean.add(barrel);
-  const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.0078, 0.0072, 0.045, 12), GRIP);
-  grip.position.y = 0.055;
+  // short dark ferrule near the head; the brass reservoir stays visible
+  const grip = new THREE.Mesh(new THREE.CylinderGeometry(0.0088, 0.0084, 0.02, 12), GRIP);
+  grip.position.y = 0.03;
   lean.add(grip);
-  const cap = new THREE.Mesh(new THREE.SphereGeometry(0.0068, 10, 8), BRASS);
-  cap.position.y = 0.09;
+  const cap = new THREE.Mesh(new THREE.SphereGeometry(0.008, 10, 8), BRASS);
+  cap.position.y = 0.1;
   lean.add(cap);
   g.add(lean);
 

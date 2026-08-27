@@ -32,7 +32,7 @@ const pmrem = new THREE.PMREMGenerator(renderer);
 const envMap = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
 scene.environment = null; // applied only on glass materials to keep control
 
-const workshop = buildWorkshop(scene, renderer);
+const workshop = buildWorkshop(scene, renderer, envMap);
 const director = new CameraDirector(camera);
 const audio = new AudioEngine();
 const game = new Game({ scene, director, audio, workshop, renderer, envMap });

@@ -25,16 +25,6 @@ function canvasTexture(size, draw, opts = {}) {
   return tex;
 }
 
-function noiseFill(ctx, w, h, base, amp, cell = 2) {
-  for (let y = 0; y < h; y += cell) {
-    for (let x = 0; x < w; x += cell) {
-      const v = base + (rand() - 0.5) * amp;
-      ctx.fillStyle = `rgb(${v | 0},${v | 0},${v | 0})`;
-      ctx.fillRect(x, y, cell, cell);
-    }
-  }
-}
-
 export function woodTexture(tone = [122, 92, 62], plank = true) {
   return canvasTexture(512, (ctx, w, h) => {
     ctx.fillStyle = `rgb(${tone[0]},${tone[1]},${tone[2]})`;
@@ -97,7 +87,6 @@ export function plasterTexture() {
   return canvasTexture(256, (ctx, w, h) => {
     ctx.fillStyle = 'rgb(214,204,188)';
     ctx.fillRect(0, 0, w, h);
-    noiseFill(ctx, w, h, 0, 0, 2);
     for (let i = 0; i < 2600; i++) {
       const v = 195 + rand() * 34;
       ctx.fillStyle = `rgba(${v | 0},${v - 8 | 0},${v - 22 | 0},0.25)`;

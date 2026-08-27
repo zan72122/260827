@@ -119,6 +119,7 @@ async function playRound(page, strokeOpts, shots = {}) {
 }
 
 async function run() {
+  const only = process.argv[2] || 'all'; // all | cases | matrix | cleanup
   const server = startServer();
   await sleep(1500);
   const browser = await chromium.launch({
@@ -143,7 +144,7 @@ async function run() {
   mkdirSync(resolve(OUT, 'judge'), { recursive: true });
   mkdirSync(resolve(OUT, 'cases'), { recursive: true });
 
-  for (const [name, vp, opts] of cases) {
+  for (const [name, vp, opts] of (only === 'all' || only === 'cases' ? cases : [])) {
     const ctx = await browser.newContext({
       viewport: { width: vp.w, height: vp.h }, deviceScaleFactor: 1, hasTouch: true
     });
@@ -178,7 +179,7 @@ async function run() {
     ['ipad-portrait', 820, 1180, 1],
     ['ipad-landscape', 1180, 820, 1]
   ];
-  for (const [name, w, h, dsf] of viewports) {
+  for (const [name, w, h, dsf] of (only === 'all' || only === 'matrix' ? viewports : [])) {
     const dir = resolve(OUT, name);
     mkdirSync(dir, { recursive: true });
     const ctx = await browser.newContext({
@@ -212,7 +213,7 @@ async function run() {
   }
 
   // ---- replay resource cleanup: 3 rounds in one page ----------------------
-  {
+  if (only === 'all' || only === 'cleanup') {
     const ctx = await browser.newContext({
       viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true
     });
@@ -228,6 +229,58 @@ async function run() {
     }
     results.cleanup = mem;
     console.log('cleanup memory per round:', JSON.stringify(mem));
+    await ctx.close();
+  }
+
+  // ---- quick pose check: portrait mid-scoring only ------------------------
+  if (only === 'pose') {
+    const ctx = await browser.newContext({
+      viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, hasTouch: true
+    });
+    const page = await ctx.newPage();
+    await page.goto(BASE);
+    await page.evaluate(() => window.__gc.setTimeScale(2.5));
+    await waitPhase(page, 'ready');
+    await page.waitForFunction(() => window.__gc.game.director.t >= 1, null, { timeout: 10000 });
+    const rect = await page.evaluate(() => window.__gc.sheetRect());
+    await performStroke(page, planStroke(rect, { orient: 'portrait', bulge: 0.35 }), {
+      midShot: () => page.screenshot({ path: resolve(OUT, 'pose-mid.png'), timeout: 60000 })
+    });
+    await waitPhase(page, 'press', 90000);
+    await page.screenshot({ path: resolve(OUT, 'pose-press.png'), timeout: 60000 });
+    await ctx.close();
+  }
+
+  // ---- orientation change mid-flow: score + split state must survive ------
+  if (only === 'all' || only === 'rotate') {
+    const ctx = await browser.newContext({
+      viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, hasTouch: true
+    });
+    const page = await ctx.newPage();
+    await page.goto(BASE);
+    await page.evaluate(() => window.__gc.setTimeScale(2.5));
+    await waitPhase(page, 'ready');
+    await page.waitForFunction(() => window.__gc.game.director.t >= 1, null, { timeout: 10000 });
+    const rect = await page.evaluate(() => window.__gc.sheetRect());
+    await performStroke(page, planStroke(rect, { orient: 'portrait', bulge: 0.35 }));
+    await waitPhase(page, 'press', 90000);
+    const before = await page.evaluate(() => window.__gc.diagnostics());
+    // rotate to landscape mid-flow
+    await page.setViewportSize({ width: 844, height: 390 });
+    await sleep(1200);
+    const afterRot = await page.evaluate(() => window.__gc.diagnostics());
+    await page.screenshot({ path: resolve(OUT, 'rotate-press-landscape.png'), timeout: 60000 });
+    await pressPliers(page);
+    await waitPhase(page, 'separate', 90000);
+    await page.waitForFunction(() => window.__gc.game.phaseT > 0.75, null, { timeout: 60000 });
+    // rotate back to portrait after separation
+    await page.setViewportSize({ width: 390, height: 844 });
+    await sleep(1200);
+    await page.screenshot({ path: resolve(OUT, 'rotate-separated-portrait.png'), timeout: 60000 });
+    const after = await page.evaluate(() => window.__gc.diagnostics());
+    results.rotate = { before, afterRot, after };
+    console.log(`rotate: scoreLen ${before.curveLen.toFixed(3)} -> ${afterRot.curveLen.toFixed(3)}, ` +
+      `phase ${before.phase} -> ${afterRot.phase} -> ${after.phase}, areaErr=${after.validation?.areaError}`);
     await ctx.close();
   }
 

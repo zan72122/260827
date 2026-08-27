@@ -39,28 +39,29 @@ export function makeGlassMaterialSet(paletteEntry, envMap) {
 
   // Factory (seamed) edge: same glass but the light path is long, so the tint
   // is much deeper; still glossy.
+  const edgeCol = new THREE.Color(paletteEntry.edge).multiplyScalar(0.62);
   const factoryEdge = new THREE.MeshPhysicalMaterial({
-    color: paletteEntry.edge,
+    color: edgeCol,
     metalness: 0,
-    roughness: 0.22,
-    transmission: 0.55,
+    roughness: 0.24,
+    transmission: 0.3,
     thickness: 0.03,
     ior: 1.52,
     attenuationColor: new THREE.Color(paletteEntry.edge),
     attenuationDistance: 0.012,
     envMap,
-    envMapIntensity: 0.5,
+    envMapIntensity: 0.3,
     side: THREE.FrontSide
   });
 
   // Fresh cut face: same deep tint but micro-rough (fine fracture texture),
   // catches light with a slightly frosty sheen.
   const cutFace = new THREE.MeshPhysicalMaterial({
-    color: paletteEntry.edge,
+    color: edgeCol.clone().multiplyScalar(1.15),
     metalness: 0,
     roughness: 0.5,
     roughnessMap: sharedCutRoughMap,
-    transmission: 0.35,
+    transmission: 0.22,
     thickness: 0.03,
     ior: 1.52,
     attenuationColor: new THREE.Color(paletteEntry.edge),
