@@ -84,8 +84,8 @@ export class CameraRig {
     }
     // landscape: swing the same shot ~40° so the lane reads left -> right
     return [
-      new THREE.Vector3(START.x - 245, 185, START.z - 130),
-      new THREE.Vector3(START.x + 115, -26, START.z + 200),
+      new THREE.Vector3(START.x - 200, 150, START.z - 70),
+      new THREE.Vector3(START.x + 120, -24, START.z + 205),
     ];
   }
 

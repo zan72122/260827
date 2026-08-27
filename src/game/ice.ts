@@ -210,6 +210,15 @@ export class IceField {
     this.mesh.position.set(FIELD_MIN_X + FIELD_W / 2, 0, FIELD_MIN_Z + FIELD_L / 2);
     this.mesh.frustumCulled = false;
     scene.add(this.mesh);
+
+    // coarse apron with the same shader so the playfield never shows an edge:
+    // sits a touch lower, mask clamps to its uncarved border outside the field
+    const apronGeo = new THREE.PlaneGeometry(2300, 2300, 96, 96);
+    apronGeo.rotateX(-Math.PI / 2);
+    const apron = new THREE.Mesh(apronGeo, this.material);
+    apron.position.set(FIELD_MIN_X + FIELD_W / 2, -0.22, FIELD_MIN_Z + FIELD_L / 2);
+    apron.frustumCulled = false;
+    scene.add(apron);
   }
 
   private clearMask(): void {

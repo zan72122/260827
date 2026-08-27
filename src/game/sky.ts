@@ -56,8 +56,8 @@ export class Sky {
 
     // matte "far pack ice" disc so the playfield never ends in a hard line
     const farIce = new THREE.Mesh(
-      new THREE.CircleGeometry(1600, 40),
-      new THREE.MeshBasicMaterial({ color: new THREE.Color(0.765, 0.80, 0.845) }),
+      new THREE.CircleGeometry(3200, 40),
+      new THREE.MeshBasicMaterial({ color: new THREE.Color(0.765, 0.80, 0.845), toneMapped: false }),
     );
     farIce.rotation.x = -Math.PI / 2;
     farIce.position.y = -0.95; // below the carved-lane water level

@@ -62,7 +62,7 @@ function buildHullGeometry(p: HullParams): THREE.BufferGeometry {
     // sheer line
     const sBow = Math.max(0, (t - 0.55) / 0.45);
     const sSt = Math.max(0, (0.25 - t) / 0.25);
-    const yDeck = p.freeboard + p.bowSheer * sBow * sBow + 0.35 * sSt * sSt;
+    const yDeck = p.freeboard + p.bowSheer * sBow * sBow + 0.12 * sSt * sSt;
     // section fullness: boxy amidships, rounder toward bow
     const fullness = 0.42 + 0.5 * Math.max(0, (t - 0.5) / 0.5) + 0.2 * sSt;
 
@@ -220,10 +220,13 @@ export function buildIcebreaker(): ShipModel {
   const buff = new THREE.MeshStandardMaterial({ color: '#c8a45e', roughness: 0.75 });
   const rimed = new THREE.MeshStandardMaterial({ color: '#cfd6da', roughness: 0.95 }); // iced-up rails
 
-  // deck
+  // main deck + raised foredeck inside the sheer-line bulwark
   const deck = box(B * 0.86, 0.24, L * 0.86, deckMat);
-  deck.position.set(0, F + 0.02, -L * 0.03);
+  deck.position.set(0, F + 0.14, -L * 0.03);
   g.add(deck);
+  const foredeck = box(B * 0.56, 0.28, L * 0.24, deckMat);
+  foredeck.position.set(0, F + 0.78, L * 0.32);
+  g.add(foredeck);
   // bulwark along the foredeck
   const bwL = box(0.14, 0.9, L * 0.26, topsideMat);
   bwL.position.set(-B * 0.40, F + 0.55, L * 0.13);

@@ -246,15 +246,21 @@ for (const [name, w, h, dpr] of DEVICES) {
   await page.waitForTimeout(250);
   await page.screenshot({ path: join(OUT, `${name}-2-close.png`) });
 
-  await ib(page, 'fastForward(14)');
+  await ib(page, 'fastForward(20)');
   await page.waitForTimeout(250);
   await page.screenshot({ path: join(OUT, `${name}-3-mid.png`) });
 
-  await ib(page, 'fastForward(30)');
+  for (let i = 0; i < 40 && (await ib(page, 'getState()')) === 'breaking'; i++) {
+    await ib(page, 'fastForward(4)');
+  }
+  await ib(page, 'fastForward(12)'); // camera settles into the finale overview
   await page.waitForTimeout(250);
   await page.screenshot({ path: join(OUT, `${name}-4-finale.png`) });
 
-  await ib(page, 'fastForward(60)');
+  for (let i = 0; i < 40 && (await ib(page, 'getState()')) === 'convoy'; i++) {
+    await ib(page, 'fastForward(4)');
+  }
+  await ib(page, 'fastForward(9)');
   await page.waitForTimeout(250);
   await page.screenshot({ path: join(OUT, `${name}-5-dock.png`) });
   await ctx.close();

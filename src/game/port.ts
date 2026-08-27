@@ -90,7 +90,7 @@ export class Port {
       const x = -160 + i * 42 + (rng() - 0.5) * 26;
       // keep the water north of the harbour clear — the icebreaker's wide
       // swing to its holding spot passes through there
-      const z = x > -45 && x < 85 ? 296 + rng() * 20 : 262 + rng() * 38;
+      const z = x > -140 && x < 85 ? 298 + rng() * 22 : 264 + rng() * 36;
       rock.position.set(x, -2.5, z);
       shore.add(rock);
     }
