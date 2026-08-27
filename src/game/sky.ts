@@ -33,6 +33,8 @@ void main() {
 
 export class Sky {
   snow: THREE.Points;
+  dome!: THREE.Mesh;
+  farIce!: THREE.Mesh;
   private snowVel: Float32Array;
 
   constructor(scene: THREE.Scene, sunDir: THREE.Vector3) {
@@ -53,6 +55,7 @@ export class Sky {
     );
     dome.frustumCulled = false;
     scene.add(dome);
+    this.dome = dome;
 
     // matte "far pack ice" disc so the playfield never ends in a hard line
     const farIce = new THREE.Mesh(
@@ -62,6 +65,7 @@ export class Sky {
     farIce.rotation.x = -Math.PI / 2;
     farIce.position.y = -0.95; // below the carved-lane water level
     scene.add(farIce);
+    this.farIce = farIce;
 
     // lighting
     const sun = new THREE.DirectionalLight(0xfff0dd, 2.4);

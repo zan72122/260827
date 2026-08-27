@@ -365,6 +365,19 @@ window.__ib = {
     pts: route.pts.filter((_, i) => i % 5 === 0),
   } : null,
   lastStroke: () => lastStroke.map((s) => ({ x: s.x, z: s.z })),
+  debugHide: (what: string) => {
+    if (what === 'inst') scene.traverse((o) => { if ((o as THREE.InstancedMesh).isInstancedMesh) o.visible = false; });
+    else if (what === 'sprites') scene.traverse((o) => { if ((o as THREE.Sprite).isSprite) o.visible = false; });
+    else if (what === 'lines') { previewLine.visible = false; }
+    else if (what === 'points') scene.traverse((o) => { if ((o as THREE.Points).isPoints) o.visible = false; });
+    else if (what === 'ice') ice.mesh.visible = false;
+    else if (what === 'apron') ice.apron.visible = false;
+    else if (what === 'skydome') { sky.dome.visible = false; sky.farIce.visible = false; }
+    else if (what === 'portg') port.group.visible = false;
+    else if (what === 'ships') { ib.group.visible = false; supply.group.visible = false; }
+    else if (what === 'shadows') { ibShadow.visible = false; supShadow.visible = false; }
+    else port.debugHide(what);
+  },
   reset: (newSeed = false) => resetGame(newSeed as boolean),
   idleRngProbe: () => idleRng(),
 };

@@ -121,34 +121,43 @@ export class Port {
     }
     g.add(dock);
 
+    // --- low gravel shore pad the buildings stand on ------------------------
+    const pad = new THREE.Mesh(new THREE.BoxGeometry(52, 2.8, 34),
+      new THREE.MeshStandardMaterial({ color: '#7b7468', roughness: 0.95 }));
+    pad.position.set(PORT_DOCK.x + 15, 0.2, PORT_DOCK.z + 28);
+    const padSnow = new THREE.Mesh(new THREE.BoxGeometry(52.4, 0.3, 34.4),
+      new THREE.MeshStandardMaterial({ color: '#e9edf0', roughness: 0.95 }));
+    padSnow.position.set(PORT_DOCK.x + 15, 1.68, PORT_DOCK.z + 28);
+    g.add(pad, padSnow);
+
     // --- sheds + tank on the shore end --------------------------------------
     const shedA = gabledShed(6, 3.4, 8, '#7a3b30');
-    shedA.position.set(PORT_DOCK.x + 18, 1.6, PORT_DOCK.z + 26);
+    shedA.position.set(PORT_DOCK.x + 18, 1.85, PORT_DOCK.z + 26);
     shedA.rotation.y = -0.25;
     const shedB = gabledShed(4.5, 2.8, 6, '#5d6468');
-    shedB.position.set(PORT_DOCK.x + 4, 1.6, PORT_DOCK.z + 30);
+    shedB.position.set(PORT_DOCK.x + 4, 1.85, PORT_DOCK.z + 30);
     shedB.rotation.y = 0.35;
     g.add(shedA, shedB);
     const tank = new THREE.Mesh(new THREE.CylinderGeometry(2.4, 2.4, 4, 16),
       new THREE.MeshStandardMaterial({ color: '#98a0a4', roughness: 0.8 }));
-    tank.position.set(PORT_DOCK.x + 28, 3.4, PORT_DOCK.z + 18);
+    tank.position.set(PORT_DOCK.x + 28, 3.8, PORT_DOCK.z + 24);
     g.add(tank);
-    // light pole with a warm lamp
+    // light pole with a warm lamp, on the pier by the berth
     const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.16, 7, 8),
       new THREE.MeshStandardMaterial({ color: '#3d4144', roughness: 0.7 }));
-    pole.position.set(PORT_DOCK.x + 4, 5.6, PORT_DOCK.z + 2);
+    pole.position.set(PORT_DOCK.x + 7, 5.6, PORT_DOCK.z + 8);
     g.add(pole);
     const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.35, 10, 8),
       new THREE.MeshBasicMaterial({ color: '#ffd9a0' }));
-    lamp.position.set(PORT_DOCK.x + 4, 9.0, PORT_DOCK.z + 2);
+    lamp.position.set(PORT_DOCK.x + 7, 9.0, PORT_DOCK.z + 8);
     g.add(lamp);
     const glowTex = Port.makeSmokeTexture();
     const glow = new THREE.Sprite(new THREE.SpriteMaterial({
-      map: glowTex, color: '#ffca7a', transparent: true, opacity: 0.5,
-      depthWrite: false, blending: THREE.AdditiveBlending,
+      map: glowTex, color: '#ffca7a', transparent: true, opacity: 0.45,
+      depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending,
     }));
     glow.position.copy(lamp.position);
-    glow.scale.setScalar(14);
+    glow.scale.setScalar(10);
     g.add(glow);
 
     // --- little jib crane on the pier ---------------------------------------
@@ -205,12 +214,12 @@ export class Port {
 
     // chimney smoke sprites over shed A
     const smokeTex = Port.makeSmokeTexture();
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 3; i++) {
       const sp = new THREE.Sprite(new THREE.SpriteMaterial({
-        map: smokeTex, color: '#dfe3e6', transparent: true, opacity: 0.35, depthWrite: false,
+        map: smokeTex, color: '#dfe3e6', transparent: true, opacity: 0.3, depthWrite: false,
       }));
-      sp.position.set(PORT_DOCK.x + 20, 6 + i * 2.2, PORT_DOCK.z + 24);
-      sp.scale.setScalar(2 + i * 1.4);
+      sp.position.set(PORT_DOCK.x + 20, 6 + i * 1.8, PORT_DOCK.z + 24);
+      sp.scale.setScalar(1.8 + i * 1.0);
       this.smoke.push(sp);
       g.add(sp);
     }
@@ -239,6 +248,14 @@ export class Port {
     this.cargo.visible = false;
   }
 
+  /** debug: hide groups of port effects to isolate render artifacts */
+  debugHide(what: string): void {
+    if (what === 'smoke') this.smoke.forEach((s) => (s.visible = false));
+    if (what === 'glow') this.group.children.forEach((c) => { if ((c as THREE.Sprite).isSprite && !this.smoke.includes(c as THREE.Sprite)) c.visible = false; });
+    if (what === 'cable') { this.cable.visible = false; this.hook.visible = false; }
+    if (what === 'crane') this.craneCol.visible = false;
+  }
+
   update(dt: number, time: number): void {
     // idle seal: lifts its head now and then
     const head = this.seal.children[1];
@@ -246,9 +263,9 @@ export class Port {
 
     for (let i = 0; i < this.smoke.length; i++) {
       const sp = this.smoke[i];
-      sp.position.y += dt * 0.8;
-      sp.material.opacity = 0.4 - (sp.position.y - 6) * 0.035;
-      if (sp.position.y > 17) sp.position.y = 6;
+      sp.position.y += dt * 0.7;
+      sp.material.opacity = 0.32 - (sp.position.y - 6) * 0.04;
+      if (sp.position.y > 13) sp.position.y = 6;
     }
 
     if (this.unloadT < 0) {

@@ -33,7 +33,7 @@ float vnoise(vec2 p) {
 float iceHeight(vec2 xz, float water) {
   float n = vnoise(xz * 0.06 + uSeed) * 0.6 + vnoise(xz * 0.21 + uSeed * 2.7) * 0.4;
   float r = abs(vnoise(xz * 0.033 + uSeed * 5.1) - 0.5) * 2.0;
-  r = pow(1.0 - r, 7.0);
+  r = pow(max(1.0 - r, 0.0), 7.0);
   float h = n * 0.34 + r * 0.85;
   return h * (1.0 - water) - 0.72 * water;
 }
@@ -42,6 +42,9 @@ void main() {
   vec2 muv = vec2((wp.x - (${FIELD_MIN_X.toFixed(1)})) / ${FIELD_W.toFixed(1)},
                   (wp.z - (${FIELD_MIN_Z.toFixed(1)})) / ${FIELD_L.toFixed(1)});
   vec4 m = texture2D(uMask, muv);
+#ifdef NO_MASK
+  m = vec4(0.0);
+#endif
   float water = smoothstep(0.32, 0.62, m.r);
   wp.y += iceHeight(wp.xz, water);
   vWorld = wp;
@@ -80,11 +83,14 @@ float vnoise(vec2 p) {
 float iceHeight(vec2 xz, float water) {
   float n = vnoise(xz * 0.06 + uSeed) * 0.6 + vnoise(xz * 0.21 + uSeed * 2.7) * 0.4;
   float r = abs(vnoise(xz * 0.033 + uSeed * 5.1) - 0.5) * 2.0;
-  r = pow(1.0 - r, 7.0);
+  r = pow(max(1.0 - r, 0.0), 7.0);
   float h = n * 0.34 + r * 0.85;
   return h * (1.0 - water) - 0.72 * water;
 }
 float waterAt(vec2 xz) {
+#ifdef NO_MASK
+  return 0.0;
+#endif
   vec2 muv = vec2((xz.x - (${FIELD_MIN_X.toFixed(1)})) / ${FIELD_W.toFixed(1)},
                   (xz.y - (${FIELD_MIN_Z.toFixed(1)})) / ${FIELD_L.toFixed(1)});
   return smoothstep(0.32, 0.62, texture2D(uMask, muv).r);
@@ -92,6 +98,9 @@ float waterAt(vec2 xz) {
 
 void main() {
   vec4 m = texture2D(uMask, vMuv);
+#ifdef NO_MASK
+  m = vec4(0.0);
+#endif
   float water = smoothstep(0.32, 0.62, m.r);
   float deepWater = smoothstep(0.55, 0.95, m.r);
 
@@ -165,6 +174,8 @@ void main() {
 
 export class IceField {
   mesh: THREE.Mesh;
+  apron!: THREE.Mesh;
+  private apronMaterial!: THREE.ShaderMaterial;
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
   private texture: THREE.CanvasTexture;
@@ -215,7 +226,13 @@ export class IceField {
     // sits a touch lower, mask clamps to its uncarved border outside the field
     const apronGeo = new THREE.PlaneGeometry(2300, 2300, 96, 96);
     apronGeo.rotateX(-Math.PI / 2);
-    const apron = new THREE.Mesh(apronGeo, this.material);
+    // the apron never carries lane data: a NO_MASK clone skips the mask
+    // lookup entirely (sampling the mask on the coarse far grid produced
+    // rasterization garbage on some GPUs)
+    this.apronMaterial = this.material.clone();
+    this.apronMaterial.defines = { NO_MASK: '' };
+    const apron = new THREE.Mesh(apronGeo, this.apronMaterial);
+    this.apron = apron;
     apron.position.set(FIELD_MIN_X + FIELD_W / 2, -0.22, FIELD_MIN_Z + FIELD_L / 2);
     apron.frustumCulled = false;
     scene.add(apron);
@@ -334,6 +351,7 @@ export class IceField {
 
   update(time: number): void {
     this.material.uniforms.uTime.value = time;
+    this.apronMaterial.uniforms.uTime.value = time;
     if (this.dirty) {
       this.texture.needsUpdate = true;
       this.dirty = false;
@@ -344,6 +362,7 @@ export class IceField {
     this.clearMask();
     this.crackRng = mulberry32(seed * 7 + 5);
     this.material.uniforms.uSeed.value = seed * 0.137;
+    this.apronMaterial.uniforms.uSeed.value = seed * 0.137;
     this.dirty = true;
   }
 
