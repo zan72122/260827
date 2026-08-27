@@ -256,8 +256,8 @@ function render(now: number): void {
     dust: journey.fieldOpen * 0.7 * smooth(1.0, 1.9, journey.fieldMM),
     grit: reducedMotion ? 0 : transition.grit,
     rot: tissueRot,
-    width: viewW,
-    height: viewH,
+    width: viewW * renderer.getPixelRatio(),
+    height: viewH * renderer.getPixelRatio(),
   });
 
   audio.update(journey.totalMag, progressRate, journey.fieldOpen);
