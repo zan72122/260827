@@ -359,7 +359,7 @@ export class Game {
       }
       case 'reveal': {
         // above and ahead, looking down into the open snow bin
-        return { pos: local(1.7, 4.1, 5.8), look: local(0, 0.95, 2.95), fov: 46 };
+        return { pos: local(0.9, 5.6, 4.9), look: local(0, 0.9, 2.9), fov: 46 };
       }
     }
     return this._inputView();
@@ -393,8 +393,8 @@ export class Game {
     } else if (t < 6.5) {
       // the conditioner drops onto the ice
       return seg(4.3, 6.5,
-        new THREE.Vector3(4.4, 2.4, 19.2), new THREE.Vector3(3.6, 1.8, 18.1),
-        new THREE.Vector3(-0.5, 0.4, 13.5), new THREE.Vector3(-0.5, 0.2, 13.5));
+        new THREE.Vector3(4.3, 2.2, 16.9), new THREE.Vector3(3.5, 1.7, 16.3),
+        new THREE.Vector3(-0.6, 0.35, 13.7), new THREE.Vector3(-0.6, 0.15, 13.7));
     }
     // pull up over the vehicle, facing down the rink
     const iv = this._inputView();
