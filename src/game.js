@@ -635,7 +635,7 @@ export class Game {
       vehicle: () => ({
         x: this.veh.x, z: this.veh.z, heading: this.veh.heading,
         speed: this.veh.speed, steer: this.veh.steer,
-        conditioner: this.veh.conditionerT, driving: this.veh.driving,
+        conditioner: this.veh.conditionerT, driving: this.veh.driving, lid: this.veh.lidT,
         progress: this.veh.progress, snowFill: this.veh.snowFill
       }),
       conditionerEdges: () => this.veh.conditionerEdges(),
