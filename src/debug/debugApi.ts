@@ -20,6 +20,7 @@ export interface DebugHooks {
   capturePoints: Array<{ id: string; p: number; label: string }>;
   ensureLevelsFor: (fieldMM: number) => void;
   residentBytes: () => number;
+  building: () => boolean;
   residentLevels: () => number[];
   anchor: () => { x: number; y: number };
   resolutionMM: (na: number) => number;
@@ -87,6 +88,7 @@ export function installDebugApi(hooks: DebugHooks): DebugSurface {
         residentLevels: hooks.residentLevels(),
         residentMB: +(hooks.residentBytes() / (1024 * 1024)).toFixed(1),
         tier: hooks.getTier(),
+        building: hooks.building(),
         fps: Math.round(latest?.fps ?? 0),
       };
     },

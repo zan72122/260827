@@ -20,11 +20,6 @@ export const STAGE_TOP_Y = 0;
 export const SLIDE_TOP_Y = STAGE_TOP_Y + SLIDE.thicknessMM;
 export const COVERSLIP_TOP_Y = SLIDE_TOP_Y + COVERSLIP.thicknessMM;
 
-/** Slide-frame (x, y) millimetres to world position on the slide surface. */
-export function slideToWorld(x: number, y: number, height = SLIDE_TOP_Y): THREE.Vector3 {
-  return new THREE.Vector3(x, height, -y);
-}
-
 const METAL = 0x2b2f34;
 const METAL_LIGHT = 0x51565d;
 

@@ -31,7 +31,7 @@ export class FocusController {
     const obj = OBJECTIVES[Math.max(0, Math.min(objectiveIndex, OBJECTIVES.length - 1))];
     // Racking by a few depths of field is what a hand on the fine focus actually does.
     const dof = 0.00055 / (obj.na * obj.na);
-    this.rackAmp = dof * (this.reduced ? 1.4 : 2.6);
+    this.rackAmp = dof * (this.reduced ? 1.8 : 3.4);
     this.rackT = 0;
   }
 

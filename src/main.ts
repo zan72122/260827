@@ -243,7 +243,7 @@ function render(now: number): void {
     anchorY: 1 - orientationCamera.anchor.y,
     circleR: fieldRadius(journey),
     fieldOpen: journey.fieldOpen,
-    surround: smooth(0.17, 0.275, progress),
+    surround: smooth(0.235, 0.305, progress),
     focusBlurMM: focus.blurMM(na),
     na,
     lamp: 1,
@@ -251,7 +251,9 @@ function render(now: number): void {
     // the field of its own accord once the objective is tighter than the circle the
     // pathologist drew. Nothing has to fade it out.
     ink: smooth(6.0, 8.5, journey.fieldMM) * journey.fieldOpen,
-    dust: journey.fieldOpen * 0.7,
+    // Dust reads at low power and is a blurred nothing by 20x, where the pyramid
+    // needs the GPU time more.
+    dust: journey.fieldOpen * 0.7 * smooth(1.0, 1.9, journey.fieldMM),
     grit: reducedMotion ? 0 : transition.grit,
     rot: tissueRot,
     width: viewW,
@@ -383,6 +385,7 @@ const debug = installDebugApi({
     pyramid.generateNow(Math.min(Math.floor(lod) + 1, pyramid.levelCount - 1));
   },
   residentBytes: () => pyramid.residentBytes(),
+  building: () => pyramid.building,
   residentLevels: () => pyramid.residentLevels(),
   anchor: () => orientationCamera.anchor,
   resolutionMM: (na) => resolutionMM(na),

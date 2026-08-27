@@ -148,6 +148,7 @@ export const CAPTURE_POINTS: Array<{ id: string; p: number; label: string }> = [
   { id: 'approach', p: 0.14, label: 'just before the objective' },
   { id: 'crossing', p: 0.23, label: 'crossing into the circular field' },
   { id: 'obj4x', p: 0.34, label: '4x' },
+  { id: 'rack', p: 0.468, label: 'objective change, focus settling' },
   { id: 'obj10x', p: 0.54, label: '10x' },
   { id: 'obj20x', p: 0.71, label: '20x' },
   { id: 'obj40x', p: 0.86, label: '40x' },

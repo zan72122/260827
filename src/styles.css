@@ -67,7 +67,7 @@ body {
   height: 52px;
   border-radius: 50%;
   border: none;
-  background: rgba(14, 17, 21, 0.34);
+  background: rgba(126, 138, 152, 0.16);
   color: var(--ui-dim);
   display: grid;
   place-items: center;

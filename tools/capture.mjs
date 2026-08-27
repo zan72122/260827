@@ -80,7 +80,16 @@ for (const name of deviceNames) {
   for (const pt of points) {
     await page.evaluate((p) => window.__zoom.setProgress(p, true), pt.p);
     await page.evaluate(() => window.__zoom.waitReady(6));
-    await page.waitForTimeout(650);
+    if (pt.id === 'rack') {
+      // Photograph this one while the fine focus is still settling. Park below the
+      // 10x detent first so the jump actually turns the nosepiece.
+      await page.evaluate(() => window.__zoom.setProgress(0.40, true));
+      await page.waitForTimeout(500);
+      await page.evaluate(() => window.__zoom.setProgress(0.468, true));
+      await page.waitForTimeout(110);
+    } else {
+      await page.waitForTimeout(650);
+    }
     const state = await page.evaluate(() => ({
       state: window.__zoom.getState(),
       landmark: window.__zoom.landmarkScreen(),

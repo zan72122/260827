@@ -120,7 +120,7 @@ export function follicleAxisTangent(s: number): { x: number; y: number } {
 /** The point every magnification stage keeps at the same place on screen. */
 export const HERO_TISSUE = follicleAxisPoint(HERO_S);
 export const HERO_SLIDE = tissueToSlide(HERO_TISSUE.x, HERO_TISSUE.y);
-/** Screen-space "up" of the follicle's long axis, used to keep orientation fixed. */
+/** Direction of the follicular axis at the anchor; the section's own "up". */
 export const HERO_AXIS = follicleAxisTangent(HERO_S);
 
 /**

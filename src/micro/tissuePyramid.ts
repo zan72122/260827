@@ -124,6 +124,11 @@ export class MultiresolutionTissuePyramid {
     return this.levels.length;
   }
 
+  /** True while any level still has strips left to build. */
+  get building(): boolean {
+    return this.queue.length > 0;
+  }
+
   /** True once the level's texture is fully built. */
   isReady(index: number): boolean {
     return this.levels[index]?.ready ?? false;

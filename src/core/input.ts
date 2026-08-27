@@ -156,12 +156,17 @@ export class InputController {
       this.axisY /= n;
     }
 
-    // Diagonal correction: a stroke held at an angle should cover the same ground as
-    // a vertical one of the same length, but a nearly horizontal wipe must not.
+    // Diagonal correction has two halves. A stroke held at an angle should cover the
+    // same ground as a vertical one of the same length — but a child wiping sideways
+    // always drifts a few pixels upward, and that drift must not drive the dive at
+    // all, let alone be amplified. So the boost only switches on once the stroke is
+    // genuinely off-horizontal, and below that the vertical component is gated out.
     const cosTheta = Math.abs(this.axisY);
-    const correction = Math.min(1 / Math.max(cosTheta, 0.62), 1.62);
+    const gate = smoothstep(0.14, 0.38, cosTheta);
+    const boost = Math.min(1 / Math.max(cosTheta, 0.62), 1.62);
+    const correction = gate * (1 + (boost - 1) * smoothstep(0.3, 0.58, cosTheta));
 
-    const dp = ((-dy * correction) / this.travelPx()) as number;
+    const dp = (-dy * correction) / this.travelPx();
     this.target = clamp01(this.target + dp);
     this.resetIdle();
     this.opts.onProgress(this.target);
@@ -219,6 +224,11 @@ export class InputController {
       this.opts.onProgress(this.target);
     }
   };
+}
+
+function smoothstep(a: number, b: number, x: number): number {
+  const t = Math.max(0, Math.min(1, (x - a) / (b - a)));
+  return t * t * (3 - 2 * t);
 }
 
 function clamp01(v: number): number {

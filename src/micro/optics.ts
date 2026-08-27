@@ -79,8 +79,6 @@ export const OBJECTIVES: Objective[] = [
   },
 ];
 
-export const OBJECTIVE_BY_ID = Object.fromEntries(OBJECTIVES.map((o) => [o.id, o]));
-
 /** Field diameter at the specimen = field number / magnification. */
 export function fieldOfViewMM(mag: number): number {
   return FIELD_NUMBER / mag;

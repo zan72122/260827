@@ -307,8 +307,8 @@ vec4 paintNuclei(Nuc n, float w, float focusZ, float na, float stainH) {
 
       // Nuclei are 6-8 um spheres cut by a 4 um section: each sits at its own depth,
       // so at high NA some are crisp and their neighbours are soft.
-      float z = (hash11(dot(cell, vec2(12.79, 7.31)) + n.seed) - 0.5) * SECTION_H * 1.7;
-      float wz = w + abs(z - focusZ) * na * 0.85;
+      float z = (hash11(dot(cell, vec2(12.79, 7.31)) + n.seed) - 0.5) * SECTION_H * 2.4;
+      float wz = w + abs(z - focusZ) * na * 1.05;
 
       float a1 = cov(d, wz);
       if (a1 <= bestA) continue;
@@ -320,10 +320,13 @@ vec4 paintNuclei(Nuc n, float w, float focusZ, float na, float stainH) {
       // Some nuclei are open and vesicular, others coarsely clumped: that spread is
       // most of what stops a field of nuclei looking like stamped clones.
       float clump = 0.35 + 1.15 * hash11(dot(cell, vec2(3.1, 7.7)) + n.seed);
-      float chrom = fbm3(n.uv * (1.0 / max(rs * mix(0.62, 0.26, clamp(clump, 0.0, 1.0)), 1e-5))
+      // Coarse enough to actually be seen: clumped heterochromatin is a few hundred
+      // nanometres to a micron across, not a fine dither.
+      float chrom = fbm3(n.uv * (1.0 / max(rs * mix(0.95, 0.40, clamp(clump, 0.0, 1.0)), 1e-5))
                          + cell * 13.0);
-      float dens = n.tone * (0.44 + 0.92 * chrom * clump) * (0.72 + 0.56 * h.y);
-      vec3 cc = mix(C_HEMA_PALE, C_HEMA, clamp(dens, 0.0, 1.0));
+      float dens = n.tone * (0.34 + 1.10 * chrom * clump) * (0.66 + 0.68 * h.y);
+      vec3 cc = mix(mix(C_HEMA_PALE, C_CYTO_PALE, 0.30), C_HEMA * 0.88,
+                    clamp(dens, 0.0, 1.0));
       cc = mix(meanCol, cc, fine);
 
       // Nuclear membrane reads as a slightly denser rim.
@@ -331,10 +334,10 @@ vec4 paintNuclei(Nuc n, float w, float focusZ, float na, float stainH) {
       cc = mix(cc, C_HEMA * 0.86, rim * 0.42 * fine);
 
       // A nucleolus in the occasional nucleus, only once it is truly resolvable.
-      if (h.y > 0.62) {
+      if (h.y > 0.40) {
         vec2 no = (hash22(cell * 5.1 + 2.7) - 0.5) * rs * 0.7;
-        float dn = length(q - no) - rs * 0.20;
-        cc = mix(cc, C_HEMA * 0.72, cov(dn, wz) * 0.55 * legible(rs * 0.20, w));
+        float dn = length(q - no) - rs * (0.16 + 0.12 * h.x);
+        cc = mix(cc, C_HEMA * 0.66, cov(dn, wz) * 0.70 * legible(rs * 0.18, w));
       }
       bestC = cc;
     }
@@ -397,14 +400,21 @@ vec3 collagen(vec2 t, float ang, float coarse, float w, float stainE, out float 
   // Individual fibrils inside each bundle. These are 1-3 um across, so they exist
   // only in the levels whose texels are finer than that — which is exactly why the
   // dermis stops being a smooth wash somewhere around the 20x objective.
-  float fine = vnoise(vec2(p.x / (bw * 0.55), p.y / (bw * 0.22))) - 0.5;
-  float fibril = vnoise(vec2(p.x / (bw * 0.115), p.y / (bw * 0.052))) - 0.5;
-  float fibril2 = vnoise(vec2(p.x / (bw * 0.052), p.y / (bw * 0.026)) + 61.0) - 0.5;
+  // Collagen has structure at every scale from the fascicle down to the fibril, so
+  // the model needs a tier at every octave too. Leaving a gap between the bundle and
+  // the fibril made the dermis go soft in the middle of the dive and then snap back.
+  float sub = vnoise(vec2(p.x / (bw * 2.10), p.y / (bw * 0.62))) - 0.5;
+  float fine = vnoise(vec2(p.x / (bw * 0.90), p.y / (bw * 0.28))) - 0.5;
+  float fibre = vnoise(vec2(p.x / (bw * 0.38), p.y / (bw * 0.130)) + 29.0) - 0.5;
+  float fibril = vnoise(vec2(p.x / (bw * 0.155), p.y / (bw * 0.058))) - 0.5;
+  float fibril2 = vnoise(vec2(p.x / (bw * 0.062), p.y / (bw * 0.026)) + 61.0) - 0.5;
   float dens = clamp(
       bundle
-      + 0.24 * fine
-      + 0.30 * fibril * legible(bw * 0.11, w)
-      + 0.18 * fibril2 * legible(bw * 0.05, w), 0.0, 1.0);
+      + 0.16 * sub
+      + 0.16 * fine * legible(bw * 0.28, w)
+      + 0.17 * fibre * legible(bw * 0.13, w)
+      + 0.18 * fibril * legible(bw * 0.06, w)
+      + 0.10 * fibril2 * legible(bw * 0.03, w), 0.0, 1.0);
 
   // Contrast is deliberately modest: dermis is a soft pink field, not a marble slab.
   float amp = mix(0.62, 0.88, coarse);
@@ -789,6 +799,9 @@ void paintFollicle(vec2 t, float s, float r, float w, float focusZ, float na,
     float border = cov(edge - 0.0016, max(w, 0.0004));
     // Glycogen-rich clear cells: very pale cytoplasm with crisp cell outlines.
     vec3 c = mix(C_CYTO_PALE, C_CYTO_EPI, 0.22 + 0.38 * rnd);
+    // Glycogen-rich clear cells are pale but granular, never a flat fill.
+    float gly = 0.6 * vnoise(vec2(s, r) * 1150.0 + cid * 5.0) + 0.4 * vnoise(vec2(s, r) * 2600.0);
+    c = mix(c, mix(c, C_EOSIN_PALE, 0.75), (gly - 0.5) * 0.9 * legible(0.0011, w) + 0.5 * 0.0);
     c = mix(c, mix(C_EOSIN_MID, C_HEMA_PALE, 0.30), border * 0.42);
     c = bandMix(c, mix(C_CYTO_PALE, C_CYTO_EPI, 0.35), 0.0145, w);
     over(col, c, aORS);
@@ -859,7 +872,10 @@ void paintFollicle(vec2 t, float s, float r, float w, float focusZ, float na,
   }
 
   // ---- hair shaft: cortex plus a discontinuous medulla ----
-  float aShaft = cov(ar - shaftR, max(w, 0.0005)) * (1.0 - bulbW * 0.92);
+  // The cuticle steps the outline by roughly a micron every 8-9 um along the shaft.
+  float cutStep = 1.0 + 0.030 * (fract(s / 0.0085 + 0.35 * vnoise(vec2(s * 60.0, 5.0))) - 0.5)
+                       * legible(0.0016, w);
+  float aShaft = cov(ar - shaftR * cutStep, max(w, 0.0005)) * (1.0 - bulbW * 0.92);
   if (aShaft > 0.003) {
     // Longitudinal melanin striae in the cortex; the shaft is never a flat brown bar.
     float striae = 0.6 * vnoise(vec2(s * 190.0, r * 900.0)) + 0.4 * vnoise(vec2(s * 420.0, r * 2100.0));
@@ -875,11 +891,17 @@ void paintFollicle(vec2 t, float s, float r, float w, float focusZ, float na,
     float medGrain = vnoise(vec2(s * 700.0, r * 900.0));
     c = mix(c, mix(C_HAIR_DARK * 0.72, C_KERATIN_D, 0.22 + 0.45 * medGrain), med * 0.72);
 
-    // Cuticle: overlapping keratin scales, a thin bright rim with a stepped edge.
-    float scale = 0.5 + 0.5 * sin(s * 240.0 + 1.6 * vnoise(vec2(s * 90.0, 5.0)));
-    float cut = smoothstep(shaftR * 0.80, shaftR * 0.99, ar);
-    c = mix(c, mix(C_KERATIN_D, C_HAIR, 0.30 + 0.34 * scale),
-            cut * 0.55 * legible(0.0022, w));
+    // Cortical cells: long, thin, running with the shaft.
+    float cortCell = vnoise(vec2(s / 0.048, r / 0.0042) + 7.0);
+    c = mix(c, c * (0.86 + 0.28 * cortCell), legible(0.0042, w) * 0.55);
+
+    // Cuticle: overlapping keratin scales. They are drawn as a thin bright rim AND
+    // as a step in the shaft's own outline, because a hair edge under a 40x is never
+    // a ruled line.
+    float scale = fract(s / 0.0085 + 0.35 * vnoise(vec2(s * 60.0, 5.0)));
+    float cut = smoothstep(shaftR * 0.78, shaftR * 1.0, ar);
+    c = mix(c, mix(C_KERATIN_D, C_HAIR, 0.22 + 0.42 * scale),
+            cut * 0.60 * legible(0.0030, w));
     over(col, c, aShaft);
     Nuc n = nucNone();
     claim(nuc, n, aShaft * 1.05);   // fully keratinised: no nuclei
@@ -964,11 +986,21 @@ vec3 heTissue(vec2 t, float texel, float optRes, float focusZ, float na) {
   // Two scales of orientation. One alone develops saddle points that read as wood
   // knots; the finer term keeps the weave locally coherent but globally irregular.
   float ang = 0.085 * (fbm3(t * 0.75) - 0.5) * 6.2831853
-            + 0.055 * (fbm3(t * 3.30 + 51.0) - 0.5) * 6.2831853;
+            + 0.062 * (fbm3(t * 3.30 + 51.0) - 0.5) * 6.2831853
+            + 0.020 * (vnoise(t * 12.0 + 83.0) - 0.5) * 6.2831853;
   vec2 tanF = normalize(folAxisDir() + folAxisNrm() * (2.0 * FOL_CURVE * s));
   ang = mix(ang, atan(tanF.y, tanF.x), perifol * 0.45);
+  // Structures sit at their own depth inside the 4 um section. At 4x the depth of
+  // field is 70 um and all of it is sharp at once; at 40x it is 1.5 um, so parts of
+  // the same field are softer than others. That difference is most of what makes a
+  // high-power frame feel like glass rather than a print.
+  // Varying over tens of microns, the way an imperfectly flat section really does,
+  // rather than pixel by pixel.
+  float zField = (fbm3(t * 78.0) - 0.5) * SECTION_H * 1.9;
+  float wDepth = w + abs(zField - focusZ) * na * 0.75;
+
   float bundle;
-  col = collagen(t, ang, coarse, w, stainE, bundle);
+  col = collagen(t, ang, coarse, wDepth, stainE, bundle);
 
   Nuc nFib = nucNone();
   // Fibroblasts: sparse, spindled, lying along the collagen.

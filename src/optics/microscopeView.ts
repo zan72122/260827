@@ -130,6 +130,9 @@ void main() {
   }
 
   // --- dust and mounting-medium specks on top of the coverslip ---
+  // Specks sit 0.17 mm above the section, so at high NA they blur into an invisible
+  // wash. Below that threshold the nine-cell search is pure cost, so it is skipped:
+  // this is the most expensive thing in the compositor and it runs per pixel.
   if (uDust > 0.001) {
     float dustBlur = max(0.17 * uNA, mmPerPx);
     vec2 g = floor(t / 0.85);
@@ -147,8 +150,14 @@ void main() {
     col = mix(col, vec3(0.42, 0.42, 0.45), acc * 0.14 * uDust);
   }
 
+  // Veiling glare from out-of-focus planes: a defocused field is flatter, not just
+  // blurrier, and that loss of contrast is what reads as "it needs focusing".
+  float veil = clamp(uFocusBlurMM / max(mmPerPx * 5.0, 1e-6), 0.0, 1.0);
+  col = mix(col, mix(col, vec3(0.965, 0.945, 0.950), 0.55), veil * 0.42);
+
   // --- brightfield illumination: a Kohler-even field with a gentle cos^4 falloff ---
-  float vign = 1.0 - 0.105 * pow(clamp(rr / max(uCircleR, 0.001), 0.0, 1.4), 2.4);
+  float rn = clamp(rr / max(uCircleR, 0.001), 0.0, 1.4);
+  float vign = 1.0 - 0.105 * pow(rn, 2.4) - 0.16 * smoothstep(0.90, 1.0, rn);
   col *= mix(1.0, vign, uFieldOpen);
   col *= uLamp;
   // Halogen light is faintly warm; the effect is small and never tinted for style.

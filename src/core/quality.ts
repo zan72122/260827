@@ -30,7 +30,7 @@ const TABLE: Record<QualityTier, Omit<QualitySettings, 'tier'>> = {
     levelSamples: 1,
     maxResidentLevels: 3,
     maxPixelRatio: 1.5,
-    generationStrips: 4,
+    generationStrips: 6,
     richMicroscope: false,
   },
   medium: {
@@ -38,7 +38,7 @@ const TABLE: Record<QualityTier, Omit<QualitySettings, 'tier'>> = {
     levelSamples: 2,
     maxResidentLevels: 4,
     maxPixelRatio: 2.0,
-    generationStrips: 4,
+    generationStrips: 6,
     richMicroscope: true,
   },
   high: {
@@ -46,7 +46,7 @@ const TABLE: Record<QualityTier, Omit<QualitySettings, 'tier'>> = {
     levelSamples: 2,
     maxResidentLevels: 5,
     maxPixelRatio: 2.6,
-    generationStrips: 3,
+    generationStrips: 8,
     richMicroscope: true,
   },
 };
