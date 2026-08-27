@@ -794,6 +794,8 @@ export class Game {
       routeLength: this.route?.length ?? 0,
       stations: this.route?.stations.length ?? 0,
       cableGap: this.cable.continuityGap(),
+      gapSeabed: this.cable.gapSeabed,
+      gapStern: this.cable.gapStern,
       camY: this.rig.position.y,
       maxFrameMs: this.maxFrameMs,
       avgFrameMs: this.frameMs.length

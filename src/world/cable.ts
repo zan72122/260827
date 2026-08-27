@@ -156,6 +156,8 @@ export class CableSystem {
   private touchdownBase = new THREE.Vector3();
   touchdownS = 0;
   private lastGap = 0;
+  gapSeabed = 0;
+  gapStern = 0;
 
   constructor() {
     for (let i = 0; i < this.CAT_RINGS; i++) this.catCenters.push(new THREE.Vector3());
@@ -241,7 +243,10 @@ export class CableSystem {
     if (!this.route) return;
     this.touchdownS = s;
     const st = this.route.stations;
-    const idx = this.route.stationIndexAt(s);
+    // At full completion the last segment (to the far anchor) must draw too.
+    const idx = s >= this.route.length - 1e-3
+      ? st.length - 1
+      : this.route.stationIndexAt(s);
 
     (this.laid.geometry as THREE.BufferGeometry).setDrawRange(0, Math.max(0, idx) * RADIAL * 6);
 
@@ -298,18 +303,21 @@ export class CableSystem {
         h00 * P0.y + h10 * m0.y + h01 * P1.y + h11 * m1.y,
         h00 * P0.z + h10 * m0.z + h01 * P1.z + h11 * m1.z
       );
-      // Keep the span from tunnelling under the seabed mid-water.
-      const ground = this.route.seabed.height(c.x, c.z) + CABLE_RADIUS * 0.9;
-      if (c.y < ground) c.y = ground;
+      // Keep the span from tunnelling under the seabed mid-water - but never
+      // detach the last rings from the stern attachment point over shallows.
+      if (i < this.CAT_RINGS - 3) {
+        const ground = this.route.seabed.height(c.x, c.z) + CABLE_RADIUS * 0.9;
+        if (c.y < ground) c.y = ground;
+      }
     }
     writeTube(this.catCenters, CABLE_RADIUS, this.catPositions, this.catNormals);
     const geo = this.catenary.geometry as THREE.BufferGeometry;
     (geo.getAttribute('position') as THREE.BufferAttribute).needsUpdate = true;
     (geo.getAttribute('normal') as THREE.BufferAttribute).needsUpdate = true;
 
-    this.lastGap =
-      this.catCenters[0].distanceTo(this.touchdownBase) +
-      this.catCenters[this.CAT_RINGS - 1].distanceTo(sternWorld);
+    this.gapSeabed = this.catCenters[0].distanceTo(this.touchdownBase);
+    this.gapStern = this.catCenters[this.CAT_RINGS - 1].distanceTo(sternWorld);
+    this.lastGap = this.gapSeabed + this.gapStern;
   }
 
   hideCatenary(): void {
