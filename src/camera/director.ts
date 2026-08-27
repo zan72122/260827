@@ -188,7 +188,7 @@ export class CameraDirector {
         // 上空から: 最初の一筆と完成平面形状の比較
         const c = this.pathCenter;
         const h = (P ? 3.6 : 3.0) * this.pathRadius + 4.2;
-        g.pos.set(c.x, h, c.z + 0.6);
+        g.pos.set(c.x, h, c.z + 0.22);
         g.look.set(c.x, 0.2, c.z);
         g.fov = P ? 50 : 44;
         g.stiffness = 1.1;
