@@ -60,9 +60,9 @@ export class InputManager {
   private up = (e: PointerEvent): void => {
     if (e.pointerId !== this.activeId) return;
     this.activeId = null;
-    // generous for small fingers: slow, slightly wobbly presses still count
-    const dt = performance.now() - this.startT;
-    const wasTap = this.moved < 0.05 && dt < 900;
+    // generous for small fingers: a press of any duration counts as a tap
+    // as long as the finger barely moved (no long-press semantics exist)
+    const wasTap = this.moved < 0.05;
     this.handler?.onUp(wasTap, e.clientX / window.innerWidth, e.clientY / window.innerHeight);
     e.preventDefault();
   };
