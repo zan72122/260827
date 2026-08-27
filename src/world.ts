@@ -21,8 +21,8 @@ export const LAYOUT = {
   roomCeilY: 2.75,
   standX: 2.1,              // where Santa stands beside the chimney on the roof
   standZ: -1.62,
-  sledX: 0.42,              // parked near the ridge, screen-left of the chimney
-  sledZ: 0.95,
+  sledX: -0.6,              // parked on the west slope, clear of the chimney shot
+  sledZ: 1.1,
   stockingX: 0.78,
   stockingTopY: 1.22,
   stockingZ: -1.06,

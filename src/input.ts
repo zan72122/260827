@@ -60,8 +60,9 @@ export class InputManager {
   private up = (e: PointerEvent): void => {
     if (e.pointerId !== this.activeId) return;
     this.activeId = null;
+    // generous for small fingers: slow, slightly wobbly presses still count
     const dt = performance.now() - this.startT;
-    const wasTap = this.moved < 0.035 && dt < 450;
+    const wasTap = this.moved < 0.05 && dt < 900;
     this.handler?.onUp(wasTap, e.clientX / window.innerWidth, e.clientY / window.innerHeight);
     e.preventDefault();
   };

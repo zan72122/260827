@@ -59,6 +59,8 @@ export class Game {
   private vel = 0;
   private dragAccum = 0;
   private dragXAccum = 0;
+  private scrubRate = 0;       // event-time-based vertical drag velocity (screens/s)
+  private lastDragT = 0;
   private touching = false;
   private lean = 0;
   private lastPaintP = -1;
@@ -96,6 +98,8 @@ export class Game {
   private yShaftBot = 0.98;
 
   fps = 60;
+  debugMinVel = 0; // dev probe: most negative scrub velocity seen
+  private upScrub = 0;
 
   constructor(seed: number, input: InputManager, aspect: number) {
     this.seed = seed;
@@ -148,7 +152,7 @@ export class Game {
 
     this.sled = new Sled(seed);
     const slopeAngle = Math.atan2(LAYOUT.ridgeY - LAYOUT.eaveY, LAYOUT.eaveX);
-    this.sled.group.rotation.z = -slopeAngle;
+    this.sled.group.rotation.z = slopeAngle * (LAYOUT.sledX >= 0 ? -1 : 1);
     this.sled.group.position.set(LAYOUT.sledX, roofY(LAYOUT.sledX) + 0.2, LAYOUT.sledZ);
     this.scene.add(this.sled.group);
 
@@ -309,6 +313,7 @@ export class Game {
   private startDescend(free: boolean): void {
     this.phase = free ? 'free' : 'descend';
     this.p = 0.02;
+    this.upScrub = 0;
     this.vel = 0;
     this.lean = 0;
     this.lastPaintP = -1;
@@ -664,6 +669,8 @@ export class Game {
         this.touching = true;
         this.dragAccum = 0;
         this.dragXAccum = 0;
+        this.scrubRate = 0;
+        this.lastDragT = performance.now();
         this.idleT = 0;
       },
       onDrag: (dx, dy, x, y) => {
@@ -676,7 +683,11 @@ export class Game {
         } else if (this.phase === 'entry') {
           this.entryE = clamp01(this.entryE + Math.max(0, dy) * 2.4);
         } else if (this.phase === 'descend' || this.phase === 'free') {
-          this.dragAccum += dy;
+          // velocity from event timestamps — robust across frame rates
+          const now = performance.now();
+          const dtE = clamp((now - this.lastDragT) / 1000, 0.004, 0.1);
+          this.lastDragT = now;
+          this.scrubRate = lerp(this.scrubRate, dy / dtE, 0.45);
           this.dragXAccum += dx;
         } else if (this.phase === 'nose') {
           this.dragAccum += dy;
@@ -964,10 +975,12 @@ export class Game {
       }
       case 'descend':
       case 'free': {
-        // scrub velocity from this frame's accumulated drag
-        const target = this.touching ? (this.dragAccum / Math.max(dt, 1 / 240)) * 0.26 : 0;
-        this.dragAccum = 0;
-        this.vel = damp(this.vel, clamp(target, -0.85, 0.85), this.touching ? 11 : 7, dt);
+        // scrub velocity from the event-based drag rate; a stopped finger
+        // decays the rate quickly so Santa halts where the child holds
+        const target = this.touching ? clamp(this.scrubRate * 0.3, -0.9, 0.9) : 0;
+        this.scrubRate *= Math.exp(-dt * 6);
+        this.vel = damp(this.vel, target, this.touching ? 10 : 7, dt);
+        this.debugMinVel = Math.min(this.debugMinVel, this.vel);
         const prevP = this.p;
         this.p = this.p + this.vel * dt;
 
@@ -996,7 +1009,9 @@ export class Game {
             this.vel = Math.max(this.vel, 0);
           }
           // scrubbing back up after real progress = replaying the move
-          if (!this.retriedThisRun && prevP > 0.25 && this.vel < -0.15) {
+          // (displacement-based so it works at any frame/event rate)
+          if (prevP > 0.25) this.upScrub += Math.max(0, prevP - this.p);
+          if (!this.retriedThisRun && this.upScrub > 0.07) {
             this.retriedThisRun = true;
             metrics.retry();
           }

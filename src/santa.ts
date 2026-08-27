@@ -416,10 +416,10 @@ export class Santa {
     const eyeGeo = new THREE.SphereGeometry(0.018, 10, 8);
     const eyeMat = new THREE.MeshStandardMaterial({ color: 0x2a2016, roughness: 0.25 });
     this.eyeL = new THREE.Mesh(eyeGeo, eyeMat);
-    this.eyeL.position.set(0.056, 0.045, 0.138);
+    this.eyeL.position.set(0.056, 0.048, 0.147);
     head.add(this.eyeL);
     this.eyeR = new THREE.Mesh(eyeGeo, eyeMat);
-    this.eyeR.position.set(-0.056, 0.045, 0.138);
+    this.eyeR.position.set(-0.056, 0.048, 0.147);
     head.add(this.eyeR);
 
     // brows
@@ -447,11 +447,15 @@ export class Santa {
     }
 
     // hat: fur brim + bent cone + pompom
-    const brim = cast(new THREE.Mesh(new THREE.TorusGeometry(0.142, 0.042, 10, 22), furMat));
+    const brim = cast(new THREE.Mesh(new THREE.TorusGeometry(0.15, 0.045, 10, 22), furMat));
     displaceVertices(brim.geometry, 0.05, 13, seed + 4);
     brim.rotation.x = Math.PI / 2 + 0.05;
-    brim.position.set(0, 0.128, 0.0);
+    brim.position.set(0, 0.122, 0.0);
     head.add(brim);
+    // red crown filling the space above the brim so no scalp peeks out
+    const crown = cast(new THREE.Mesh(new THREE.SphereGeometry(0.145, 16, 10, 0, Math.PI * 2, 0, Math.PI * 0.52), coatMat));
+    crown.position.set(0, 0.035, 0);
+    head.add(crown);
     const hatMat = coatMat;
     let prev = new THREE.Vector3(0, 0.1, 0);
     const hatRoot = new THREE.Group();
