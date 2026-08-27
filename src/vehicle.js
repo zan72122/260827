@@ -507,7 +507,7 @@ export class Resurfacer {
 
     const ld = this._lidTarget - this.lidT;
     if (Math.abs(ld) > 0.001) this.lidT += Math.sign(ld) * Math.min(Math.abs(ld), dt / 1.4);
-    this.lid.rotation.x = this.lidT * 1.85;   // swings past vertical, clear of the opening
+    this.lid.rotation.x = this.lidT * 2.9;   // dump-door style: flips fully forward over the nose
 
     let done = false;
     if (this.driving && this.path) {

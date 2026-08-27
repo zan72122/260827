@@ -40,11 +40,14 @@ function makeScratchTexture() {
 
   // R channel: skate scratches — several direction families + curved arcs
   const families = [0.1, 0.6, 1.2, 1.9, 2.4, 2.9];
-  for (let i = 0; i < 2600; i++) {
+  for (let i = 0; i < 3000; i++) {
     const fam = families[(rnd() * families.length) | 0];
     const ang = fam + gauss() * 0.25;
-    const cx = 512 + gauss() * 430;
-    const cy = 512 + gauss() * 450;
+    // 60% clustered center traffic, 40% spread over the whole sheet so the
+    // band boundary stays readable out to the boards and rink ends
+    const uniform = rnd() < 0.4;
+    const cx = uniform ? 40 + rnd() * 944 : 512 + gauss() * 430;
+    const cy = uniform ? 40 + rnd() * 944 : 512 + gauss() * 450;
     const len = 30 + rnd() * 150;
     const a = 0.05 + rnd() * 0.13;
     g.strokeStyle = `rgba(${(a * 255) | 0},0,0,1)`;
@@ -70,7 +73,9 @@ function makeScratchTexture() {
 
   // G channel: snow powder speckle, denser where scratches cluster
   for (let i = 0; i < 5200; i++) {
-    const cx = 512 + gauss() * 420, cy = 512 + gauss() * 450;
+    const u2 = rnd() < 0.35;
+    const cx = u2 ? rnd() * 1024 : 512 + gauss() * 420;
+    const cy = u2 ? rnd() * 1024 : 512 + gauss() * 450;
     const a = 40 + rnd() * 150;
     g.fillStyle = `rgba(0,${a | 0},0,1)`;
     const s = 0.7 + rnd() * 1.8;
