@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#aebfcf" />
+  <title>こおりのふね</title>
+  <style>
+    html, body {
+      margin: 0; padding: 0; width: 100%; height: 100%;
+      overflow: hidden; background: #aebfcf;
+      -webkit-user-select: none; user-select: none;
+      -webkit-touch-callout: none;
+      overscroll-behavior: none;
+      position: fixed; inset: 0;
+    }
+    #app { position: fixed; inset: 0; touch-action: none; }
+    canvas { display: block; touch-action: none; }
+    .ui-btn {
+      position: fixed; bottom: calc(24px + env(safe-area-inset-bottom));
+      width: 76px; height: 76px; border-radius: 50%;
+      border: none; outline: none;
+      background: rgba(28, 42, 54, 0.72);
+      box-shadow: 0 4px 14px rgba(0,0,0,0.35), inset 0 0 0 2px rgba(255,255,255,0.5);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.5s ease, transform 0.15s ease;
+      transform: scale(0.9);
+      touch-action: manipulation;
+    }
+    .ui-btn.show { opacity: 1; pointer-events: auto; transform: scale(1); }
+    .ui-btn:active { transform: scale(0.92); }
+    .ui-btn svg { width: 42px; height: 42px; }
+    #btn-replay { left: calc(50% - 92px); }
+    #btn-newice { left: calc(50% + 16px); }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <button id="btn-replay" class="ui-btn" aria-label="もういちど">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 12a9 9 0 1 0 2.6-6.3" />
+      <polyline points="3 3.5 3 9 8.5 9" />
+    </svg>
+  </button>
+  <button id="btn-newice" class="ui-btn" aria-label="あたらしいこおり">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#dff1ff" stroke-width="1.9" stroke-linecap="round">
+      <line x1="12" y1="2.5" x2="12" y2="21.5" />
+      <line x1="3.8" y1="7" x2="20.2" y2="17" />
+      <line x1="3.8" y1="17" x2="20.2" y2="7" />
+      <path d="M12 5.5 L9.8 3.8 M12 5.5 L14.2 3.8 M12 18.5 L9.8 20.2 M12 18.5 L14.2 20.2" />
+      <path d="M5.9 8.3 L3.2 8.6 M5.9 8.3 L4.8 5.8 M18.1 15.7 L20.8 15.4 M18.1 15.7 L19.2 18.2" />
+      <path d="M5.9 15.7 L3.2 15.4 M5.9 15.7 L4.8 18.2 M18.1 8.3 L20.8 8.6 M18.1 8.3 L19.2 5.8" />
+    </svg>
+  </button>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
