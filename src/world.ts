@@ -205,7 +205,7 @@ export class World {
 
     // travelling flue lamp: reads Santa + brick while he is inside the shaft
     // (justified as sky light from the mouth blending into fire glow below)
-    this.descentLamp = new THREE.PointLight(0xc8d8ff, 0, 3.6, 1.5);
+    this.descentLamp = new THREE.PointLight(0xc8d8ff, 0, 4.6, 1.4);
     this.descentLamp.position.set(LAYOUT.chimneyX, 4, LAYOUT.chimneyZ + 0.6);
     g.add(this.descentLamp);
 
@@ -486,8 +486,8 @@ export class World {
     mk(inner * 2, wallT, cx, cz + inner + wallT / 2, brickFrontMat);       // south/front — fades
 
     // crown: ring of 4 slabs with a real opening
-    const crownMat = new THREE.MeshStandardMaterial({ color: 0x504a44, roughness: 0.85 });
-    const crownH = 0.1, crownOut = outer + 0.07;
+    const crownMat = new THREE.MeshStandardMaterial({ color: 0x6e675e, roughness: 0.75 });
+    const crownH = 0.09, crownOut = outer + 0.05;
     const crownY = topY + crownH / 2;
     const crown = [
       [crownOut * 2, crownOut - inner, cx, cz - (inner + (crownOut - inner) / 2)],
@@ -532,8 +532,8 @@ export class World {
     g.add(back);
 
     const innerBrick = brickTexture({
-      hue: v.brickHue, sat: v.brickSat * 0.7, light: v.brickLight * 0.62,
-      sootTop: 0.55, sootBottom: 0.75, seed: v.seed + 11
+      hue: v.brickHue, sat: v.brickSat * 0.7, light: v.brickLight * 0.78,
+      sootTop: 0.45, sootBottom: 0.6, seed: v.seed + 11
     });
     innerBrick.repeat.set(0.5, 3.2);
     const innerMat = new THREE.MeshStandardMaterial({ map: innerBrick, roughness: 0.94 });
