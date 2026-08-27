@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#7fa8c9" />
+  <title>しょうぼう みずまき くんれん</title>
+  <style>
+    html, body {
+      margin: 0; padding: 0; width: 100%; height: 100%;
+      overflow: hidden; background: #46586a;
+      touch-action: none;
+      -webkit-user-select: none; user-select: none;
+      -webkit-touch-callout: none;
+      overscroll-behavior: none;
+    }
+    #app { position: fixed; inset: 0; }
+    canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+    .overlay-btn {
+      position: absolute; border: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 50%; -webkit-tap-highlight-color: transparent;
+      touch-action: none;
+    }
+    /* start overlay: full-screen catcher with a big pulsing droplet button */
+    #start-overlay {
+      position: absolute; inset: 0; display: flex;
+      align-items: center; justify-content: center;
+      background: radial-gradient(ellipse at center, rgba(10,26,40,0.10), rgba(8,18,30,0.42));
+      touch-action: none;
+    }
+    #start-btn {
+      width: 34vmin; height: 34vmin; max-width: 220px; max-height: 220px;
+      background: radial-gradient(circle at 35% 30%, #6db4e8, #2569a8 70%, #17517f);
+      box-shadow: 0 10px 40px rgba(0,20,40,0.45), inset 0 2px 10px rgba(255,255,255,0.35);
+      animation: pulse 1.6s ease-in-out infinite;
+    }
+    #start-btn svg { width: 58%; height: 58%; }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.09); }
+    }
+    #replay-btn {
+      left: 50%; bottom: max(6vh, env(safe-area-inset-bottom, 0px));
+      transform: translateX(-50%);
+      width: 18vmin; height: 18vmin; max-width: 120px; max-height: 120px;
+      background: radial-gradient(circle at 35% 30%, #ffd76e, #e09422 72%, #ad6d10);
+      box-shadow: 0 8px 26px rgba(20,10,0,0.4), inset 0 2px 8px rgba(255,255,255,0.4);
+      display: none;
+      animation: pulse 1.8s ease-in-out infinite;
+    }
+    #replay-btn.visible { display: flex; }
+    #replay-btn svg { width: 60%; height: 60%; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <canvas id="game-canvas"></canvas>
+    <div id="start-overlay">
+      <button id="start-btn" class="overlay-btn" aria-label="start">
+        <svg viewBox="0 0 100 100" fill="none">
+          <path d="M50 12 C50 12 24 44 24 62 a26 26 0 0 0 52 0 C76 44 50 12 50 12 Z"
+                fill="#eaf6ff" stroke="#ffffff" stroke-width="3"/>
+          <path d="M38 62 a12 14 0 0 0 8 15" stroke="#9fd0f0" stroke-width="5"
+                stroke-linecap="round" fill="none"/>
+        </svg>
+      </button>
+    </div>
+    <button id="replay-btn" class="overlay-btn" aria-label="replay">
+      <svg viewBox="0 0 100 100" fill="none">
+        <path d="M50 18 a32 32 0 1 0 32 32" stroke="#fff8ea" stroke-width="9"
+              stroke-linecap="round" fill="none"/>
+        <path d="M50 4 L50 32 L72 18 Z" fill="#fff8ea"/>
+      </svg>
+    </button>
+  </div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>
