@@ -162,7 +162,7 @@ export class Game {
 
     this.gifts = buildGifts(seed);
     const homes: [number, number, number][] = [
-      [1.5, 0.09, -0.52], [1.82, 0.1, -0.38], [2.14, 0.13, -0.5]
+      [1.22, 0.09, -0.5], [1.56, 0.1, -0.34], [1.9, 0.13, -0.56]
     ];
     this.gifts.forEach((g, i) => {
       g.home.set(...homes[i]);
@@ -297,7 +297,7 @@ export class Game {
     this.phase = 'peek';
     this.tl = null;
     this.idleT = 0;
-    this.hintCooldown = 5.5;
+    this.hintCooldown = 4.5;
     this.entryE = 0;
     this.santa.setPose({ peek: 1, carry: 0.25 });
     this.santa.peekPhase = 1;
@@ -634,28 +634,44 @@ export class Game {
   // ------------------------------------------------------------------
   // entry choreography: continuous, scrubbed by the first downward swipe
   // ------------------------------------------------------------------
+  // Three readable beats, all in one camera move:
+  //  1) hop onto the rim (still fat — his width vs the mouth is the mystery)
+  //  2) THE SQUEEZE, above the mouth where it can be seen: shoulders, belly,
+  //     coat, fur trim and sack compress together while he wiggles in
+  //  3) the slide: the now-slim Santa sinks into the flue
   private applyEntry(e: number): void {
     const stand = V3(LAYOUT.standX, roofFeetY(LAYOUT.standX), LAYOUT.standZ);
-    const perch = V3(this.cx + 0.34, LAYOUT.chimneyTopY - 0.62, this.cz);
+    const perch = V3(this.cx + 0.3, LAYOUT.chimneyTopY - 0.55, this.cz);
+    const squeezed = V3(this.cx, LAYOUT.chimneyTopY - 0.85, this.cz);
     const inShaft = V3(this.cx, this.yShaftTop, this.cz);
-    if (e < 0.38) {
-      // climb onto the rim — a little hop, sack swung overhead
-      const t = easeInOut(e / 0.38);
+    if (e < 0.3) {
+      const t = easeInOut(e / 0.3);
       this.pos.lerpVectors(stand, perch, t);
       this.pos.y += Math.sin(t * Math.PI) * 0.42;
       this.yawTarget = lerp(-Math.PI / 2, 0, t); // turn to face the camera
       this.santa.setPose({ peek: 1 - t, rimSit: t, carry: (1 - t) * 0.3 });
       this.santa.squash = 0;
       this.santa.bagSquash = t * 0.15;
-    } else {
-      // the squeeze: shoulders, belly, coat, fur and sack compress together
-      const t = easeInOut((e - 0.38) / 0.62);
-      this.pos.lerpVectors(perch, inShaft, t);
+      this.santa.lean = 0;
+    } else if (e < 0.68) {
+      const t = (e - 0.3) / 0.38;
+      this.pos.lerpVectors(perch, squeezed, easeInOut(t));
       this.yawTarget = 0;
-      const sq = clamp01(t * 1.25);
-      this.santa.squash = sq;
-      this.santa.bagSquash = clamp01(t * 1.35);
-      this.santa.setPose({ rimSit: 1 - t, tuck: t });
+      this.santa.squash = easeInOut(t);
+      this.santa.bagSquash = clamp01(t * 1.2);
+      // legs straighten into the flue quickly so the boots never poke
+      // through the chimney's front wall
+      this.santa.setPose({ rimSit: Math.max(0, 1 - t * 2.2), tuck: Math.min(1, t * 2.2) });
+      // effortful wiggle while the body presses through the opening
+      this.santa.lean = Math.sin(t * 19) * 0.5 * Math.sin(Math.min(1, t * 1.4) * Math.PI);
+    } else {
+      const t = easeInOut((e - 0.68) / 0.32);
+      this.pos.lerpVectors(squeezed, inShaft, t);
+      this.yawTarget = 0;
+      this.santa.squash = 1;
+      this.santa.bagSquash = 1;
+      this.santa.setPose({ tuck: 1 });
+      this.santa.lean = Math.sin(t * 8) * 0.2 * (1 - t);
     }
   }
 
@@ -681,7 +697,7 @@ export class Game {
             this.startEntry();
           }
         } else if (this.phase === 'entry') {
-          this.entryE = clamp01(this.entryE + Math.max(0, dy) * 2.4);
+          this.entryE = clamp01(this.entryE + Math.max(0, dy) * 1.7);
         } else if (this.phase === 'descend' || this.phase === 'free') {
           // velocity from event timestamps — robust across frame rates
           const now = performance.now();
@@ -778,7 +794,7 @@ export class Game {
         return this.compareShot(portrait);
       case 'entry': {
         // continuous blend: compare shot → descent follow, one camera move
-        const b = easeInOut(remap(this.entryE, 0.3, 0.95, 0, 1));
+        const b = easeInOut(remap(this.entryE, 0.62, 0.98, 0, 1));
         const compare = this.compareShot(portrait);
         const follow = this.followShot(portrait, sy);
         return {
@@ -810,8 +826,8 @@ export class Game {
       case 'awaitUp': {
         this.santa.faceTarget.getWorldPosition(face);
         return portrait
-          ? { pos: face.clone().add(V3(0.14, 0.18, 1.1)), look: face.clone().add(V3(0, 0.03, 0)), fov: 38 }
-          : { pos: face.clone().add(V3(0.22, 0.16, 1.0)), look: face.clone().add(V3(0, 0.03, 0)), fov: 35 };
+          ? { pos: face.clone().add(V3(0.16, 0.2, 1.3)), look: face.clone().add(V3(0, 0.02, 0)), fov: 38 }
+          : { pos: face.clone().add(V3(0.24, 0.18, 1.2)), look: face.clone().add(V3(0, 0.02, 0)), fov: 35 };
       }
       case 'ascend':
         return this.followShot(portrait, sy);
@@ -826,7 +842,7 @@ export class Game {
       case 'freeEnter': {
         const t = this.tl ? this.tl.time : 0;
         if (t < 1.1) return this.compareShot(portrait);
-        const b = easeInOut(remap(this.entryE, 0.3, 0.95, 0, 1));
+        const b = easeInOut(remap(this.entryE, 0.62, 0.98, 0, 1));
         const compare = this.compareShot(portrait);
         const follow = this.followShot(portrait, sy);
         return {
@@ -844,7 +860,7 @@ export class Game {
   // the same frame, sled and sky readable behind
   private compareShot(portrait: boolean): Shot {
     return portrait
-      ? { pos: V3(1.35, 4.95, 5.7), look: V3(1.8, 4.55, -1.62), fov: 46 }
+      ? { pos: V3(1.35, 5.2, 5.7), look: V3(1.8, 4.5, -1.62), fov: 46 }
       : { pos: V3(0.5, 4.85, 4.6), look: V3(1.78, 4.45, -1.62), fov: 40 };
   }
 
@@ -931,13 +947,13 @@ export class Game {
         ((this.phase === 'entry' || this.phase === 'freeEnter') && this.entryE > 0.4) ||
         (this.phase === 'landing' && (this.tl?.time ?? 9) < 1.0);
       const onFace = this.phase === 'nose' || this.phase === 'awaitUp';
-      lamp.intensity = damp(lamp.intensity, inShaft ? 2.0 : onFace ? 1.1 : 0, 5, dt);
+      lamp.intensity = damp(lamp.intensity, inShaft ? 2.0 : onFace ? 2.0 : 0, 5, dt);
       if (inShaft) {
         lamp.position.set(this.cx + 0.05, this.pos.y + 1.35, this.cz + 0.5);
       } else if (onFace) {
         const face = new THREE.Vector3();
         this.santa.faceTarget.getWorldPosition(face);
-        lamp.position.copy(face).add(V3(0.35, 0.55, 0.9));
+        lamp.position.copy(face).add(V3(0.2, 0.35, 1.0));
       }
     }
 
@@ -1074,7 +1090,10 @@ export class Game {
     this.santa.descentSpeed = this.phase === 'descend' || this.phase === 'free' ? this.vel : 0;
     if (this.phase !== 'descend' && this.phase !== 'free') {
       this.santa.wobble = 0;
-      this.santa.lean *= Math.exp(-dt * 6);
+      // entry phases drive lean themselves (the squeeze wiggle)
+      if (this.phase !== 'entry' && this.phase !== 'freeEnter') {
+        this.santa.lean *= Math.exp(-dt * 6);
+      }
       audio.setSlide(0, dt);
     }
   }
@@ -1087,8 +1106,8 @@ export class Game {
         break;
       case 'entry':
       case 'freeEnter':
-        this.world.setFrontFade(this.entryE > 0.3 ? 0 : 1);
-        this.world.setHouseFade(this.entryE > 0.5 ? 0 : 1);
+        this.world.setFrontFade(this.entryE > 0.6 ? 0 : 1);
+        this.world.setHouseFade(this.entryE > 0.68 ? 0 : 1);
         break;
       case 'descend': case 'free': case 'ascend': case 'freeExit':
         this.world.setFrontFade(0);

@@ -6,6 +6,7 @@ import { Rng, makeRng, rr, lerp, clamp01 } from './util';
 import {
   brickTexture, snowTexture, woodTexture, wallpaperTexture, rugTexture
 } from './textures';
+import { softCircleTexture } from './particles';
 
 // ---- authored layout constants ----
 export const LAYOUT = {
@@ -195,11 +196,11 @@ export class World {
     this.hemi = new THREE.HemisphereLight(0x39476b, 0x10141f, 0.85);
     g.add(this.hemi);
 
-    this.fireLight = new THREE.PointLight(0xff8a30, 0, 8, 1.9);
+    this.fireLight = new THREE.PointLight(0xff8a30, 0, 10, 1.7);
     this.fireLight.position.set(LAYOUT.chimneyX, 0.55, LAYOUT.chimneyZ + 0.2);
     g.add(this.fireLight);
 
-    this.roomFill = new THREE.PointLight(0xffb46a, 0, 7, 1.6);
+    this.roomFill = new THREE.PointLight(0xffb46a, 0, 9, 1.5);
     this.roomFill.position.set(0.7, 1.7, 0.3);
     g.add(this.roomFill);
 
@@ -297,7 +298,8 @@ export class World {
       const geo = new THREE.BufferGeometry();
       geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
       this.snowPoints = new THREE.Points(geo, new THREE.PointsMaterial({
-        color: 0xdde6f5, size: 0.045, transparent: true, opacity: 0.75, depthWrite: false
+        color: 0xdde6f5, size: 0.05, transparent: true, opacity: 0.7, depthWrite: false,
+        map: softCircleTexture()
       }));
       g.add(this.snowPoints);
     }
@@ -307,14 +309,15 @@ export class World {
       const n = 6;
       const pos = new Float32Array(n * 3);
       for (let i = 0; i < n; i++) {
-        pos[i * 3] = LAYOUT.chimneyX + rr(rng, -0.16, 0.16);
+        pos[i * 3] = LAYOUT.chimneyX + rr(rng, -0.09, 0.09);
         pos[i * 3 + 1] = LAYOUT.chimneyTopY + 0.5 + i * 0.14;
-        pos[i * 3 + 2] = LAYOUT.chimneyZ + rr(rng, -0.16, 0.16);
+        pos[i * 3 + 2] = LAYOUT.chimneyZ + rr(rng, -0.09, 0.09);
       }
       const geo = new THREE.BufferGeometry();
       geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
       this.hintMotes = new THREE.Points(geo, new THREE.PointsMaterial({
-        color: 0xe8eefb, size: 0.06, transparent: true, opacity: 0, depthWrite: false
+        color: 0xf2f6ff, size: 0.085, transparent: true, opacity: 0, depthWrite: false,
+        map: softCircleTexture()
       }));
       g.add(this.hintMotes);
     }
@@ -989,8 +992,8 @@ export class World {
     // blue on the roof, orange near the hearth, mixing inside the flue
     const warm = clamp01((3.4 - camY) / 2.6); // 0 above y=3.4 → 1 below y=0.8
     const flick = 0.85 + Math.sin(t * 9.2) * 0.06 + Math.sin(t * 23.7) * 0.05;
-    this.fireLight.intensity = (0.35 + warm * 3.3) * flick * this.fireLevel;
-    this.roomFill.intensity = warm * 1.7 * this.fireLevel;
+    this.fireLight.intensity = (0.35 + warm * 4.4) * flick * this.fireLevel;
+    this.roomFill.intensity = warm * 2.6 * this.fireLevel;
     this.moonLight.intensity = lerp(1.9, 0.55, warm);
     this.hemi.intensity = lerp(0.85, 0.45, warm);
     // flue lamp shifts cold sky-light → warm fire-light with depth
@@ -1028,11 +1031,11 @@ export class World {
     }
 
     // hint motes: drift down into the flue mouth, then fade
-    if (this.hintMoteT < 3.2) {
+    if (this.hintMoteT < 4.5) {
       this.hintMoteT += dt;
       const mt = this.hintMoteT;
       const mat = this.hintMotes.material as THREE.PointsMaterial;
-      mat.opacity = mt < 0.4 ? mt / 0.4 : mt > 2.4 ? Math.max(0, 1 - (mt - 2.4) / 0.8) : 1;
+      mat.opacity = mt < 0.4 ? mt / 0.4 : mt > 3.6 ? Math.max(0, 1 - (mt - 3.6) / 0.9) : 1;
       const pos = this.hintMotes.geometry.attributes.position as THREE.BufferAttribute;
       for (let i = 0; i < pos.count; i++) {
         let y = pos.getY(i) - dt * 0.55;

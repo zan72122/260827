@@ -637,8 +637,10 @@ export class Santa {
     }
 
     // ---- squash deformation (after posing) ----
+    // 0.28: squashed belly (~0.63m) just kisses the 0.62m flue — the walls
+    // must read as touching the coat, not floating beside it
     const s = this.squash;
-    const lateral = 1 - 0.40 * s;
+    const lateral = 1 - 0.28 * s;
     const vertical = 1 + 0.24 * s;
     this.torso.scale.set(lateral, vertical, lateral);
     // hips narrow slightly too so pants/boots read as squeezed
@@ -657,9 +659,9 @@ export class Santa {
       // sack compression: long thin sausage when squeezed
       const bs = this.bagSquash;
       bag.scale.set(
-        (1 - 0.30 * bs) * this.bagBaseScale,
+        (1 - 0.22 * bs) * this.bagBaseScale,
         (1 + 0.55 * bs) * this.bagBaseScale,
-        (1 - 0.34 * bs) * this.bagBaseScale
+        (1 - 0.28 * bs) * this.bagBaseScale
       );
     }
 
