@@ -401,6 +401,10 @@ const debug = installDebugApi({
   },
   residentBytes: () => pyramid.residentBytes(),
   building: () => pyramid.building,
+  holdFocus: (mm) => {
+    focus.hold = mm;
+  },
+  depthOfFieldMM: () => journey.depthOfFieldMM,
   residentLevels: () => pyramid.residentLevels(),
   anchor: () => orientationCamera.anchor,
   resolutionMM: (na) => resolutionMM(na),

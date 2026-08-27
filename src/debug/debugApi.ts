@@ -21,6 +21,8 @@ export interface DebugHooks {
   ensureLevelsFor: (fieldMM: number) => void;
   residentBytes: () => number;
   building: () => boolean;
+  holdFocus: (mm: number | null) => void;
+  depthOfFieldMM: () => number;
   residentLevels: () => number[];
   anchor: () => { x: number; y: number };
   resolutionMM: (na: number) => number;
@@ -103,6 +105,14 @@ export function installDebugApi(hooks: DebugHooks): DebugSurface {
       while (framesSinceSet < minFrames) {
         await new Promise((r) => requestAnimationFrame(() => r(null)));
       }
+    },
+    /**
+     * Pins the focal plane at a multiple of the current depth of field, so the focus
+     * rack — which lasts a third of a second — can be photographed reliably. Pass
+     * null to hand control back to the FocusController.
+     */
+    holdFocus(depthsOfField: number | null): void {
+      hooks.holdFocus(depthsOfField === null ? null : depthsOfField * hooks.depthOfFieldMM());
     },
     memory: () => ({
       residentMB: +(hooks.residentBytes() / (1024 * 1024)).toFixed(1),

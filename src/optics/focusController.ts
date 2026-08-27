@@ -12,6 +12,8 @@ import { OBJECTIVES } from '../micro/optics';
 export class FocusController {
   /** Current focal plane offset from the middle of the section, mm. */
   offsetMM = 0;
+  /** Debug only: pins the focal plane so a transient can be photographed. */
+  hold: number | null = null;
   private rackAmp = 0;
   private rackT = 0;
   private rackDur = 0.28;
@@ -52,6 +54,10 @@ export class FocusController {
   }
 
   update(dt: number): void {
+    if (this.hold !== null) {
+      this.offsetMM = this.hold;
+      return;
+    }
     if (this.rackT < this.rackDur) {
       this.rackT += dt;
       const t = Math.min(this.rackT / this.rackDur, 1);

@@ -80,13 +80,19 @@ for (const name of deviceNames) {
   for (const pt of points) {
     await page.evaluate((p) => window.__zoom.setProgress(p, true), pt.p);
     await page.evaluate(() => window.__zoom.waitReady(6));
+    // getState() reports the last RENDERED frame, so on a slow renderer it can lag a
+    // jump by a whole frame. Wait until the frame on screen is the one asked for.
+    const settleBy = Date.now() + 30000;
+    while (Date.now() < settleBy) {
+      const p = await page.evaluate(() => window.__zoom.getState().progress);
+      if (Math.abs(p - pt.p) < 1e-6) break;
+      await page.waitForTimeout(150);
+    }
     if (pt.id === 'rack') {
-      // Photograph this one while the fine focus is still settling. Park below the
-      // 40x detent first so the jump actually turns the nosepiece.
-      await page.evaluate(() => window.__zoom.setProgress(0.74, true));
+      // Pin the focal plane a couple of depths of field out, which is where the fine
+      // focus actually swings to when the nosepiece clicks over.
+      await page.evaluate(() => window.__zoom.holdFocus(2.2));
       await page.waitForTimeout(500);
-      await page.evaluate(() => window.__zoom.setProgress(0.80, true));
-      await page.waitForTimeout(110);
     } else {
       await page.waitForTimeout(650);
     }
@@ -97,6 +103,7 @@ for (const name of deviceNames) {
     }));
     const file = path.join(dir, `${String(pt.p.toFixed(2)).replace('.', '_')}-${pt.id}.png`);
     await page.screenshot({ path: file });
+    if (pt.id === 'rack') await page.evaluate(() => window.__zoom.holdFocus(null));
     shots.push({ ...pt, file, ...state });
   }
 
