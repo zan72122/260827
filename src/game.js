@@ -351,13 +351,15 @@ export class Game {
             look: new THREE.Vector3(sk.x, 0.8, sk.z), fov: 50
           };
         }
+        const perp = { x: -sf.z, z: sf.x };
         return {
-          pos: new THREE.Vector3(sk.x - sf.x * 5.2 + 1.2, 2.4, sk.z - sf.z * 5.2),
-          look: new THREE.Vector3(sk.x + sf.x * 2, 0.7, sk.z + sf.z * 2), fov: 50
+          pos: new THREE.Vector3(sk.x - sf.x * 5.4 + perp.x * 1.6, 2.5, sk.z - sf.z * 5.4 + perp.z * 1.6),
+          look: new THREE.Vector3(sk.x + sf.x * 2.5, 0.55, sk.z + sf.z * 2.5), fov: 50
         };
       }
       case 'reveal': {
-        return { pos: local(2.3, 2.9, 5.9), look: local(0, 1.15, 2.9), fov: 48 };
+        // above and ahead, looking down into the open snow bin
+        return { pos: local(1.7, 4.1, 5.8), look: local(0, 0.95, 2.95), fov: 46 };
       }
     }
     return this._inputView();
@@ -391,8 +393,8 @@ export class Game {
     } else if (t < 6.5) {
       // the conditioner drops onto the ice
       return seg(4.3, 6.5,
-        new THREE.Vector3(3.2, 1.9, 17.8), new THREE.Vector3(2.5, 1.35, 16.9),
-        new THREE.Vector3(-0.3, 0.5, 13.6), new THREE.Vector3(-0.3, 0.25, 13.6));
+        new THREE.Vector3(4.4, 2.4, 19.2), new THREE.Vector3(3.6, 1.8, 18.1),
+        new THREE.Vector3(-0.5, 0.4, 13.5), new THREE.Vector3(-0.5, 0.2, 13.5));
     }
     // pull up over the vehicle, facing down the rink
     const iv = this._inputView();

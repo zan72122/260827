@@ -23,8 +23,9 @@ for (const tc of CASES) {
   await page.waitForTimeout(300);
   await page.evaluate(() => window.__test.setTimeScale(3));
   await waitPhase(page, 'bandview', 180000);
-  await page.evaluate(() => window.__test.setTimeScale(1));
-  await page.waitForTimeout(7000);   // camera settles on the wide view
+  // hold the band view (slow game clock) while the camera settles in real time
+  await page.evaluate(() => window.__test.setTimeScale(0.25));
+  await page.waitForTimeout(8000);
 
   // clean band shot first
   await page.screenshot({ path: `screenshots/evidence/${tc.id}-1-band.png` });
