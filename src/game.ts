@@ -243,7 +243,7 @@ export class Game {
         getWorld: (out) => { out.copy(unit.trace.endB); }
       }));
       this.pickDeer.push(reg({
-        id: `deer${i}`, radiusPx: 90, enabled: false, priority: 0,
+        id: `deer${i}`, radiusPx: 70, enabled: false, priority: 0,
         getWorld: (out) => {
           unit.deer.root.getWorldPosition(out);
           out.y += 0.8 * unit.deer.params.shoulderHeight;
@@ -303,6 +303,32 @@ export class Game {
     this.input.onDragStart = (d) => this.handleDragStart(d);
     this.input.onDragMove = (d) => this.handleDragMove(d);
     this.input.onDragEnd = (d) => this.handleDragEnd(d);
+    this.input.onTap = (d) => this.handleTap(d);
+  }
+
+  /** タップへの遊びの反応（サンタが手を振る・トナカイが鼻を鳴らす） */
+  private handleTap(d: DragInfo): void {
+    if (this.phase === 'run' || this.phase === 'landing' || this.phase === 'launch') return;
+    const ray = this.input.raycaster(d.ndc);
+    // サンタ
+    const santaHit = ray.intersectObject(this.sled.santa.group, true);
+    if (santaHit.length > 0) {
+      this.sled.santa.tug();
+      audio.bell(1, 0.5, THREE.MathUtils.clamp(this.sled.group.position.x / 7, -0.8, 0.8));
+      return;
+    }
+    // トナカイ本体（ドラッグ対象でなくても撫でれば反応する）
+    for (const u of this.units) {
+      if (!u.deer.root.visible) continue;
+      if (ray.intersectObject(u.deer.hitMesh, false).length > 0) {
+        u.deer.perkUp();
+        audio.snort();
+        const p = new THREE.Vector3();
+        u.deer.muzzleTip.getWorldPosition(p);
+        this.particles.breath(p);
+        return;
+      }
+    }
   }
 
   /** 検証用: 直近に掴んだ対象 */
@@ -376,7 +402,7 @@ export class Game {
       unit.trace.moveDrag(this.dragWorld);
       unit.deer.gazeTarget = unit.trace.endB;
       // 金具が触れ合う距離まで来たらカチンと留まる
-      const near = this.nearestFreeLeader(unit.trace.endB, 0.5);
+      const near = this.nearestFreeLeader(unit.trace.endB, 0.65);
       if (near >= 0) {
         this.dragging = null;
         this.connectUnitToHook(unit, near);
@@ -487,7 +513,7 @@ export class Game {
 
   private tryConnectTrace(unit: DeerUnit): void {
     // 最も近い空きリーダーの先端へスナップ
-    const best = this.nearestFreeLeader(unit.trace.endB, 0.8);
+    const best = this.nearestFreeLeader(unit.trace.endB, 1.0);
     if (best < 0) {
       // 届かなかった: 線は雪へ落ちるだけ（失敗表示はしない）
       unit.trace.releaseB();
@@ -532,8 +558,8 @@ export class Game {
 
   /** フックに対応する編成スロット（ワールド） */
   private slotWorld(hookIndex: number, out: THREE.Vector3): THREE.Vector3 {
-    const lateral = [-0.95, 0, 0.95][hookIndex];
-    out.set(lateral, 0, -2.35);
+    const lateral = [-1.1, 0, 1.1][hookIndex];
+    out.set(lateral, 0, -3.15);
     // 中央スロットはやや前（先頭格）
     if (hookIndex === 1) out.z -= 0.55;
     this.sled.group.localToWorld(out);
@@ -599,8 +625,8 @@ export class Game {
       await wait(900);
       unit.deer.settleToIdle();
       unit.deer.setStretch(0);
-      unit.trace.pullStraight = 0.35;
-      this.leaders[unit.hook].pullStraight = 0.35;
+      unit.trace.pullStraight = 0.55;
+      this.leaders[unit.hook].pullStraight = 0.55;
       await wait(500);
       if (this.phase === 'firstConnect') this.enterOutfit();
       else this.checkAllConnected();
@@ -619,8 +645,8 @@ export class Game {
       audio.leatherCreak();
       await wait(500);
       unit.deer.setStretch(0);
-      unit.trace.pullStraight = 0.35;
-      this.leaders[unit.hook].pullStraight = 0.35;
+      unit.trace.pullStraight = 0.55;
+      this.leaders[unit.hook].pullStraight = 0.55;
       this.checkAllConnected();
     };
     void seq();
@@ -800,8 +826,15 @@ export class Game {
       while (this.phase === 'intro') {
         await wait(3500 + Math.random() * 2500);
         if (this.phase !== 'intro') break;
+        // トナカイが線の端を見る + 線の端が雪の上で小さくぴくっと動く
+        // （矢印を出さずに入口を一つへ絞る非言語の手がかり）
         unit.deer.gazeTarget = unit.trace.endB;
         unit.deer.earAlert = 0.9;
+        if (unit.trace.endBMode === 'free') {
+          unit.trace.nudgeEndB(0.05);
+          audio.leatherCreak();
+          this.particles.puff(unit.trace.endB, 2, 0.05, 0.4);
+        }
         await wait(1800);
         if (this.phase !== 'intro') break;
         unit.deer.gazeTarget = null;
@@ -811,7 +844,7 @@ export class Game {
     void loop();
   }
 
-  private enterOutfit(): void {
+  private enterOutfit(snapCam = false): void {
     this.phase = 'outfit';
     this.phaseT = 0;
     this.connectCam = 0;
@@ -825,7 +858,8 @@ export class Game {
         u.walkArrive = () => u.deer.settleToIdle();
       }
     }
-    this.rig.setShot((portrait, out) => this.shotOverview(portrait, out), false, 1.4);
+    // 着地後のリセットは雪煙に隠してカット（遠くの雪原を長く映さない）
+    this.rig.setShot((portrait, out) => this.shotOverview(portrait, out), snapCam, 1.4);
     this.refreshPickables();
   }
 
@@ -901,7 +935,8 @@ export class Game {
         u.deer.mode = 'walk';
         u.deer.setStretch(0.25);
       }
-      this.rig.setShot((portrait, out) => this.shotRun(portrait, out), false, 1.8);
+      // 走行のチェイス視点へはカットで切り替える（編成の中を通過しない）
+      this.rig.setShot((portrait, out) => this.shotRun(portrait, out), true, 1.8);
     }, 350 + order.length * 620 + 800);
   }
 
@@ -951,7 +986,8 @@ export class Game {
     for (const u of this.units) {
       if (u.deer.snowCover < 0.2) u.deer.setSnowCover(0.3);
     }
-    this.enterOutfit();
+    this.focusUnit = null;
+    this.enterOutfit(true);
   }
 
   // =========================================================================
@@ -965,9 +1001,9 @@ export class Game {
         out.look.set(0.1, -0.2, 0.3);
         out.fov = 66;
       } else {
-        out.pos.set(0.2, 3.6, -8.0);
-        out.look.set(0.15, 0.25, 0.4);
-        out.fov = 54;
+        out.pos.set(0.2, 4.6, -8.8);
+        out.look.set(0.15, 0.1, -0.3);
+        out.fov = 56;
       }
       return;
     }
@@ -982,13 +1018,15 @@ export class Game {
     const perpX = -dir.z, perpZ = dir.x;
     if (portrait) {
       // 一頭を大きく中央下、そりは奥＝画面上部寄りに残す（低いカメラ）
+      // 対角の低い3/4: トナカイ全身を下側に大きく、そりを右上に残す。
+      // 「離れている」「線が届いていない」が縦でも一目で読めるように。
       out.pos.set(
-        dp.x - dir.x * 4.2 + perpX * 0.45, 1.35,
-        dp.z - dir.z * 4.2 + perpZ * 0.45);
+        dp.x - dir.x * 5.5 + perpX * 4.2, 1.5,
+        dp.z - dir.z * 5.5 + perpZ * 4.2);
       out.look.set(
-        dp.x + (sp.x - dp.x) * 0.28, 0.8,
-        dp.z + (sp.z - dp.z) * 0.28);
-      out.fov = 56;
+        dp.x + (sp.x - dp.x) * 0.33, 0.75,
+        dp.z + (sp.z - dp.z) * 0.33);
+      out.fov = 58;
     } else {
       // 低めの3/4: トナカイ全身・手元・そり方向を同時に
       const mx = (dp.x + sp.x) / 2, mz = (dp.z + sp.z) / 2;

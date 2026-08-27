@@ -131,8 +131,8 @@ export function furBodyTextures(p: FurPalette, withRuff = false): FurMaps {
     for (let x = 0; x < W; x += 2) {
       const len = H * (0.30 + ruffRand() * 0.35);
       const grad = ctx.createLinearGradient(0, H, 0, H - len);
-      grad.addColorStop(0, `rgba(${rr255},${rg255},${rb255},0.95)`);
-      grad.addColorStop(0.6, `rgba(${rr255},${rg255},${rb255},0.55)`);
+      grad.addColorStop(0, `rgba(${rr255},${rg255},${rb255},0.8)`);
+      grad.addColorStop(0.6, `rgba(${rr255},${rg255},${rb255},0.45)`);
       grad.addColorStop(1, `rgba(${rr255},${rg255},${rb255},0)`);
       ctx.fillStyle = grad;
       ctx.fillRect(x, H - len, 2, len);

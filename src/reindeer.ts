@@ -205,20 +205,24 @@ export class Reindeer {
     const furN = furBodyTextures(params.palette, true); // 首用: 下端にラフ（たてがみ状の淡毛）
     const furH = furHeadTextures(params.palette);
     const legTex = furLegTexture(params.palette);
+    // envMapIntensity を絞って毛皮のプラスチック的な照りを消す
     const bodyMat = new THREE.MeshStandardMaterial({
       map: furB.map, bumpMap: furB.bump, bumpScale: 0.9, roughnessMap: furB.rough,
-      roughness: 1.0, metalness: 0
+      roughness: 1.0, metalness: 0, envMapIntensity: 0.12
     });
     const neckMat = new THREE.MeshStandardMaterial({
       map: furN.map, bumpMap: furN.bump, bumpScale: 0.9, roughnessMap: furN.rough,
-      roughness: 1.0, metalness: 0
+      roughness: 1.0, metalness: 0, envMapIntensity: 0.12
     });
     const headMat = new THREE.MeshStandardMaterial({
-      map: furH.map, bumpMap: furH.bump, bumpScale: 0.5, roughness: 0.95, metalness: 0
+      map: furH.map, bumpMap: furH.bump, bumpScale: 0.5, roughness: 0.95, metalness: 0,
+      envMapIntensity: 0.12
     });
-    const legMat = new THREE.MeshStandardMaterial({ map: legTex, roughness: 0.95, metalness: 0 });
+    const legMat = new THREE.MeshStandardMaterial({
+      map: legTex, roughness: 0.95, metalness: 0, envMapIntensity: 0.12
+    });
     const antlerMat = new THREE.MeshStandardMaterial({
-      color: params.antler.color, roughness: 0.75, metalness: 0.02
+      color: params.antler.color, roughness: 0.75, metalness: 0.02, envMapIntensity: 0.2
     });
 
     // --- 胴体 ---------------------------------------------------------------

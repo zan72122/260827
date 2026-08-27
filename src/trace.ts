@@ -111,6 +111,16 @@ export class LeatherLine {
     this.endBTarget = null;
   }
 
+  /** 自由端を小さく跳ねさせる（気づきの手がかり用） */
+  nudgeEndB(strength = 0.05): void {
+    if (this.endBMode !== 'free') return;
+    const end = this.pts[N_POINTS - 1];
+    const prev = this.prev[N_POINTS - 1];
+    prev.y = end.y - strength;
+    prev.x = end.x - (Math.random() - 0.5) * strength;
+    prev.z = end.z - (Math.random() - 0.5) * strength;
+  }
+
   beginDrag(world: THREE.Vector3): void {
     this.endBMode = 'drag';
     this.dragPos.copy(world);

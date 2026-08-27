@@ -162,6 +162,13 @@ export class Santa {
     const head = new THREE.Mesh(new THREE.SphereGeometry(0.105, 12, 10), skin);
     head.position.y = 0.56;
     head.castShadow = true;
+    // 目（小さな黒い点）
+    const eyeMat = new THREE.MeshStandardMaterial({ color: '#26201a', roughness: 0.3 });
+    for (const sx of [-1, 1]) {
+      const eye = new THREE.Mesh(new THREE.SphereGeometry(0.014, 8, 6), eyeMat);
+      eye.position.set(sx * 0.04, 0.59, -0.09);
+      this.group.add(eye);
+    }
     // ひげ
     const beardMesh = new THREE.Mesh(new THREE.SphereGeometry(0.095, 10, 8), beard);
     beardMesh.scale.set(1, 1.15, 0.8);

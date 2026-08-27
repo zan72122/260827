@@ -210,9 +210,10 @@ export class BreastHarness extends Wearable {
     pad.rotation.z = Math.PI * 0.9;
     pad.scale.set(1, 1.17, 0.55);
     pad.position.z = 0.014;
-    // 下部中央のD環（牽引線）
+    // 下部中央のD環（牽引線）: 帯に密着させる
     const dring = new THREE.Mesh(new THREE.TorusGeometry(0.036, 0.009, 8, 16), mats.brass);
-    dring.position.set(0, -0.24, 0.02);
+    dring.position.set(0, -0.225, 0.045);
+    dring.rotation.x = 0.5;
     this.group.add(band, pad, dring);
     this.dRing = new THREE.Object3D();
     this.dRing.position.copy(dring.position);
@@ -408,13 +409,23 @@ export class Brush {
   private storedRot = new THREE.Euler();
 
   constructor(mats: TackMats) {
-    const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.026, 0.34, 8), mats.wood);
-    handle.position.y = 0.20;
-    const block = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.055, 0.22), mats.wood);
+    const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.028, 0.30, 8), mats.wood);
+    handle.position.y = 0.19;
+    const knob = new THREE.Mesh(new THREE.SphereGeometry(0.036, 8, 6), mats.wood);
+    knob.position.y = 0.345;
+    const block = new THREE.Mesh(new THREE.BoxGeometry(0.17, 0.06, 0.26), mats.wood);
     block.position.y = 0.028;
-    const bristles = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.06, 0.21), mats.bristle);
-    bristles.position.y = -0.028;
-    this.group.add(handle, block, bristles);
+    // 剛毛は房ごとの列に分けてブラシらしく
+    const bristleGeos: THREE.BufferGeometry[] = [];
+    for (let ix = -1; ix <= 1; ix++) {
+      for (let iz = -2; iz <= 2; iz++) {
+        const tuft = new THREE.CylinderGeometry(0.020, 0.016, 0.075, 6);
+        tuft.translate(ix * 0.05, -0.035, iz * 0.048);
+        bristleGeos.push(tuft);
+      }
+    }
+    const bristles = new THREE.Mesh(mergeGeometries(bristleGeos)!, mats.bristle);
+    this.group.add(handle, knob, block, bristles);
     this.group.traverse((o) => { o.castShadow = true; });
   }
 

@@ -72,6 +72,11 @@ async function waitVisible(name, timeoutMs = 16000) {
 async function dragByName(a, b, pad = { x: 0, y: 0 }) {
   const pa = await waitVisible(a);
   if (!pa) throw new Error(`no marker ${a}`);
+  // 画面外なら触らない（実際の子どもも見えない物は触れない）
+  if (pa.x < 4 || pa.x > +w - 4 || pa.y < 4 || pa.y > +h - 4) {
+    console.log(`   [drag ${a}] SKIP offscreen ${JSON.stringify(pa)}`);
+    return;
+  }
   await page.mouse.move(pa.x, pa.y);
   await page.mouse.down();
   await page.waitForTimeout(80);
@@ -158,12 +163,12 @@ await shot('06_brushed');
 
 // 首輪を柵からユキの首へ
 await dragByName('collar1', 'neck1');
-await page.waitForTimeout(1800);
+await page.waitForTimeout(2600);
 s = await state();
 console.log('collar state:', JSON.stringify(s.wear));
 if (s.wear[1] !== 'fitted') {
   await dragByName('collar1', 'neck1');
-  await page.waitForTimeout(1800);
+  await page.waitForTimeout(2600);
   s = await state();
 }
 await shot('07_collar_fitted');
@@ -192,12 +197,12 @@ await shot('09_yuki_connected');
 
 // --- 4. クリ(2): 胸当て → バックル → 鈴 → 牽引線 -----------------------------
 await dragByName('harness2', 'chest2');
-await page.waitForTimeout(1800);
+await page.waitForTimeout(2600);
 s = await state();
 console.log('harness state:', JSON.stringify(s.wear));
 if (s.wear[2] !== 'fitted') {
   await dragByName('harness2', 'chest2');
-  await page.waitForTimeout(1800);
+  await page.waitForTimeout(2600);
 }
 await shot('10_harness_fitted');
 
