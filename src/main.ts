@@ -56,6 +56,21 @@ renderer.autoClear = false;
 renderer.setClearColor(0x0b0d10, 1);
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
+// iOS drops WebGL contexts when memory gets tight, and this app deliberately holds
+// tens of megabytes of render targets. Without this the screen would simply stay
+// black; preventing the default lets the browser restore, and the reload rebuilds
+// the pyramid from scratch, which is cheap because nothing has to be downloaded.
+canvas.addEventListener(
+  'webglcontextlost',
+  (e) => {
+    e.preventDefault();
+    bootEl.classList.remove('hidden');
+    bootEl.style.display = '';
+  },
+  false,
+);
+canvas.addEventListener('webglcontextrestored', () => location.reload(), false);
+
 const scene3d = new THREE.Scene();
 const slideScene = new PhysicalSlideScene(settings.richMicroscope);
 scene3d.add(slideScene.root);
