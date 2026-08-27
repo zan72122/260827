@@ -396,13 +396,11 @@ vec3 collagen(vec2 t, float ang, float coarse, float w, float stainE, out float 
   float weave = mix(f1, max(f1, f2 * 0.96), 0.42 + 0.30 * coarse);
   bundle = smoothstep(0.385, 0.635, weave);
 
-  // Fibrillar streaking inside each bundle, and the pale clefts between them.
-  // Individual fibrils inside each bundle. These are 1-3 um across, so they exist
-  // only in the levels whose texels are finer than that — which is exactly why the
-  // dermis stops being a smooth wash somewhere around the 20x objective.
   // Collagen has structure at every scale from the fascicle down to the fibril, so
-  // the model needs a tier at every octave too. Leaving a gap between the bundle and
-  // the fibril made the dermis go soft in the middle of the dive and then snap back.
+  // the model needs a tier at every octave too. Each tier switches on only once the
+  // level's texels and the objective can resolve it, which is what makes the dermis
+  // keep gaining detail all the way down instead of going soft in the middle of the
+  // dive and then snapping back when the next tier arrives all at once.
   float sub = vnoise(vec2(p.x / (bw * 2.10), p.y / (bw * 0.62))) - 0.5;
   float fine = vnoise(vec2(p.x / (bw * 0.90), p.y / (bw * 0.28))) - 0.5;
   float fibre = vnoise(vec2(p.x / (bw * 0.38), p.y / (bw * 0.130)) + 29.0) - 0.5;
