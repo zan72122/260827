@@ -433,11 +433,13 @@ export class Game {
       this.santa.walkSpeed = 0;
       this.santa.setPose({ squat: Math.sin(t * Math.PI) * 0.6, carry: t });
     });
-    // step back into the firebox, crouch beneath the flue, face out
+    // step to the hearth's front edge, kneel under the mantel, face out —
+    // the head must stay in front of the chimney-breast wall so the
+    // face close-up reads (he hops back under the flue at launch)
     tl.add(1.5, 1.3, (t) => {
       const e = easeInOut(t);
       this.pos.x = lerp(2.2, this.cx, e);
-      this.pos.z = lerp(-0.78, this.cz + 0.05, e);
+      this.pos.z = lerp(-0.78, -0.88, e);
       this.yawTarget = lerp(Math.PI / 2, 0, e);
       this.santa.walkSpeed = 0.55;
       const inside = remap(this.pos.z, -0.9, -1.3, 0, 1);
@@ -486,15 +488,17 @@ export class Game {
     this.phase = 'ascend';
     audio.whooshUp();
     const tl = new Timeline();
-    tl.add(0, 0.3, (t) => {
+    tl.add(0, 0.45, (t) => {
       this.santa.squash = t;
       this.santa.bagSquash = t;
       this.santa.setPose({ launch: t, squat: (1 - t) * 0.8 });
-      this.pos.x = lerp(this.pos.x, this.cx, t);
-      this.pos.z = lerp(this.pos.z, this.cz, t);
+      this.pos.x = lerp(this.pos.x, this.cx, t * 0.6);
+      this.pos.z = lerp(this.pos.z, this.cz, t * 0.6);
     });
-    tl.add(0.3, 0.75, (t) => {
+    tl.add(0.45, 0.75, (t) => {
       const e = easeIn(t) * 0.4 + t * 0.6;
+      this.pos.x = lerp(this.pos.x, this.cx, 0.4);
+      this.pos.z = lerp(this.pos.z, this.cz, 0.4);
       this.pos.y = lerp(LAYOUT.fireboxFloorY, this.yShaftTop + 0.55, e);
       if (Math.random() < 0.35) {
         this.world.paintSoot(clamp01(1 - e), 0.5 + (Math.random() - 0.5) * 0.2, 0.35);
@@ -826,8 +830,8 @@ export class Game {
       case 'awaitUp': {
         this.santa.faceTarget.getWorldPosition(face);
         return portrait
-          ? { pos: face.clone().add(V3(0.16, 0.2, 1.3)), look: face.clone().add(V3(0, 0.02, 0)), fov: 38 }
-          : { pos: face.clone().add(V3(0.24, 0.18, 1.2)), look: face.clone().add(V3(0, 0.02, 0)), fov: 35 };
+          ? { pos: face.clone().add(V3(0.16, 0.2, 1.3)), look: face.clone().add(V3(0, 0.04, 0)), fov: 38 }
+          : { pos: face.clone().add(V3(0.24, 0.18, 1.2)), look: face.clone().add(V3(0, 0.04, 0)), fov: 35 };
       }
       case 'ascend':
         return this.followShot(portrait, sy);
@@ -837,8 +841,8 @@ export class Game {
           : mk(5.2, 5.3, 4.9, 1.9, 4.15, -0.4, 41);
       case 'menu':
         return portrait
-          ? mk(5.6, 6.4, 8.4, 0.9, 3.9, 0.1, 48)
-          : mk(6.4, 5.9, 7.6, 0.9, 3.7, 0.1, 43);
+          ? mk(4.7, 6.2, 8.5, 0.15, 3.95, 0.2, 48)
+          : mk(5.8, 5.9, 7.5, 0.4, 3.7, 0.2, 43);
       case 'freeEnter': {
         const t = this.tl ? this.tl.time : 0;
         if (t < 1.1) return this.compareShot(portrait);
@@ -947,13 +951,13 @@ export class Game {
         ((this.phase === 'entry' || this.phase === 'freeEnter') && this.entryE > 0.4) ||
         (this.phase === 'landing' && (this.tl?.time ?? 9) < 1.0);
       const onFace = this.phase === 'nose' || this.phase === 'awaitUp';
-      lamp.intensity = damp(lamp.intensity, inShaft ? 2.0 : onFace ? 2.0 : 0, 5, dt);
+      lamp.intensity = damp(lamp.intensity, inShaft ? 2.0 : onFace ? 2.6 : 0, 5, dt);
       if (inShaft) {
         lamp.position.set(this.cx + 0.05, this.pos.y + 1.35, this.cz + 0.5);
       } else if (onFace) {
         const face = new THREE.Vector3();
         this.santa.faceTarget.getWorldPosition(face);
-        lamp.position.copy(face).add(V3(0.2, 0.35, 1.0));
+        lamp.position.copy(face).add(V3(0.1, 0.12, 1.0));
       }
     }
 

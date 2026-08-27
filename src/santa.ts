@@ -167,8 +167,8 @@ const POSES: Record<PoseName, Pose> = {
     head: { r: [-0.06, 0.2, 0.08] }
   },
   faceCam: {
-    neck: { r: [-0.14, 0, 0] },
-    head: { r: [-0.16, 0, 0] }
+    neck: { r: [-0.06, 0, 0] },
+    head: { r: [-0.08, 0, 0] }
   }
 };
 
@@ -390,7 +390,7 @@ export class Santa {
     for (const s of [1, -1]) {
       const cheek = new THREE.Mesh(
         new THREE.SphereGeometry(0.045, 10, 8),
-        new THREE.MeshStandardMaterial({ color: 0xd98a76, roughness: 0.7, transparent: true, opacity: 0.65 })
+        new THREE.MeshStandardMaterial({ color: 0xe09a84, roughness: 0.7, transparent: true, opacity: 0.38 })
       );
       cheek.position.set(0.075 * s, -0.02, 0.105);
       cheek.scale.set(1, 0.8, 0.5);
@@ -453,8 +453,8 @@ export class Santa {
     brim.position.set(0, 0.122, 0.0);
     head.add(brim);
     // red crown filling the space above the brim so no scalp peeks out
-    const crown = cast(new THREE.Mesh(new THREE.SphereGeometry(0.145, 16, 10, 0, Math.PI * 2, 0, Math.PI * 0.52), coatMat));
-    crown.position.set(0, 0.035, 0);
+    const crown = cast(new THREE.Mesh(new THREE.SphereGeometry(0.142, 16, 10, 0, Math.PI * 2, 0, Math.PI * 0.5), coatMat));
+    crown.position.set(0, 0.055, 0);
     head.add(crown);
     const hatMat = coatMat;
     let prev = new THREE.Vector3(0, 0.1, 0);
