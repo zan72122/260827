@@ -1,0 +1,180 @@
+:root {
+  --bench: #0b0d10;
+  --ui-dim: rgba(232, 236, 240, 0.42);
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background: var(--bench);
+  color: #e8ecf0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN',
+    'Yu Gothic', system-ui, sans-serif;
+  /* Nothing in this app scrolls, zooms, or selects: the surface is one continuous control. */
+  overscroll-behavior: none;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#app {
+  position: fixed;
+  inset: 0;
+  /* 100svh keeps the canvas stable while iOS Safari's bars collapse mid-swipe. */
+  height: 100svh;
+  width: 100vw;
+}
+
+#stage-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+}
+
+#gesture-layer {
+  position: absolute;
+  inset: 0;
+  touch-action: none;
+  outline: none;
+  /* The entire viewport is the touch target — no 44pt hit area to miss. */
+  cursor: grab;
+}
+
+#gesture-layer.dragging {
+  cursor: grabbing;
+}
+
+#sound-toggle {
+  position: absolute;
+  /* Kept clear of the specimen and of the thumb arc, inside the safe area. */
+  top: calc(env(safe-area-inset-top, 0px) + 10px);
+  right: calc(env(safe-area-inset-right, 0px) + 10px);
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(14, 17, 21, 0.34);
+  color: var(--ui-dim);
+  display: grid;
+  place-items: center;
+  padding: 0;
+  touch-action: manipulation;
+  transition: opacity 240ms ease;
+  opacity: 0.55;
+  z-index: 5;
+}
+
+#sound-toggle:active {
+  opacity: 1;
+}
+
+#sound-toggle[aria-pressed='true'] #sound-mute {
+  display: none;
+}
+
+#sound-toggle[aria-pressed='false'] #sound-waves {
+  display: none;
+}
+
+#boot {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: var(--bench);
+  transition: opacity 620ms ease;
+  z-index: 20;
+  pointer-events: none;
+}
+
+#boot.hidden {
+  opacity: 0;
+}
+
+/* The loading state is the microscope lamp warming up — no spinner, no words. */
+.boot-lamp {
+  width: 74px;
+  height: 74px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 50%, #ffe9c4 0%, #e8b978 42%, rgba(90, 62, 30, 0) 72%);
+  animation: lamp-warm 2.4s ease-in-out infinite;
+}
+
+@keyframes lamp-warm {
+  0%,
+  100% {
+    opacity: 0.32;
+    transform: scale(0.94);
+  }
+  50% {
+    opacity: 0.95;
+    transform: scale(1.03);
+  }
+}
+
+#fallback,
+.noscript {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  gap: 10px;
+  padding: 32px;
+  text-align: center;
+  background: var(--bench);
+  font-size: 17px;
+  line-height: 1.7;
+  z-index: 30;
+}
+
+#fallback[hidden] {
+  display: none;
+}
+
+.small {
+  font-size: 14px;
+  opacity: 0.6;
+}
+
+#debug-overlay {
+  position: absolute;
+  left: calc(env(safe-area-inset-left, 0px) + 8px);
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
+  font: 11px/1.5 ui-monospace, 'SF Mono', Menlo, monospace;
+  background: rgba(6, 8, 11, 0.72);
+  border-radius: 8px;
+  padding: 7px 10px;
+  color: #b7ffd8;
+  white-space: pre;
+  pointer-events: none;
+  z-index: 10;
+  max-width: 60vw;
+}
+
+#debug-crosshair {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .boot-lamp {
+    animation: none;
+    opacity: 0.7;
+  }
+}
