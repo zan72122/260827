@@ -664,7 +664,7 @@ export class Game {
       {
         q0: 0.80, q1: 9, fn: (o) => {
           // 6: pull back - the whole laid path seen from the seabed.
-          o.pos.set(td.x + side.x * 26, td.y + 21, td.z + side.z * 26);
+          o.pos.set(td.x + side.x * 32, td.y + 30, td.z + side.z * 32);
           this.route!.surfaceAt(this.touchdownS * 0.55, this.v2);
           o.look.set(this.v2.x, this.seabed.height(this.v2.x, this.v2.z) + 2, this.v2.z);
         }
