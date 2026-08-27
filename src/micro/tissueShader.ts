@@ -874,8 +874,12 @@ void paintFollicle(vec2 t, float s, float r, float w, float focusZ, float na,
 
   // ---- hair shaft: cortex plus a discontinuous medulla ----
   // The cuticle steps the outline by roughly a micron every 8-9 um along the shaft.
-  float cutStep = 1.0 + 0.030 * (fract(s / 0.0085 + 0.35 * vnoise(vec2(s * 60.0, 5.0))) - 0.5)
-                       * legible(0.0016, w);
+  // Cuticle scales overlap every 8-9 um and step the outline by only a few tenths of
+  // a micron. Any more than that and the hair reads as a saw blade.
+  float cutPhase = s / 0.0085 + 0.35 * vnoise(vec2(s * 60.0, 5.0));
+  float cutStep = 1.0 + 0.016 * (fract(cutPhase) - 0.5)
+                       * (0.7 + 0.6 * vnoise(vec2(s * 9.0, 2.0)))
+                       * legible(0.0012, w);
   float aShaft = cov(ar - shaftR * cutStep, max(w, 0.0005)) * (1.0 - bulbW * 0.92);
   if (aShaft > 0.003) {
     // Longitudinal melanin striae in the cortex; the shaft is never a flat brown bar.
@@ -900,9 +904,9 @@ void paintFollicle(vec2 t, float s, float r, float w, float focusZ, float na,
     // as a step in the shaft's own outline, because a hair edge under a 40x is never
     // a ruled line.
     float scale = fract(s / 0.0085 + 0.35 * vnoise(vec2(s * 60.0, 5.0)));
-    float cut = smoothstep(shaftR * 0.78, shaftR * 1.0, ar);
-    c = mix(c, mix(C_KERATIN_D, C_HAIR, 0.22 + 0.42 * scale),
-            cut * 0.60 * legible(0.0030, w));
+    float cut = smoothstep(shaftR * 0.82, shaftR * 1.0, ar);
+    c = mix(c, mix(C_KERATIN_D, C_HAIR, 0.26 + 0.34 * scale),
+            cut * 0.38 * legible(0.0030, w));
     over(col, c, aShaft);
     Nuc n = nucNone();
     claim(nuc, n, aShaft * 1.05);   // fully keratinised: no nuclei
