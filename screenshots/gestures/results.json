@@ -47,7 +47,7 @@
  {
   "name": "straight: previous band kept for additive strokes",
   "ok": true,
-  "detail": "{\"smooth\":1,\"wet\":0.47843137254901963}"
+  "detail": "{\"smooth\":1,\"wet\":0.4627450980392157}"
  },
  {
   "name": "replay: mask fully re-initialized",
@@ -92,7 +92,7 @@
  {
   "name": "bulge-right: band width matches conditioner (2.2m)",
   "ok": true,
-  "detail": "2.00m"
+  "detail": "1.92m"
  },
  {
   "name": "bulge-right: undrawn ice stays rough",
@@ -107,7 +107,7 @@
  {
   "name": "bulge-right: band bulges right, not left",
   "ok": true,
-  "detail": "{\"there\":{\"smooth\":1,\"wet\":0.6470588235294118},\"mirror\":{\"smooth\":0,\"wet\":0}}"
+  "detail": "{\"there\":{\"smooth\":1,\"wet\":0.6509803921568628},\"mirror\":{\"smooth\":0,\"wet\":0}}"
  },
  {
   "name": "bulge-left: no film before pass",
@@ -187,7 +187,7 @@
  {
   "name": "gentle-s: a smooth band always exists",
   "ok": true,
-  "detail": "61"
+  "detail": "62"
  },
  {
   "name": "gentle-s: band continuous along drive",
@@ -197,7 +197,7 @@
  {
   "name": "gentle-s: band width matches conditioner (2.2m)",
   "ok": true,
-  "detail": "2.00m"
+  "detail": "1.92m"
  },
  {
   "name": "gentle-s: undrawn ice stays rough",
@@ -242,7 +242,7 @@
  {
   "name": "short: a smooth band always exists",
   "ok": true,
-  "detail": "16"
+  "detail": "15"
  },
  {
   "name": "short: band continuous along drive",
@@ -252,7 +252,7 @@
  {
   "name": "short: band width matches conditioner (2.2m)",
   "ok": true,
-  "detail": "1.92m"
+  "detail": "2.00m"
  },
  {
   "name": "short: undrawn ice stays rough",
@@ -262,7 +262,7 @@
  {
   "name": "short: even a short stroke makes a band",
   "ok": true,
-  "detail": "16, total=7.0"
+  "detail": "15, total=7.0"
  },
  {
   "name": "back-forth: no film before pass",
@@ -302,7 +302,7 @@
  {
   "name": "back-forth: band width matches conditioner (2.2m)",
   "ok": true,
-  "detail": "1.84m"
+  "detail": "1.76m"
  },
  {
   "name": "back-forth: undrawn ice stays rough",
