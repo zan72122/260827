@@ -801,7 +801,8 @@ void paintFollicle(vec2 t, float s, float r, float w, float focusZ, float na,
     vec3 c = mix(C_CYTO_PALE, C_CYTO_EPI, 0.22 + 0.38 * rnd);
     // Glycogen-rich clear cells are pale but granular, never a flat fill.
     float gly = 0.6 * vnoise(vec2(s, r) * 1150.0 + cid * 5.0) + 0.4 * vnoise(vec2(s, r) * 2600.0);
-    c = mix(c, mix(c, C_EOSIN_PALE, 0.75), (gly - 0.5) * 0.9 * legible(0.0011, w) + 0.5 * 0.0);
+    float gran = clamp(0.5 + (gly - 0.5) * 1.5, 0.0, 1.0);
+    c = mix(c, mix(c, C_EOSIN_PALE, 0.55), gran * legible(0.0011, w));
     c = mix(c, mix(C_EOSIN_MID, C_HEMA_PALE, 0.30), border * 0.42);
     c = bandMix(c, mix(C_CYTO_PALE, C_CYTO_EPI, 0.35), 0.0145, w);
     over(col, c, aORS);

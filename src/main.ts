@@ -247,9 +247,9 @@ function render(now: number): void {
     focusBlurMM: focus.blurMM(na),
     na,
     lamp: 1,
-    // The marker ring is 2.1 mm across on the underside of the glass, so it leaves
-    // the field of its own accord once the objective is tighter than the circle the
-    // pathologist drew. Nothing has to fade it out.
+    // The pathologist's ring is 6.4 mm across on the underside of the glass, so it
+    // is already outside even the 4x field. It guides the eye while the hardware is
+    // on screen and then leaves of its own accord; nothing has to fade it out.
     ink: smooth(6.0, 8.5, journey.fieldMM) * journey.fieldOpen,
     // Dust reads at low power and is a blurred nothing by 20x, where the pyramid
     // needs the GPU time more.
