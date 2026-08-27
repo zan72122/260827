@@ -1,0 +1,32 @@
+{
+  "name": "santa-sack-star-warehouse",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zan72122/260827.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/zan72122/260827/issues"
+  },
+  "homepage": "https://github.com/zan72122/260827#readme",
+  "dependencies": {
+    "three": "^0.170.0"
+  },
+  "devDependencies": {
+    "@types/three": "^0.170.0",
+    "playwright-core": "^1.62.1",
+    "typescript": "5.7",
+    "vite": "^6.4.3"
+  },
+  "private": true,
+  "type": "module"
+}
