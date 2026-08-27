@@ -142,14 +142,14 @@ export class Present {
       geo = new THREE.BoxGeometry(1.0, 0.86, 0.42, 26, 22, 12);
       geo.translate(0, 0.43, 0);
       displaceBody(geo, [
-        { c: new THREE.Vector3(0.34, 0.98, 0), r: 0.34, s: 0.30 },              // head
-        { c: new THREE.Vector3(0.55, 1.10, 0), r: 0.20, s: 0.13 },              // ears/mane
+        { c: new THREE.Vector3(0.34, 0.98, 0), r: 0.34, s: 0.26 },              // head
+        { c: new THREE.Vector3(0.55, 1.10, 0), r: 0.20, s: 0.09 },              // ears/mane
         { c: new THREE.Vector3(-0.45, 0.72, 0), r: 0.26, s: 0.12 },             // tail
         { c: new THREE.Vector3(0, 0.02, 0.16), r: 0.55, s: -0.10, dir: new THREE.Vector3(0, 1, 0) },
         { c: new THREE.Vector3(0, 0.02, -0.16), r: 0.55, s: -0.10, dir: new THREE.Vector3(0, 1, 0) },
         { c: new THREE.Vector3(0.42, 0.02, 0), r: 0.24, s: 0.10, dir: new THREE.Vector3(0, -1, 0) }, // rocker tips
         { c: new THREE.Vector3(-0.42, 0.02, 0), r: 0.24, s: 0.10, dir: new THREE.Vector3(0, -1, 0) },
-      ], 0.012, 3);
+      ], 0.007, 3);
       bandA = 0.52; bandB = 0.46; bandC = 0.24;
       this.entryAxis.set(0.35, -1, 0).normalize();
       this.entryTilt.set(0, 0, -0.35);
@@ -167,7 +167,7 @@ export class Present {
         { c: new THREE.Vector3(-0.42, 0.28, 0.3), r: 0.24, s: 0.10 },// leg
         { c: new THREE.Vector3(0.42, 0.28, 0.3), r: 0.24, s: 0.10 },
         { c: new THREE.Vector3(0, 0.12, 0), r: 0.5, s: -0.08, dir: new THREE.Vector3(0, 1, 0) }, // sits flat
-      ], 0.02, 8);
+      ], 0.013, 8);
       bandA = 0.55; bandB = 0.64; bandC = 0.48; // presses into the soft body
       this.entryAxis.set(0, -1, 0).normalize();
       this.entryTilt.set(0.15, 0, 0);
@@ -184,7 +184,7 @@ export class Present {
         { c: new THREE.Vector3(-0.42, 0.14, -0.26), r: 0.17, s: 0.11 },
         { c: new THREE.Vector3(-0.18, 0.72, 0), r: 0.28, s: 0.16 },  // cab
         { c: new THREE.Vector3(0.5, 0.5, 0), r: 0.2, s: 0.06 },      // bonnet
-      ], 0.010, 15);
+      ], 0.006, 15);
       bandA = 0.62; bandB = 0.34; bandC = 0.28;
       this.entryAxis.set(1, -0.25, 0).normalize(); // slides in nose-first, lengthwise
       this.entryTilt.set(0, 0, 1.1);
@@ -258,7 +258,7 @@ export class Present {
         const lead = clamp(0.65 + (-a / this.height) * 0.7, 0.35, 1);
         radial.multiplyScalar(1 - eff * lead);
         // crinkle jitter of the compressed paper
-        const cr = (fbm2(v.x * 9 + i * 0.01, v.y * 9, 2) - 0.5) * eff * 0.05;
+        const cr = (fbm2(v.x * 9 + i * 0.01, v.y * 9, 2) - 0.5) * eff * 0.03;
         v.copy(center).addScaledVector(axis, a * (1 + eff * 0.45)).add(radial)
           .multiplyScalar(1 + cr);
         pos.setXYZ(i, v.x, v.y, v.z);
@@ -307,5 +307,26 @@ export class Present {
   resetSway() {
     this.sway.rotation.set(0, 0, 0);
     this.sway.scale.setScalar(1);
+  }
+
+  /** stored presents become static set dressing: same-kind presents share
+   *  one rest-pose geometry so the warehouse can fill up without the
+   *  GPU bill growing per gift */
+  private static restGeometries = new Map<string, THREE.BufferGeometry[]>();
+  freezeToShared() {
+    this.setSqueeze(0);
+    const meshes = this.deformables.map((d) => d.mesh);
+    const shared = Present.restGeometries.get(this.kind);
+    if (!shared) {
+      Present.restGeometries.set(this.kind, meshes.map((m) => m.geometry));
+    } else {
+      meshes.forEach((m, i) => {
+        if (m.geometry !== shared[i]) {
+          m.geometry.dispose();
+          m.geometry = shared[i];
+        }
+      });
+    }
+    this.deformables = [];
   }
 }

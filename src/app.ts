@@ -42,6 +42,8 @@ export class App {
   private ndc = new THREE.Vector2();
   private ray = new THREE.Raycaster();
   private dragging = false;
+  private downAt = { x: 0, y: 0, t: 0 };
+  private nextHintAt = 6; // wordless stardust invitation timer
 
   // entry / camera blending scratch
   private camFromPos = new THREE.Vector3();
@@ -75,7 +77,7 @@ export class App {
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure = 1.05;
+    this.renderer.toneMappingExposure = 1.12;
     container.appendChild(this.renderer.domElement);
 
     const q = new URLSearchParams(location.search).get('q');
@@ -161,6 +163,8 @@ export class App {
     if (this.pointerId !== null) return;
     this.pointerId = e.pointerId;
     this.lastPointer.set(e.clientX, e.clientY);
+    this.downAt = { x: e.clientX, y: e.clientY, t: this.time };
+    this.nextHintAt = this.time + 9;
 
     if (this.state === 'outside') {
       this.setNdc(e);
@@ -218,6 +222,15 @@ export class App {
     this.pointerId = null;
     if (this.state === 'dragging') {
       this.dragging = false;
+      // a quick tap (the first thing a four-year-old tries): answer with
+      // the stardust invitation flying from the present into the mouth
+      const moved = Math.hypot(e.clientX - this.downAt.x, e.clientY - this.downAt.y);
+      if (moved < 14 && this.time - this.downAt.t < 0.45 && this.present) {
+        this.outside.playHint(this.present.group.position);
+        this.nextHintAt = this.time + 7;
+        this.setState('outside');
+        return;
+      }
       // let go near the mouth: the cloth leans over and takes it anyway
       if (this.present) {
         this.outside.sack.mouthWorld(this.mouth);
@@ -349,11 +362,11 @@ export class App {
     let breeze = 0;
 
     if (this.state === 'outside') {
-      // the invitation loop: santa parts the mouth, a faint breath escapes,
-      // the ribbon leans toward the sack — no arrows, no words
+      // the invitation loop: santa parts the mouth wide enough to SEE it
+      // breathe, a breath escapes, the ribbon leans — no arrows, no words
       const pulse = 0.5 + 0.5 * Math.sin(this.time * 0.9);
-      santa.hold = 0.35 + pulse * 0.5;
-      sack.open = 0.06 + pulse * 0.16;
+      santa.hold = 0.35 + pulse * 0.6;
+      sack.open = 0.10 + pulse * 0.35;
       sack.leanAmt *= 0.95;
       breeze = pulse;
       if (this.present) {
@@ -362,8 +375,23 @@ export class App {
         const age = this.time - (p.group.userData.spawnT ?? 0);
         const s = age < 0.6 ? easeOutBack(clamp(age / 0.6, 0, 1)) : 1;
         p.group.scale.setScalar(Math.max(0.01, s));
+        // always faintly alive; every few seconds a tiny eager hop
+        const hopPhase = (this.time % 3.2);
+        let hop = 0;
+        let rotZ = Math.sin(this.time * 1.5) * 0.012;
+        if (hopPhase < 0.55 && age > 1.2) {
+          hop = Math.abs(Math.sin(hopPhase / 0.55 * Math.PI * 2)) * 0.07 * (hopPhase < 0.28 ? 1 : 0.55);
+          rotZ += Math.sin(hopPhase * 23) * 0.03;
+        }
+        p.sway.rotation.z = rotZ;
+        // no touch for a while: the stardust invitation plays by itself
+        if (this.time > this.nextHintAt && !this.outside.hintPlaying && age > 1.2) {
+          this.outside.playHint(p.group.position);
+          this.nextHintAt = this.time + 7;
+        }
         // settles back to the floor if it was dropped mid-air
-        p.group.position.y = Math.max(0, p.group.position.y - Math.max(2.2 * dt, p.group.position.y * 6 * dt));
+        const floorY = Math.max(0, p.group.position.y - Math.max(2.2 * dt, p.group.position.y * 6 * dt));
+        p.group.position.y = floorY + hop;
         // ribbon feels the breeze from the sack
         const toSack = new THREE.Vector3().subVectors(sack.group.position, p.group.position);
         toSack.y = 0;
@@ -404,6 +432,23 @@ export class App {
     } else if (this.state === 'menu') {
       santa.hold = 0.3 + 0.2 * Math.sin(this.time * 0.9);
       sack.open = 0.1 + 0.08 * Math.sin(this.time * 0.9);
+    }
+
+    // the sack opens wide while the invitation flies
+    if (this.outside.hintPlaying) {
+      sack.open = Math.max(sack.open, 0.85);
+      santa.hold = 1;
+    }
+    // contact shadow keeps the present grounded (fades while carried)
+    if (this.present && this.state !== 'entering') {
+      const pp = this.present.group.position;
+      this.outside.contactShadow.visible = true;
+      this.outside.contactShadow.position.set(pp.x, 0.012, pp.z);
+      const h = clamp(1 - pp.y * 0.55, 0.15, 1);
+      this.outside.contactShadow.scale.setScalar(Math.max(0.01, this.present.group.scale.x * h));
+      (this.outside.contactShadow.material as THREE.MeshBasicMaterial).opacity = h;
+    } else {
+      this.outside.contactShadow.visible = false;
     }
 
     this.outside.update(dt, breeze);
@@ -492,7 +537,7 @@ export class App {
   }
 
   private updateTunnelIn(dt: number) {
-    const T_RIDE = 3.0, T_BLEND = 0.9;
+    const T_RIDE = 3.0, T_BLEND = 1.7;
     const p = this.present!;
     const curve = this.inside.tunnelCurve;
     const t = this.tState;
@@ -523,9 +568,14 @@ export class App {
       const rest = this.inside.restPos(this.portrait);
       const target = this.inside.restTarget(this.portrait);
       const endPos = this.inside.tunnelCurve.getPointAt(0.94);
+      const mouthUp = this.inside.tunnelCurve.getPointAt(0.45); // the glowing way we came in
       this.camera.up.set(0, 1, 0);
       this.camera.position.lerpVectors(endPos, rest, k);
-      this.camera.lookAt(target);
+      // brief look BACK up at the mouth — "we came through THERE" —
+      // then swing down to the three bays
+      const lookK = smoothstep(0.3, 0.75, k);
+      const look = mouthUp.clone().lerp(target, lookK);
+      this.camera.lookAt(look);
       p.group.position.lerp(this.inside.presentSpot, k * 0.5);
       p.group.quaternion.slerp(new THREE.Quaternion(), k);
     } else {
@@ -545,6 +595,13 @@ export class App {
     const inTunnel = this.state === 'tunnelIn' || this.state === 'tunnelOut' || this.state === 'flyEnter';
     this.inside.travelLight.intensity = lerp(this.inside.travelLight.intensity, inTunnel ? 13 : 0, 0.15);
     if (inTunnel) this.inside.travelLight.position.copy(this.camera.position);
+    // the travelling present carries its own pool of warm light
+    if (p && (this.state === 'inside' || this.state === 'settling' || this.state === 'tunnelIn')) {
+      this.inside.presentLight.position.copy(p.group.position).add(new THREE.Vector3(0, 1.6, 1.2));
+      this.inside.presentLight.intensity = 9;
+    } else {
+      this.inside.presentLight.intensity = 0;
+    }
 
     switch (this.state) {
       case 'tunnelIn': this.updateTunnelIn(dt); break;
@@ -625,6 +682,7 @@ export class App {
     p.group.userData.phase = Math.random() * 6;
     this.path.active = false;
     this.inside.archiveTrails();
+    this.inside.celebrate(this.settleTo, bayIndex);
     this.setState('settling');
   }
 
@@ -660,8 +718,9 @@ export class App {
       if (p.kind === 'horse') p.sway.rotation.z = 0;
       this.storedCount++;
       this.everStored = true;
-      // stored presents become static set-dressing (cheap from now on)
-      p.group.traverse((o) => { o.matrixAutoUpdate = true; });
+      // stored presents become static set-dressing (cheap from now on):
+      // same-kind gifts share one rest geometry
+      p.freezeToShared();
       this.present = null;
       this.setState('storedWait');
       this.ui.showReturn(() => this.returnOutside());

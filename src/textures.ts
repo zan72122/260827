@@ -177,10 +177,10 @@ export function wrapPaperTexture(kind: 'horse' | 'plush' | 'wheel'): THREE.Textu
   for (let y = 0; y < S; y++) {
     for (let x = 0; x < S; x++) {
       const i = (y * S + x) * 4;
-      const grain = (fbm2(x * 0.09, y * 0.09, 3) - 0.5) * 0.10;
-      // a few long soft creases
-      const cr1 = Math.exp(-(((x + y * 0.3 - 300) % 512 / 5) ** 2) * 0.25) * 0.10;
-      const cr2 = Math.exp(-(((y - x * 0.15 - 120) % 512 / 4) ** 2) * 0.25) * 0.08;
+      const grain = (fbm2(x * 0.09, y * 0.09, 3) - 0.5) * 0.07;
+      // a few long soft creases — fresh paper, not crumpled
+      const cr1 = Math.exp(-(((x + y * 0.3 - 300) % 512 / 5) ** 2) * 0.25) * 0.05;
+      const cr2 = Math.exp(-(((y - x * 0.15 - 120) % 512 / 4) ** 2) * 0.25) * 0.04;
       const k = 1 + grain - cr1 + cr2 * 0.5;
       d[i] *= k; d[i + 1] *= k; d[i + 2] *= k;
     }

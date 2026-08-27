@@ -162,7 +162,8 @@ export class InsideScene {
   scene = new THREE.Scene();
   tunnelCurve!: THREE.CatmullRomCurve3;
   bays: Bay[] = [];
-  presentSpot = new THREE.Vector3(0, 1.8, 3);
+  private bayRims: THREE.MeshBasicMaterial[] = [];
+  presentSpot = new THREE.Vector3(0, 2.4, 5.2);
   private starTex = starSpriteTexture();
   private fields: StarPoints[] = [];
   private pathDusts: StarPoints[] = [];
@@ -170,6 +171,11 @@ export class InsideScene {
   private guideCurve: THREE.CatmullRomCurve3 | null = null;
   /** headlamp that rides with the camera through the tunnel */
   travelLight = new THREE.PointLight(0xffd9b0, 0, 16, 2);
+  /** soft warm light that follows the travelling present (keeps it readable) */
+  presentLight = new THREE.PointLight(0xffe0b8, 9, 7, 2);
+  /** celebration burst on arrival */
+  private burst: StarPoints | null = null;
+  private burstAge = 0;
   private buildSteps: (() => void)[] = [];
   built = false;
   time = 0;
@@ -191,6 +197,7 @@ export class InsideScene {
     const interiorTex = sackInteriorTexture();
 
     this.scene.add(this.travelLight);
+    this.scene.add(this.presentLight);
     // Build in chunks so we can preload across frames while the child drags.
     this.buildSteps = [
       () => this.buildWalls(interiorTex),
@@ -236,11 +243,32 @@ export class InsideScene {
     this.scene.add(walls);
 
     // low warm base light — bays / mouth / path carry the real light
-    this.scene.add(new THREE.AmbientLight(0x3a2026, 2.0));
-    this.scene.add(new THREE.HemisphereLight(0x5a3240, 0x140608, 0.55));
+    this.scene.add(new THREE.AmbientLight(0x3a2026, 2.6));
+    this.scene.add(new THREE.HemisphereLight(0x5a3240, 0x140608, 0.75));
     const mouthGlow = new THREE.PointLight(0xffdcb0, 70, 50, 2);
     mouthGlow.position.set(0, 6, 13);
     this.scene.add(mouthGlow);
+    // shaft of light falling from the (unseen) mouth above onto the arrival
+    // spot — the reminder that the way in is up there
+    const shaftCanvas = document.createElement('canvas');
+    shaftCanvas.width = 64; shaftCanvas.height = 256;
+    const sg2 = shaftCanvas.getContext('2d')!;
+    const shaftGrad = sg2.createLinearGradient(0, 0, 0, 256);
+    shaftGrad.addColorStop(0, 'rgba(255,225,180,0.30)');
+    shaftGrad.addColorStop(1, 'rgba(255,225,180,0.0)');
+    sg2.fillStyle = shaftGrad;
+    sg2.fillRect(0, 0, 64, 256);
+    const shaftTex = new THREE.CanvasTexture(shaftCanvas);
+    shaftTex.colorSpace = THREE.SRGBColorSpace;
+    const shaft = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.9, 1.9, 15, 20, 1, true),
+      new THREE.MeshBasicMaterial({
+        map: shaftTex, transparent: true, opacity: 0.3, side: THREE.DoubleSide,
+        blending: THREE.AdditiveBlending, depthWrite: false,
+      })
+    );
+    shaft.position.set(0, 9.5, 5.2);
+    this.scene.add(shaft);
   }
 
   private buildTunnel(tex: THREE.Texture) {
@@ -317,13 +345,12 @@ export class InsideScene {
       plat.position.y = -0.45;
       g.add(plat);
       // rim stitching glow — restrained
-      const rim = new THREE.Mesh(
-        new THREE.TorusGeometry(3.55, 0.045, 8, 48),
-        new THREE.MeshBasicMaterial({ color: 0xffd9a8, transparent: true, opacity: 0.7 })
-      );
+      const rimMat = new THREE.MeshBasicMaterial({ color: 0xffd9a8, transparent: true, opacity: 0.7 });
+      const rim = new THREE.Mesh(new THREE.TorusGeometry(3.55, 0.045, 8, 48), rimMat);
       rim.rotation.x = Math.PI / 2;
       rim.position.y = -0.02;
       g.add(rim);
+      this.bayRims.push(rimMat);
       // fabric-fold backdrop: pleated curtain panels derived from the sack cloth
       const pleatMat = new THREE.MeshStandardMaterial({
         map: tex, roughness: 1, side: THREE.DoubleSide, color: 0xf0caca,
@@ -509,6 +536,29 @@ export class InsideScene {
     }
   }
 
+  /** celebration sparkle burst when a present reaches its bay */
+  celebrate(at: THREE.Vector3, bayIndex: number) {
+    if (this.burst) {
+      this.scene.remove(this.burst.mesh);
+      this.burst.dispose();
+    }
+    const b = new StarPoints(48, this.starTex, 0xfff0c8, 1.0);
+    for (let i = 0; i < 48; i++) {
+      const a = (i / 48) * Math.PI * 2;
+      const r = 0.4 + Math.random() * 2.6;
+      b.add(
+        at.x + Math.cos(a) * r,
+        at.y + Math.random() * 2.8 - 0.4,
+        at.z + Math.sin(a) * r,
+        0.3 + Math.random() * 0.32, Math.random() * 10);
+    }
+    b.commit();
+    this.scene.add(b.mesh);
+    this.burst = b;
+    this.burstAge = 0;
+    this.bays[bayIndex].light.intensity = 260; // flare, decays in update()
+  }
+
   storePresent(p: Present, bayIndex: number): THREE.Vector3 {
     const bay = this.bays[bayIndex];
     const slot = bay.slots[bay.used % bay.slots.length];
@@ -523,6 +573,24 @@ export class InsideScene {
   update(dt: number) {
     this.time += dt;
     for (const f of this.fields) f.setTime(this.time);
+    // celebration burst fades out; bay flare settles back down
+    if (this.burst) {
+      this.burstAge += dt;
+      this.burst.setTime(this.time * 2);
+      this.burst.setOpacity(Math.max(0, 1 - this.burstAge / 2.2));
+      if (this.burstAge > 2.2) {
+        this.scene.remove(this.burst.mesh);
+        this.burst.dispose();
+        this.burst = null;
+      }
+    }
+    for (const bay of this.bays) {
+      if (bay.light.intensity > 110) bay.light.intensity = Math.max(110, bay.light.intensity - dt * 200);
+    }
+    // rims breathe gently — "here is a good place"
+    this.bayRims.forEach((m, i) => {
+      m.opacity = 0.5 + 0.28 * (0.5 + 0.5 * Math.sin(this.time * 1.7 + i * 2.1));
+    });
     for (const d of this.pathDusts) d.setTime(this.time);
     if (this.guide && this.guideCurve) {
       this.guide.setTime(this.time * 2.2);

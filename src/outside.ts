@@ -16,11 +16,17 @@ export class OutsideScene {
   sack = new Sack();
   santa = new Santa();
   /** where a new present is placed for the child */
-  presentSpot = new THREE.Vector3(-0.9, 0, 0.3);
+  presentSpot = new THREE.Vector3(-0.42, 0, 0.9);
   breeze: THREE.Points;
   private breezeVel: Float32Array;
   private breezeAge: Float32Array;
   time = 0;
+  /** stardust streamline: flies from the present to the mouth as a wordless hint */
+  private hintPts: THREE.Points;
+  private hintT = -1;
+  private hintFrom = new THREE.Vector3();
+  /** soft contact shadow under the present */
+  contactShadow: THREE.Mesh;
 
   constructor() {
     this.scene.background = new THREE.Color(0x171017);
@@ -186,10 +192,10 @@ export class OutsideScene {
     const coolFill = new THREE.DirectionalLight(0x7f9cc8, 0.5);
     coolFill.position.set(-4, 2.5, -2);
     this.scene.add(coolFill);
-    this.scene.add(new THREE.HemisphereLight(0x5a4b40, 0x241812, 0.7));
+    this.scene.add(new THREE.HemisphereLight(0x5a4b40, 0x241812, 0.85));
 
     // ---------- faint breath of air drifting OUT of the sack mouth
-    const N = 26;
+    const N = 42;
     const pos = new Float32Array(N * 3);
     this.breezeVel = new Float32Array(N * 3);
     this.breezeAge = new Float32Array(N);
@@ -197,13 +203,50 @@ export class OutsideScene {
     const bg = new THREE.BufferGeometry();
     bg.setAttribute('position', new THREE.BufferAttribute(pos, 3));
     this.breeze = new THREE.Points(bg, new THREE.PointsMaterial({
-      color: 0xffe6c0, size: 0.05, transparent: true, opacity: 0.55,
+      color: 0xffe6c0, size: 0.075, transparent: true, opacity: 0.55,
       map: starSpriteTexture(), alphaTest: 0.01,
       depthWrite: false, blending: THREE.AdditiveBlending, sizeAttenuation: true,
     }));
     this.breeze.frustumCulled = false;
     this.scene.add(this.breeze);
+
+    // hint streamline points
+    const HN = 18;
+    const hg = new THREE.BufferGeometry();
+    hg.setAttribute('position', new THREE.BufferAttribute(new Float32Array(HN * 3), 3));
+    this.hintPts = new THREE.Points(hg, new THREE.PointsMaterial({
+      color: 0xffe9b8, size: 0.09, transparent: true, opacity: 0,
+      map: starSpriteTexture(), alphaTest: 0.01,
+      depthWrite: false, blending: THREE.AdditiveBlending, sizeAttenuation: true,
+    }));
+    this.hintPts.frustumCulled = false;
+    this.scene.add(this.hintPts);
+
+    // contact shadow blob (keeps the present grounded)
+    const shCanvas = document.createElement('canvas');
+    shCanvas.width = shCanvas.height = 128;
+    const shg = shCanvas.getContext('2d')!;
+    const shGrad = shg.createRadialGradient(64, 64, 6, 64, 64, 62);
+    shGrad.addColorStop(0, 'rgba(0,0,0,0.42)');
+    shGrad.addColorStop(1, 'rgba(0,0,0,0)');
+    shg.fillStyle = shGrad;
+    shg.fillRect(0, 0, 128, 128);
+    const shTex = new THREE.CanvasTexture(shCanvas);
+    this.contactShadow = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.5, 1.1),
+      new THREE.MeshBasicMaterial({ map: shTex, transparent: true, depthWrite: false })
+    );
+    this.contactShadow.rotation.x = -Math.PI / 2;
+    this.contactShadow.position.y = 0.012;
+    this.scene.add(this.contactShadow);
   }
+
+  /** play the stardust hint from `from` to the mouth (wordless invitation) */
+  playHint(from: THREE.Vector3) {
+    this.hintFrom.copy(from).add(new THREE.Vector3(0, 0.9, 0));
+    this.hintT = 0;
+  }
+  get hintPlaying() { return this.hintT >= 0; }
 
   /** camera composition, low 3/4 so mouth vs present size difference reads at once */
   applyCamera(cam: THREE.PerspectiveCamera, portrait: boolean) {
@@ -247,5 +290,24 @@ export class OutsideScene {
     }
     pos.needsUpdate = true;
     (this.breeze.material as THREE.PointsMaterial).opacity = 0.15 + breezeStrength * 0.45;
+
+    // hint streamline: staggered sparks arc from the present into the mouth
+    if (this.hintT >= 0) {
+      this.hintT += dt / 2.4;
+      const hp = this.hintPts.geometry.attributes.position as THREE.BufferAttribute;
+      const mid = this.hintFrom.clone().lerp(mouth, 0.5);
+      mid.y = Math.max(this.hintFrom.y, mouth.y) + 0.85;
+      for (let i = 0; i < hp.count; i++) {
+        const t = ((this.hintT * 2 - i * 0.045) % 1 + 1) % 1;
+        const a = this.hintFrom.clone().lerp(mid, t);
+        const bpt = mid.clone().lerp(mouth, t);
+        a.lerp(bpt, t);
+        hp.setXYZ(i, a.x, a.y, a.z);
+      }
+      hp.needsUpdate = true;
+      const fade = Math.min(1, this.hintT * 6) * Math.min(1, (1 - this.hintT) * 4);
+      (this.hintPts.material as THREE.PointsMaterial).opacity = Math.max(0, fade * 0.95);
+      if (this.hintT >= 1) this.hintT = -1;
+    }
   }
 }
