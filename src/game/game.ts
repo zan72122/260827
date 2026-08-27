@@ -615,9 +615,9 @@ export class Game {
         q0: 0.56, q1: 0.80, fn: (o) => {
           // 5: seabed 3/4 view - touchdown + burial machine.
           o.pos.set(
-            td.x - this.cable.touchdownTangent.x * 11 + side.x * 9,
-            td.y + 6.5,
-            td.z - this.cable.touchdownTangent.z * 11 + side.z * 9
+            td.x - this.cable.touchdownTangent.x * 12 + side.x * 12,
+            td.y + 8.5,
+            td.z - this.cable.touchdownTangent.z * 12 + side.z * 12
           );
           o.look.set(td.x + this.cable.touchdownTangent.x * 3, td.y + 0.5, td.z + this.cable.touchdownTangent.z * 3);
         }
@@ -625,7 +625,7 @@ export class Game {
       {
         q0: 0.80, q1: 9, fn: (o) => {
           // 6: pull back - the whole laid path seen from the seabed.
-          o.pos.set(td.x + side.x * 24, td.y + 17, td.z + side.z * 24);
+          o.pos.set(td.x + side.x * 26, td.y + 21, td.z + side.z * 26);
           route.surfaceAt(this.touchdownS * 0.55, this.v2);
           o.look.set(this.v2.x, this.seabed.height(this.v2.x, this.v2.z) + 2, this.v2.z);
         }

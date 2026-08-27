@@ -100,8 +100,10 @@ export class LayRoute {
       const tan = this.tangentAt(s, new THREE.Vector3());
       const h = this.seabed.height(p.x, p.z);
       this.stations.push({
+        // Slightly sunk vs the exact height so the tube reads as resting on
+        // the rendered (interpolated) terrain rather than hovering.
         s,
-        pos: new THREE.Vector3(p.x, h + CABLE_RADIUS, p.z),
+        pos: new THREE.Vector3(p.x, h + CABLE_RADIUS - 0.12, p.z),
         tangent: tan,
         buriable: this.seabed.buriable(p.x, p.z) && h < -6
       });

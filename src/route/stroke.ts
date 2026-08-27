@@ -53,10 +53,10 @@ function smoothJitter(pts: THREE.Vector3[], passes: number): THREE.Vector3[] {
 }
 
 /** Iteratively relax interior points until every turn respects MIN_BEND_RADIUS. */
-function clampCurvature(pts: THREE.Vector3[], step: number): void {
-  const maxTurn = step / MIN_BEND_RADIUS; // radians allowed per sample step
+function clampCurvature(pts: THREE.Vector3[], step: number, iterations = 160): void {
+  const maxTurn = (step / MIN_BEND_RADIUS) * 0.85; // margin under the limit
   const a = new THREE.Vector2(), b = new THREE.Vector2();
-  for (let iter = 0; iter < 40; iter++) {
+  for (let iter = 0; iter < iterations; iter++) {
     let worst = 0;
     for (let i = 1; i < pts.length - 1; i++) {
       a.set(pts[i].x - pts[i - 1].x, pts[i].z - pts[i - 1].z);
@@ -67,12 +67,12 @@ function clampCurvature(pts: THREE.Vector3[], step: number): void {
         worst = Math.max(worst, turn);
         const mx = (pts[i - 1].x + pts[i + 1].x) * 0.5;
         const mz = (pts[i - 1].z + pts[i + 1].z) * 0.5;
-        const k = Math.min(0.5, (turn - maxTurn) / turn);
+        const k = Math.min(0.75, (turn - maxTurn) / turn + 0.15);
         pts[i].x += (mx - pts[i].x) * k;
         pts[i].z += (mz - pts[i].z) * k;
       }
     }
-    if (worst < maxTurn * 1.05) break;
+    if (worst < maxTurn * 1.02) break;
   }
 }
 
@@ -117,12 +117,15 @@ export function processStroke(
   pts[pts.length - 1].set(B.x, 0, B.z);
 
   pts = resample(pts, RESAMPLE_STEP);
-  pts = smoothJitter(pts, 3);
+  pts = smoothJitter(pts, 4);
   pushOffLand(pts, seabed);
-  clampCurvature(pts, RESAMPLE_STEP);
-  pts = resample(pts, RESAMPLE_STEP);
+  // Pin the anchors BEFORE the curvature pass so the pass can also round any
+  // corner the pinning itself creates; resampling preserves endpoints.
   pts[0].set(A.x, 0, A.z);
   pts[pts.length - 1].set(B.x, 0, B.z);
+  clampCurvature(pts, RESAMPLE_STEP);
+  pts = resample(pts, RESAMPLE_STEP);
+  clampCurvature(pts, RESAMPLE_STEP, 40);
 
   return { ok: true, points: pts };
 }

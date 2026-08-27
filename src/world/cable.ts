@@ -207,11 +207,14 @@ export class CableSystem {
         const i1 = i - 1;
         if (i1 - runStart >= 3) {
           const sb = route.seabed;
+          // Edge vertices are sunk BELOW the exact surface so the strips tuck
+          // under the (linearly interpolated) terrain mesh instead of showing
+          // floating edges on slopes.
           const trench = buildRibbon(st, runStart, i1, (side) => (
-            side === 0 ? { off: 0, lift: -0.35 } : { off: 0.75, lift: 0.05 }
+            side === 0 ? { off: 0, lift: -0.55 } : { off: 0.75, lift: -0.22 }
           ), 0x4a453a, (x, z) => sb.height(x, z));
           const mound = buildRibbon(st, runStart, i1, (side) => (
-            side === 0 ? { off: 0, lift: CABLE_RADIUS * 2 + 0.42 } : { off: 1.7, lift: 0.03 }
+            side === 0 ? { off: 0, lift: CABLE_RADIUS * 2 + 0.35 } : { off: 1.7, lift: -0.25 }
           ), 0x9a8a6c, (x, z) => sb.height(x, z));
           this.group.add(trench, mound);
           this.buryRuns.push({ i0: runStart, i1, trench, mound });
