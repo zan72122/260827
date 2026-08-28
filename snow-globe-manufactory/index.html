@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#1b1f26" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <title>ちいさな雪の町 スノーグローブ製造所</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='13' r='10' fill='%23bcd7e6'/%3E%3Crect x='7' y='23' width='18' height='5' rx='2' fill='%238a5a33'/%3E%3C/svg%3E" />
+    <style>
+      :root {
+        --ui-safe-b: env(safe-area-inset-bottom, 0px);
+        --ui-safe-t: env(safe-area-inset-top, 0px);
+        --ui-safe-l: env(safe-area-inset-left, 0px);
+        --ui-safe-r: env(safe-area-inset-right, 0px);
+        --ink: #f2ede4;
+        --ink-dim: #b9b2a6;
+        --panel: rgba(28, 24, 20, 0.72);
+        --panel-line: rgba(238, 228, 210, 0.18);
+        --accent: #e8c37a;
+      }
+      * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+      html, body {
+        margin: 0; padding: 0; width: 100%; height: 100%;
+        overflow: hidden; background: #0e1116;
+        font-family: -apple-system, BlinkMacSystemFont, "Hiragino Maru Gothic ProN",
+          "Hiragino Sans", "Yu Gothic", system-ui, sans-serif;
+        color: var(--ink);
+        touch-action: none; overscroll-behavior: none;
+        user-select: none; -webkit-user-select: none;
+      }
+      #app { position: fixed; inset: 0; }
+      #scene { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+
+      #hud { position: absolute; inset: 0; pointer-events: none; }
+      #hud .pe { pointer-events: auto; }
+
+      /* ---- top strip: current step pictogram ---- */
+      #steps {
+        position: absolute;
+        top: calc(var(--ui-safe-t) + 10px);
+        left: 50%; transform: translateX(-50%);
+        display: flex; gap: 7px; align-items: center;
+        padding: 6px 10px; border-radius: 999px;
+        background: var(--panel); border: 1px solid var(--panel-line);
+        backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px);
+      }
+      #steps .dot {
+        width: 9px; height: 9px; border-radius: 50%;
+        background: rgba(240, 235, 224, 0.24);
+        transition: background 220ms ease, transform 220ms ease;
+      }
+      #steps .dot.done { background: rgba(232, 195, 122, 0.55); }
+      #steps .dot.now { background: var(--accent); transform: scale(1.45); }
+
+      /* ---- coach: big pictogram + short hiragana line ---- */
+      #bottom {
+        position: absolute; left: 50%; transform: translateX(-50%);
+        bottom: calc(var(--ui-safe-b) + 12px);
+        display: flex; flex-direction: column; align-items: center; gap: 10px;
+        width: 100%; pointer-events: none;
+      }
+      #coach {
+        display: flex; align-items: center; gap: 12px;
+        padding: 10px 18px 10px 12px; border-radius: 22px;
+        background: var(--panel); border: 1px solid var(--panel-line);
+        backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px);
+        max-width: min(94vw, 520px);
+        opacity: 0; transition: opacity 320ms ease;
+      }
+      #coach.show { opacity: 1; }
+      #coach svg { width: 46px; height: 46px; flex: none; }
+      #coach .txt { font-size: 17px; line-height: 1.35; letter-spacing: 0.02em; }
+      .btn .lb { white-space: nowrap; }
+
+      /* ---- tray: piece chooser / action buttons ---- */
+      #tray {
+        display: flex; flex-wrap: wrap; gap: 8px;
+        align-items: flex-end; justify-content: center;
+        padding: 9px 11px; border-radius: 24px;
+        background: var(--panel); border: 1px solid var(--panel-line);
+        backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px);
+        width: max-content; max-width: calc(100vw - 20px);
+      }
+      #tray:empty { display: none; }
+      .btn {
+        flex: none; width: 68px; min-height: 68px;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        gap: 3px; padding: 6px 4px; border-radius: 18px; border: 1px solid transparent;
+        background: rgba(255, 252, 246, 0.07);
+        transition: transform 140ms ease, background 160ms ease, border-color 160ms ease;
+      }
+      .btn:active { transform: scale(0.94); }
+      .btn svg { width: 38px; height: 38px; }
+      .btn .lb { font-size: 11px; color: var(--ink-dim); letter-spacing: 0.02em; }
+      .btn.sel { background: rgba(232, 195, 122, 0.2); border-color: rgba(232, 195, 122, 0.6); }
+      .btn.sel .lb { color: var(--accent); }
+      .btn.gone { display: none; }
+      .btn[data-disabled='1'] { opacity: 0.32; }
+
+      /* ---- corner buttons ---- */
+      .corner {
+        position: absolute; width: 46px; height: 46px; border-radius: 14px;
+        display: flex; align-items: center; justify-content: center;
+        background: var(--panel); border: 1px solid var(--panel-line);
+        backdrop-filter: blur(7px); -webkit-backdrop-filter: blur(7px);
+      }
+      .corner svg { width: 26px; height: 26px; }
+      .corner:active { transform: scale(0.93); }
+      #btn-settings { top: calc(var(--ui-safe-t) + 10px); right: calc(var(--ui-safe-r) + 12px); }
+      #btn-settings.gone { display: none; }
+
+      /* ---- settings sheet ---- */
+      #sheet {
+        position: absolute; inset: 0; display: none;
+        align-items: center; justify-content: center;
+        background: rgba(10, 12, 16, 0.62);
+        backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+      }
+      #sheet.open { display: flex; }
+      #sheet .card {
+        width: min(88vw, 380px); padding: 18px; border-radius: 22px;
+        background: #221d19; border: 1px solid var(--panel-line);
+        display: flex; flex-direction: column; gap: 8px;
+      }
+      #sheet h2 { margin: 0 0 6px; font-size: 16px; font-weight: 600; color: var(--ink); }
+      .row {
+        display: flex; align-items: center; justify-content: space-between;
+        gap: 12px; padding: 11px 12px; border-radius: 14px;
+        background: rgba(255, 252, 246, 0.05); font-size: 15px;
+      }
+      .row .sw {
+        width: 50px; height: 29px; border-radius: 999px; flex: none;
+        background: rgba(255, 252, 246, 0.16); position: relative; transition: background 180ms ease;
+      }
+      .row .sw::after {
+        content: ''; position: absolute; top: 3px; left: 3px;
+        width: 23px; height: 23px; border-radius: 50%; background: #efe7da;
+        transition: transform 180ms ease;
+      }
+      .row[data-on='1'] .sw { background: rgba(232, 195, 122, 0.7); }
+      .row[data-on='1'] .sw::after { transform: translateX(21px); }
+
+      /* ---- shelf of saved globes ---- */
+      #shelf {
+        position: absolute; inset: 0; display: none;
+        align-items: center; justify-content: center;
+        background: rgba(10, 12, 16, 0.72);
+        backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+      }
+      #shelf.open { display: flex; }
+      #shelf .card {
+        width: min(92vw, 520px); padding: 18px; border-radius: 22px;
+        background: #221d19; border: 1px solid var(--panel-line);
+      }
+      #shelf .slots { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+      .slot {
+        width: 124px; padding: 10px; border-radius: 18px;
+        background: rgba(255, 252, 246, 0.06); border: 1px solid transparent;
+        display: flex; flex-direction: column; align-items: center; gap: 6px;
+      }
+      .slot:active { transform: scale(0.96); }
+      .slot canvas { width: 96px; height: 96px; border-radius: 12px; background: rgba(0,0,0,0.2); }
+      .slot .lb { font-size: 12px; color: var(--ink-dim); }
+      .slot.empty { opacity: 0.45; }
+
+      /* ---- start veil ---- */
+      #veil {
+        position: absolute; inset: 0; display: flex; flex-direction: column;
+        align-items: center; justify-content: center; gap: 22px;
+        background: radial-gradient(circle at 50% 42%, #2a3038 0%, #0e1116 72%);
+        transition: opacity 620ms ease;
+      }
+      #veil.gone { opacity: 0; pointer-events: none; }
+      #veil h1 {
+        margin: 0; font-size: clamp(19px, 5.2vw, 27px); font-weight: 600;
+        letter-spacing: 0.04em; text-align: center; line-height: 1.5;
+        text-shadow: 0 2px 18px rgba(0, 0, 0, 0.6);
+      }
+      #veil .sub { font-size: 13px; color: var(--ink-dim); letter-spacing: 0.08em; }
+      #veil .go {
+        display: flex; flex-direction: column; align-items: center; gap: 8px;
+        padding: 16px 30px; border-radius: 26px;
+        background: rgba(232, 195, 122, 0.16); border: 1px solid rgba(232, 195, 122, 0.5);
+        animation: breathe 2.6s ease-in-out infinite;
+      }
+      #veil .go svg { width: 54px; height: 54px; }
+      @keyframes breathe { 0%,100% { transform: scale(1); } 50% { transform: scale(1.045); } }
+      @media (prefers-reduced-motion: reduce) { #veil .go { animation: none; } }
+
+      /* ---- landscape: tray hugs the right edge as a column ---- */
+      /* Landscape: coach hugs the left edge, tray the right, so the middle of
+         the frame — where the globe is — stays clear. */
+      @media (orientation: landscape) and (max-height: 620px) {
+        #bottom {
+          left: calc(var(--ui-safe-l) + 10px);
+          right: calc(var(--ui-safe-r) + 10px);
+          transform: none; width: auto;
+          bottom: calc(var(--ui-safe-b) + 10px);
+          flex-direction: row; align-items: flex-end;
+          justify-content: space-between; gap: 12px;
+        }
+        #tray { max-width: min(44vw, 320px); }
+        #coach { max-width: min(44vw, 330px); padding: 8px 14px 8px 10px; }
+        #coach svg { width: 34px; height: 34px; }
+        #coach .txt { font-size: 14px; }
+        .btn { width: 58px; min-height: 58px; padding: 5px 3px; }
+        .btn svg { width: 30px; height: 30px; }
+        .btn .lb { font-size: 9px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="scene"></canvas>
+      <div id="hud">
+        <div id="steps" class="pe"></div>
+        <div id="btn-settings" class="corner pe"></div>
+        <div id="bottom">
+          <div id="coach"></div>
+          <div id="tray" class="pe"></div>
+        </div>
+        <div id="sheet"><div class="card pe"><h2>せってい</h2><div id="sheet-rows"></div></div></div>
+        <div id="shelf"><div class="card pe"><h2>つくった スノーグローブ</h2><div class="slots" id="shelf-slots"></div></div></div>
+      </div>
+      <div id="veil">
+        <h1>ちいさな雪の町<br />スノーグローブ製造所</h1>
+        <div class="go pe" id="veil-go"></div>
+        <div class="sub">タップして はじめる</div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
