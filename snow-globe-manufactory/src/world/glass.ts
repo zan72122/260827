@@ -64,12 +64,15 @@ const FRAG = /* glsl */ `
     float spec = pow(max(dot(R, uWindowDir), 0.0), 640.0) * 2.6
                + pow(max(dot(R, uLampDir), 0.0), 320.0) * 1.1;
 
-    // The extreme grazing band is the thick edge of the shell.
-    float edge = smoothstep(0.78, 0.995, 1.0 - ndv);
+    // The extreme grazing band is the thick edge of the shell. Real soda-lime
+    // glass darkens and greens there because the light path through it is long,
+    // and that dark band is what keeps the silhouette readable against a bright
+    // window as well as against the dark room.
+    float edge = smoothstep(0.72, 0.995, 1.0 - ndv);
     vec3 col = env * (0.3 + 0.7 * fres) + vec3(spec);
-    col = mix(col, col * 0.55 + uEdgeTint, edge * 0.75);
+    col = mix(col, col * 0.32 + uEdgeTint, edge * 0.9);
 
-    float a = uBaseAlpha + fres * uRimAlpha + edge * 0.28;
+    float a = uBaseAlpha + fres * uRimAlpha + edge * 0.45;
     if (uBackFace > 0.5) a *= 0.55;   // the far wall must never bury the town
     gl_FragColor = vec4(col, clamp(a, 0.0, 0.94) * uOpacity);
 
@@ -100,8 +103,8 @@ export class Glass {
       uWindowCol: { value: new THREE.Color(0xc7dcec) },
       uLampDir: { value: new THREE.Vector3(0.78, 0.44, 0.44).normalize() },
       uLampCol: { value: new THREE.Color(0xffc98a) },
-      uEdgeTint: { value: new THREE.Color(0x2f4a44) },
-      uBaseAlpha: { value: 0.055 },
+      uEdgeTint: { value: new THREE.Color(0x27403c) },
+      uBaseAlpha: { value: 0.072 },
       uRimAlpha: { value: 0.72 },
       uReflect: { value: 0.85 },
       uOpacity: { value: 1 },

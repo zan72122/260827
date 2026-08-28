@@ -1,6 +1,8 @@
 import * as THREE from 'three'
 import { GROUND_Y, MOUTH_R, MOUTH_Y, PLATE_THICKNESS, PLOT_R, fitsInside } from './dims'
-import { PIECE_SPECS, buildPiece, disposePiece, setSnowCapAmount, type PieceBuild } from './pieces'
+import {
+  PIECE_SPECS, buildPiece, disposePiece, gableRoof, setSnowCapAmount, type PieceBuild,
+} from './pieces'
 import { HeightField } from './snow'
 import { enamel } from './materials'
 import type { MatKit } from './materials'
@@ -75,7 +77,7 @@ export class Town {
   private groundMesh: THREE.Mesh
   private plug: THREE.Mesh
   private lampLights: THREE.PointLight[] = []
-  private decorAnchors: THREE.Vector3[] = []
+  private decorAngles: number[] = []
   private glowMats: THREE.MeshStandardMaterial[] = []
   private lit = 0
   private seed: number
@@ -231,9 +233,7 @@ export class Town {
     this.glowMats.push(farGlow)
     this.owned.push(farWall, farRoof, farGlow)
     const bodyGeo = new THREE.BoxGeometry(0.05, 0.032, 0.04)
-    const roofGeo = new THREE.CylinderGeometry(0.001, 0.036, 0.056, 3)
-    roofGeo.rotateZ(Math.PI / 2)
-    roofGeo.rotateY(Math.PI / 2)
+    const roofGeo = gableRoof(0.029, 0.026, 0.022)
     const winGeo = new THREE.BoxGeometry(0.012, 0.01, 0.004)
     this.owned.push(bodyGeo, roofGeo, winGeo)
     for (let i = 0; i < 3; i++) {
@@ -247,8 +247,7 @@ export class Town {
       body.position.y = 0.016
       body.castShadow = true
       const roof = new THREE.Mesh(roofGeo, farRoof)
-      roof.position.y = 0.034
-      roof.scale.set(1, 1, 0.8)
+      roof.position.y = 0.032
       const win = new THREE.Mesh(winGeo, farGlow)
       win.position.set(0.008, 0.018, 0.021)
       g.add(body, roof, win)
@@ -256,7 +255,7 @@ export class Town {
       g.rotation.y = -a + Math.PI / 2 + rng.range(-0.3, 0.3)
       g.scale.setScalar(0.86)
       this.ground.add(g)
-      this.decorAnchors.push(new THREE.Vector3(x, y + 0.03, z))
+      this.decorAngles.push(Math.atan2(x, z))
     }
 
     // Low hills at the rim, kept under the glass line.
@@ -284,6 +283,7 @@ export class Town {
       const x = Math.cos(a) * 0.29
       const z = Math.sin(a) * 0.29
       const b = buildPiece('fir', 1)
+      this.decorAngles.push(Math.atan2(x, z))
       b.group.position.set(x, GROUND_Y + groundHeight(x, z, this.seed), z)
       b.group.scale.setScalar(0.72)
       this.ground.add(b.group)
@@ -459,6 +459,20 @@ export class Town {
     return { x: best.x, z: best.z }
   }
 
+  /**
+   * Bearings, from +Z, of everything standing on the ground that a camera
+   * walking the rim would run into. The centre piece is excluded: nothing
+   * ever passes close to it.
+   */
+  blockedAzimuths(): number[] {
+    const out = [...this.decorAngles]
+    for (const rec of this.placed.values()) {
+      const r = Math.hypot(rec.data.x, rec.data.z)
+      if (r > 0.06) out.push(Math.atan2(rec.data.x, rec.data.z))
+    }
+    return out
+  }
+
   /** The scene object for a placed piece, for spawn animations. */
   pieceObject(id: number): THREE.Object3D | null {
     return this.placed.get(id)?.build.group ?? null
@@ -512,7 +526,7 @@ export class Town {
       for (const m of rec.build.glow) m.emissiveIntensity = 0.1 + this.lit * 1.9
     }
     for (const m of this.glowMats) m.emissiveIntensity = 0.08 + this.lit * 1.4
-    for (const l of this.lampLights) l.intensity = this.lit * 0.09
+    for (const l of this.lampLights) l.intensity = this.lit * 0.14
   }
 
   get litAmount(): number {

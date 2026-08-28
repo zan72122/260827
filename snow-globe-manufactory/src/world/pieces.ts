@@ -84,6 +84,24 @@ export function setSnowCapAmount(t: number) {
   m.visible = m.opacity > 0.01
 }
 
+/**
+ * A proper gabled roof: a triangular prism with its ridge running along X.
+ * Extruded from a shape so the winding and the normals come out right — a
+ * three-segment cylinder gives a pyramid, not a roof.
+ */
+export function gableRoof(halfLen: number, halfWidth: number, height: number): THREE.BufferGeometry {
+  const tri = new THREE.Shape()
+  tri.moveTo(-halfWidth, 0)
+  tri.lineTo(halfWidth, 0)
+  tri.lineTo(0, height)
+  tri.closePath()
+  const geo = new THREE.ExtrudeGeometry(tri, { depth: halfLen * 2, bevelEnabled: false })
+  geo.translate(0, 0, -halfLen)
+  geo.rotateY(Math.PI / 2)
+  geo.computeVertexNormals()
+  return geo
+}
+
 class Builder {
   group = new THREE.Group()
   caps: THREE.Mesh[] = []
@@ -157,23 +175,17 @@ function house(paint: number[]): PieceBuild {
   const body = b.add(new THREE.BoxGeometry(w, wallH, d), wall)
   body.position.y = wallH / 2
 
-  // Gabled roof from a 3-sided prism, rotated so the ridge runs along X.
-  const roofGeo = new THREE.CylinderGeometry(0.001, 0.076, w * 1.16, 3, 1, false)
-  roofGeo.rotateZ(Math.PI / 2)
-  roofGeo.rotateY(Math.PI / 2)
+  // Overhanging gable, ridge along X.
+  const roofGeo = gableRoof(w * 0.58, d * 0.62, 0.044)
   const roof = b.add(roofGeo, roofMat)
-  roof.position.y = wallH + 0.028
-  roof.scale.set(1, 1, 0.86)
+  roof.position.y = wallH
 
-  const capGeo = roofGeo.clone()
-  const capMesh = b.cap(capGeo)
-  capMesh.position.copy(roof.position)
-  capMesh.position.y += 0.004
-  capMesh.scale.set(1.015, 1.015, 0.875)
+  const capMesh = b.cap(gableRoof(w * 0.6, d * 0.64, 0.046))
+  capMesh.position.y = wallH + 0.0015
 
   const chimGeo = new THREE.BoxGeometry(0.018, 0.038, 0.018)
   const chim = b.add(chimGeo, trim)
-  chim.position.set(w * 0.27, wallH + 0.048, d * 0.16)
+  chim.position.set(w * 0.27, wallH + 0.036, d * 0.14)
 
   const door = b.add(new THREE.BoxGeometry(0.026, 0.042, 0.006), trim)
   door.position.set(-w * 0.16, 0.021, d / 2 + 0.001)
@@ -187,7 +199,7 @@ function house(paint: number[]): PieceBuild {
   side.position.set(-w / 2 - 0.001, wallH * 0.6, 0)
 
   b.lampAnchors.push(new THREE.Vector3(0, wallH * 0.7, d * 0.6))
-  return b.done(0.072, wallH + 0.066)
+  return b.done(0.072, wallH + 0.06)
 }
 
 function fir(paint: number[]): PieceBuild {

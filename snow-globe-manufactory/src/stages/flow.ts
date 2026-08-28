@@ -35,6 +35,10 @@ const PIECE_LABEL: Record<PieceKind, string> = {
 /** How far the plug hovers above the mouth during filling. */
 const LIFT_HIGH = 0.42
 const LIFT_LOW = 0.1
+/** Raised out of the way so the gasket has a clear run down to the rim. */
+const LIFT_SEAT = 0.3
+/** Travel of the gasket from the player's hand down onto the rim. */
+const GASKET_TRAVEL = 0.24
 
 const SNOW_MIN = 0.28
 const TILT_LIMIT = 0.2
@@ -69,6 +73,8 @@ export class Flow {
   /** Whether the glass shell has been lowered over the town yet. */
   private glassOn = 0
   private interiorTime = 0
+  /** Bearing of the lane the camera uses to enter and tour the globe. */
+  private bearing = 0.35
   private rearranging = false
   /** True while the camera is on its way back out of the globe. */
   private exiting = false
@@ -233,7 +239,7 @@ export class Flow {
         break
       case 'finale':
         t.set(-0.06, 0.5 - this.bias * 0.6, -0.05)
-        rig.frame({ target: t, radius: 0.8, yaw: 0.3, pitch: -0.18, fov: 46, margin: m })
+        rig.frame({ target: t, radius: 0.7, yaw: 0.3, pitch: -0.18, fov: 46, margin: m })
         break
       default:
         break
@@ -437,8 +443,11 @@ export class Flow {
 
     this.sub('move', (p) => {
       if (!this.app.input.down) return
+      // Swiping toward the globe tips the scoop; swiping back rights it. Any
+      // wiggle still pours a little, so a four-year-old cannot get stuck.
       const speed = Math.min(1, Math.abs(p.dx) / 22)
-      this.scoopTip = Math.min(1, this.scoopTip + speed * 0.09)
+      const push = p.dx > 0 ? speed * 0.09 : -speed * 0.05
+      this.scoopTip = THREE.MathUtils.clamp(this.scoopTip + push, 0, 1)
     })
     this.sub('up', () => {
       this.app.audio.setBed('pour', 'snow', 5200, 0.6, 0)
@@ -601,16 +610,20 @@ export class Flow {
       this.app.audio.slosh(Math.min(1, Math.abs(p.dx) * 0.02))
       if (this.sealProgress > 1.1) this.nextSealStep()
     } else if (this.sealStep === 1) {
-      // Drag the rubber ring onto the rim.
-      this.sealProgress = THREE.MathUtils.clamp(this.sealProgress - p.dy / (el.clientHeight * 0.32), 0, 1)
+      // Drag the rubber ring down onto the rim: finger down, ring down.
+      this.sealProgress = THREE.MathUtils.clamp(
+        this.sealProgress + p.dy / (el.clientHeight * 0.32), 0, 1,
+      )
       const ring = g.town.gasket
       ring.visible = true
-      ring.position.y = MOUTH_Y + 0.03 + (1 - this.sealProgress) * 0.34
+      ring.position.y = MOUTH_Y + 0.03 - (1 - this.sealProgress) * GASKET_TRAVEL
       if (Math.random() < 0.05) this.app.audio.gasketSqueeze(this.sealProgress * 0.4)
       if (this.sealProgress >= 0.999) this.nextSealStep()
     } else if (this.sealStep === 2) {
-      this.sealProgress = THREE.MathUtils.clamp(this.sealProgress - p.dy / (el.clientHeight * 0.42), 0, 1)
-      g.plateLift = THREE.MathUtils.lerp(LIFT_LOW, 0, this.sealProgress)
+      this.sealProgress = THREE.MathUtils.clamp(
+        this.sealProgress + p.dy / (el.clientHeight * 0.42), 0, 1,
+      )
+      g.plateLift = THREE.MathUtils.lerp(LIFT_SEAT, 0, this.sealProgress)
       g.gasketSeat = this.sealProgress
       g.liquid.setFill(THREE.MathUtils.lerp(FILL_TO_BRIM, FILL_SEALED, this.sealProgress))
       if (Math.random() < 0.09) {
@@ -636,9 +649,12 @@ export class Flow {
     this.sealProgress = 0
     if (this.sealStep === 1) {
       this.tw.add(0.45, (k) => (g.tilt.y = g.tilt.y * (1 - k)))
+      // The lid lifts clear so the ring has somewhere to travel from.
+      const from = g.plateLift
+      this.tw.add(0.5, (k) => (g.plateLift = THREE.MathUtils.lerp(from, LIFT_SEAT, k)))
       this.coach('gasket', 'ゴムの わっかを したに おろしてね')
       g.town.gasket.visible = true
-      g.town.gasket.position.y = MOUTH_Y + 0.37
+      g.town.gasket.position.y = MOUTH_Y + 0.03 - GASKET_TRAVEL
     } else if (this.sealStep === 2) {
       g.town.gasket.position.y = MOUTH_Y + 0.03
       this.app.audio.gasketSeat()
@@ -839,25 +855,66 @@ export class Flow {
     this.app.audio.snowFall(g.snow.agitation * 0.8)
   }
 
+
   // --- step 8: inside the globe -------------------------------------------
+
+  /**
+   * Picks the bearing the camera will fly in on: the direction, kept roughly
+   * frontal so the dive still reads as "through the glass I just tapped",
+   * whose nearest miniature is furthest away. Without this the camera can end
+   * up nose to nose with a street lamp.
+   */
+  private clearBearing(): number {
+    const blocked = this.globe.town.blockedAzimuths()
+    let best = 0.35
+    let bestScore = -1
+    for (let deg = -75; deg <= 75; deg += 5) {
+      const a = THREE.MathUtils.degToRad(deg)
+      let nearest = Math.PI
+      for (const b of blocked) {
+        let d = Math.abs(a - b)
+        if (d > Math.PI) d = Math.PI * 2 - d
+        nearest = Math.min(nearest, d)
+      }
+      // A small pull toward the front breaks ties in favour of a frontal entry.
+      const score = nearest - Math.abs(a) * 0.12
+      if (score > bestScore) {
+        bestScore = score
+        best = a
+      }
+    }
+    return best
+  }
+
+  /** Point inside the globe at a bearing and radius, in world space. */
+  private inner(bearing: number, radius: number, y: number, out: THREE.Vector3): THREE.Vector3 {
+    const c = this.globe.root.position
+    return out.set(
+      c.x + Math.sin(bearing) * radius,
+      c.y + y,
+      c.z + Math.cos(bearing) * radius,
+    )
+  }
 
   private enterDive() {
     const g = this.globe
     this.app.hud.clearTray()
     this.coach(null, '')
     this.litTarget = 1
-    // The lane the camera flies is kept clear of every socket a miniature can
-    // occupy, and stays a few centimetres inside the glass so the fence and
-    // the near trees sweep past the lens on the way down.
-    const c = g.root.position.clone()
-    const key = (x: number, y: number, z: number) => c.clone().add(new THREE.Vector3(x, y, z))
+    // The lane is chosen to clear whatever the player actually placed, and it
+    // stays a few centimetres inside the glass so the fence and the near trees
+    // sweep past the lens on the way down.
+    this.bearing = this.clearBearing()
+    const b = this.bearing
+    const at = (bear: number, r: number, y: number) => this.inner(bear, r, y, new THREE.Vector3())
+    const eye = GROUND_Y + 0.075
     const keys = [
-      { pos: this.app.camera.position.clone(), look: c.clone() },
-      { pos: key(0.19, 0.12, 0.95), look: key(0.02, -0.02, 0) },
-      { pos: key(0.2, 0.02, 0.52), look: key(0.04, -0.13, -0.04) },
-      { pos: key(0.22, -0.1, 0.42), look: key(0.02, -0.19, -0.12) },
-      { pos: key(0.24, -0.17, 0.35), look: key(0, -0.2, -0.18) },
-      { pos: key(0.247, -0.208, 0.295), look: key(-0.05, -0.19, -0.22) },
+      { pos: this.app.camera.position.clone(), look: g.root.position.clone() },
+      { pos: at(b, 1.0, 0.12), look: at(b, 0, -0.02) },
+      { pos: at(b, 0.55, 0.02), look: at(b + 0.3, 0.1, -0.12) },
+      { pos: at(b, 0.46, -0.1), look: at(b + 1.2, 0.14, -0.18) },
+      { pos: at(b, 0.41, -0.19), look: at(b + 2.4, 0.16, eye + 0.01) },
+      { pos: at(b, 0.385, eye), look: at(b + Math.PI * 1.08, 0.16, eye + 0.012) },
     ]
     this.app.rig.playPath(keys, this.app.settings.calmCamera ? 6.5 : 5.2, () => this.goto('inside'))
   }
@@ -866,14 +923,14 @@ export class Flow {
     const g = this.globe
     this.interiorTime = 0
     this.litTarget = 1
-    const c = g.root.position.clone()
-    const key = (x: number, y: number, z: number) => c.clone().add(new THREE.Vector3(x, y, z))
-    const keys = [
-      { pos: key(0.247, -0.208, 0.295), look: key(-0.05, -0.19, -0.22) },
-      { pos: key(0.08, -0.206, 0.377), look: key(0.02, -0.185, -0.24) },
-      { pos: key(-0.132, -0.204, 0.362), look: key(0.1, -0.185, -0.2) },
-      { pos: key(-0.295, -0.198, 0.247), look: key(0.12, -0.185, -0.1) },
-    ]
+    const b = this.bearing
+    const at = (bear: number, r: number, y: number) => this.inner(bear, r, y, new THREE.Vector3())
+    const eye = GROUND_Y + 0.075
+    // A slow drift along the rim, always looking across the town.
+    const keys = [0, 0.16, 0.34, 0.52].map((d) => ({
+      pos: at(b + d, 0.385, eye),
+      look: at(b + d + Math.PI * 1.08, 0.16, eye + 0.012),
+    }))
     this.app.rig.playPath(keys, this.app.settings.calmCamera ? 20 : 15, () => this.exitGlobe())
     this.coach('tap', 'あかりを タップしてみて', 4)
     this.app.hud.setTray([{ id: 'out', icon: 'enter', label: 'そとへ' }], () => this.exitGlobe())
@@ -904,12 +961,13 @@ export class Flow {
     this.coach(null, '')
     this.frameFor('finale')
     const c = this.globe.root.position.clone()
-    const key = (x: number, y: number, z: number) => c.clone().add(new THREE.Vector3(x, y, z))
+    const b = this.bearing + 0.52
+    const at = (bear: number, r: number, y: number) => this.inner(bear, r, y, new THREE.Vector3())
     const out = this.app.rig.restingPosition(new THREE.Vector3())
     const keys = [
-      { pos: this.app.camera.position.clone(), look: key(0.06, -0.17, -0.26) },
-      { pos: key(-0.34, -0.1, 0.34), look: key(0, -0.15, -0.08) },
-      { pos: key(-0.36, 0.12, 0.9), look: c.clone() },
+      { pos: this.app.camera.position.clone(), look: at(b + Math.PI, 0.16, GROUND_Y + 0.09) },
+      { pos: at(b, 0.42, -0.12), look: at(b + Math.PI, 0.1, -0.1) },
+      { pos: at(b, 0.95, 0.12), look: c.clone() },
       { pos: out, look: c.clone() },
     ]
     this.app.rig.playPath(keys, this.app.settings.calmCamera ? 5.5 : 4.2, () => {
@@ -923,7 +981,7 @@ export class Flow {
   private enterFinale() {
     this.app.rig.cancelPath()
     this.frameFor('finale')
-    this.litTarget = 0.85
+    this.litTarget = 1
     this.app.hud.setStepsVisible(false)
     this.app.build.recipe.pieces = this.globe.town.pieces
     this.saved = saveGlobe(this.app.build.recipe)
@@ -1094,7 +1152,7 @@ export class Flow {
     g.glass.setOpacity(this.glassOn * (1 - 0.74 * inside))
     g.glass.setInterior(inside)
     g.liquid.setOpacity(1 - 0.72 * inside)
-    this.app.atelier.setExposure(1 - 0.5 * inside)
+    this.app.atelier.setExposure(1 - 0.62 * inside)
 
     const flicker =
       this.app.settings.steadyLight ? 0 : Math.sin(this.interiorTime * 5.1) * 0.012
@@ -1155,9 +1213,10 @@ export class Flow {
           this.sealProgress = Math.min(1, this.sealProgress + dt * 0.85)
           if (this.sealStep === 1) {
             g.town.gasket.visible = true
-            g.town.gasket.position.y = MOUTH_Y + 0.03 + (1 - this.sealProgress) * 0.34
+            g.town.gasket.position.y =
+              MOUTH_Y + 0.03 - (1 - this.sealProgress) * GASKET_TRAVEL
           } else {
-            g.plateLift = THREE.MathUtils.lerp(LIFT_LOW, 0, this.sealProgress)
+            g.plateLift = THREE.MathUtils.lerp(LIFT_SEAT, 0, this.sealProgress)
             g.gasketSeat = this.sealProgress
             g.liquid.setFill(THREE.MathUtils.lerp(FILL_TO_BRIM, FILL_SEALED, this.sealProgress))
           }

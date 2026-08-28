@@ -237,8 +237,10 @@ export class Atelier {
 
     // --- the workshop lamp ---------------------------------------------------
     // A bench lamp that reads as one: weighted foot, post, elbow, shade.
-    const lampX = 1.42
-    const lampZ = -0.62
+    // Set forward of the shelf so its shade reads as a lamp in the foreground
+    // rather than a dark wedge sitting on the shelf behind it.
+    const lampX = 1.74
+    const lampZ = -0.24
     const footGeo2 = new THREE.CylinderGeometry(0.13, 0.15, 0.035, 20)
     const foot2 = new THREE.Mesh(footGeo2, mats.paintedMetal)
     foot2.position.set(lampX, 0.018, lampZ)
@@ -250,7 +252,6 @@ export class Atelier {
     const postGeo = new THREE.CylinderGeometry(0.017, 0.021, 0.8, 10)
     const post = new THREE.Mesh(postGeo, mats.steel)
     post.position.set(lampX, 0.42, lampZ)
-    post.castShadow = true
     this.group.add(post)
     this.owned.push(postGeo)
 
@@ -258,18 +259,16 @@ export class Atelier {
     const arm = new THREE.Mesh(armGeo, mats.steel)
     arm.position.set(lampX - 0.19, 0.8, lampZ + 0.05)
     arm.rotation.z = Math.PI / 2 - 0.22
-    arm.castShadow = true
     this.group.add(arm)
     this.owned.push(armGeo)
 
-    const shadeGeo = new THREE.ConeGeometry(0.135, 0.17, 20, 1, true)
+    const shadeGeo = new THREE.ConeGeometry(0.12, 0.15, 20, 1, true)
     const shadeMat = new THREE.MeshStandardMaterial({
-      color: 0x46525c, roughness: 0.48, metalness: 0.4, side: THREE.DoubleSide,
+      color: 0x74838f, roughness: 0.5, metalness: 0.22, side: THREE.DoubleSide,
     })
     const shade = new THREE.Mesh(shadeGeo, shadeMat)
     shade.position.set(lampX - 0.38, 0.72, lampZ + 0.1)
     shade.rotation.set(0, 0, Math.PI - 0.34)
-    shade.castShadow = true
     this.group.add(shade)
     this.owned.push(shadeGeo, shadeMat)
 
@@ -327,17 +326,17 @@ export class Atelier {
       const c = this.keyLight.shadow.camera
       c.near = 0.5
       c.far = 8
-      c.left = -1.6
-      c.right = 1.6
-      c.top = 1.6
-      c.bottom = -1.6
+      c.left = -1.25
+      c.right = 1.25
+      c.top = 1.25
+      c.bottom = -1.25
       c.updateProjectionMatrix()
       this.keyLight.shadow.bias = -0.0012
       this.keyLight.shadow.normalBias = 0.012
     }
 
     this.lampLight = new THREE.PointLight(0xffbe7d, 3.4, 5.6, 2)
-    this.lampLight.position.set(1.02, 0.66, -0.51)
+    this.lampLight.position.set(1.34, 0.66, -0.13)
     this.group.add(this.lampLight)
 
     this.fill = new THREE.DirectionalLight(0x9db4c8, 0.6)
@@ -542,9 +541,9 @@ export class Atelier {
   setExposure(k: number) {
     this.ambient.intensity = 1.15 * k
     this.keyLight.intensity = 2.5 * k
-    this.lampLight.intensity = 3.4 * (0.25 + 0.75 * k)
+    this.lampLight.intensity = 3.4 * (0.12 + 0.88 * k)
     this.fill.intensity = 0.6 * k
-    this.lampBulb.emissiveIntensity = 2.4 * (0.4 + 0.6 * k)
+    this.lampBulb.emissiveIntensity = 2.4 * (0.35 + 0.65 * k)
   }
 
   dispose() {

@@ -58,10 +58,10 @@ export class Hud {
       this.veil.classList.add('gone')
       fn()
     }
-    this.veilGo.addEventListener('click', go, { once: true })
-    this.veil.addEventListener('pointerdown', (e) => {
-      if (e.target === this.veil || (e.target as HTMLElement).tagName === 'H1') go()
-    })
+    // Anywhere on the title screen starts the game: a four-year-old should not
+    // have to find a button.
+    this.veilGo.addEventListener('click', go)
+    this.veil.addEventListener('pointerdown', go)
   }
 
   // --- step dots ---------------------------------------------------------
