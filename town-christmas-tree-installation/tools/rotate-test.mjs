@@ -56,9 +56,12 @@ const after = await snapshot();
 await checkControls('landscape/lift');
 console.log('before', JSON.stringify(before));
 console.log('after ', JSON.stringify(after));
+// The run keeps going while we rotate, so assert nothing was reset or lost:
+// monotonic progress and identical rigging state, not frozen numbers.
 const kept =
   before.stage === after.stage &&
-  Math.abs(before.theta - after.theta) < 0.12 &&
+  after.theta >= before.theta - 0.02 &&
+  after.hoist >= before.hoist - 0.01 &&
   before.slings === after.slings &&
   before.outriggers === after.outriggers;
 console.log(kept ? 'STATE PRESERVED across rotation' : 'STATE LOST across rotation');
@@ -74,7 +77,7 @@ await checkControls('portrait/wrap');
 console.log('wrap before', JSON.stringify(w1));
 console.log('wrap after ', JSON.stringify(w2));
 console.log(
-  Math.abs(w1.wrap - w2.wrap) < 0.08 && w1.guys === w2.guys && Math.abs(w1.treeY - w2.treeY) < 0.05
+  w2.wrap >= w1.wrap && w1.guys === w2.guys && Math.abs(w1.treeY - w2.treeY) < 0.02 && w1.stage === w2.stage
     ? 'LIGHT/WIRE STATE PRESERVED across rotation'
     : 'LIGHT/WIRE STATE LOST',
 );

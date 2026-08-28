@@ -1104,13 +1104,17 @@ export class Director {
         // the machine that is doing the work stays in frame beside it.
         const p = this.lights.pointAt(this.wrapVisual, this.tree, this.tmp);
         const a = Math.atan2(p.z, p.x) + 0.85;
-        const dist = portrait ? 13.5 : 16.5;
+        const dist = portrait ? 18.5 : 20;
         const bias = 0.35;
         return {
-          position: new THREE.Vector3(Math.cos(a) * dist, p.y * 0.58 + 4.2, Math.sin(a) * dist),
+          position: new THREE.Vector3(
+            Math.cos(a) * dist,
+            Math.max(7.4, p.y * 0.58 + 4.6),
+            Math.sin(a) * dist,
+          ),
           look: new THREE.Vector3(
             p.x * bias,
-            p.y * 0.94 + (portrait ? -0.8 : 0.4),
+            Math.max(2.4, p.y * 0.94) + (portrait ? -1.4 : 0.2),
             p.z * bias,
           ),
           fov: portrait ? 58 : 48,

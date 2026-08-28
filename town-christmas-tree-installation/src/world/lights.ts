@@ -32,7 +32,7 @@ export class TreeLights {
 
   constructor(m: Materials, tree: ConiferTree, rng: Rng, bulbCount: number) {
     this.turns = Math.round(rng.range(6.5, 8.5));
-    this.bottomY = 1.15;
+    this.bottomY = 1.95;
     this.topY = tree.spec.height * 0.945;
 
     // ---- spiral path resting on the branches ----------------------------
