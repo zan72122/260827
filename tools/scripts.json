@@ -1494,5 +1494,136 @@
   {
    "shot": "mute"
   }
+ ],
+ "ipadrotate": [
+  {
+   "wait": 3000
+  },
+  {
+   "waitPhase": "fitting"
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "dragBell": {
+    "from": 0,
+    "to": 1
+   }
+  },
+  {
+   "wait": 700
+  },
+  {
+   "dragBell": {
+    "from": 0,
+    "to": 3
+   }
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "eval": "({b:window.game.debugState().bells,t:window.game.debugState().tray})",
+   "label": "portraitFitted"
+  },
+  {
+   "shot": "ipr-a"
+  },
+  {
+   "viewport": [
+    1180,
+    820
+   ]
+  },
+  {
+   "wait": 5000
+  },
+  {
+   "eval": "({b:window.game.debugState().bells,t:window.game.debugState().tray,p:window.game.debugState().phase})",
+   "label": "afterRotateLandscape"
+  },
+  {
+   "shot": "ipr-b"
+  },
+  {
+   "dragBell": {
+    "from": 0,
+    "to": 5
+   }
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "eval": "({b:window.game.debugState().bells,t:window.game.debugState().tray})",
+   "label": "fittedLandscape"
+  },
+  {
+   "viewport": [
+    820,
+    1180
+   ]
+  },
+  {
+   "wait": 4000
+  },
+  {
+   "eval": "({b:window.game.debugState().bells,t:window.game.debugState().tray,p:window.game.debugState().phase})",
+   "label": "backToPortrait"
+  },
+  {
+   "shot": "ipr-c"
+  }
+ ],
+ "diag": [
+  {
+   "wait": 3000
+  },
+  {
+   "waitPhase": "fitting"
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "dragBell": {
+    "from": 0,
+    "to": 1
+   }
+  },
+  {
+   "wait": 800
+  },
+  {
+   "eval": "window.game.debugState().lastDrop",
+   "label": "drop1"
+  },
+  {
+   "dragBell": {
+    "from": 0,
+    "to": 3
+   }
+  },
+  {
+   "wait": 800
+  },
+  {
+   "eval": "window.game.debugState().lastDrop",
+   "label": "drop2"
+  },
+  {
+   "dragBell": {
+    "from": 0,
+    "to": 6
+   }
+  },
+  {
+   "wait": 800
+  },
+  {
+   "eval": "({b:window.game.debugState().bells,t:window.game.debugState().tray})",
+   "label": "bells"
+  }
  ]
 }

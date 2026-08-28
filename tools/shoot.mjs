@@ -73,6 +73,14 @@ for (const s of steps) {
   else if (s.swipe) await swipe(px(s.swipe[0], 'x'), px(s.swipe[1], 'y'), px(s.swipe[2], 'x'), px(s.swipe[3], 'y'), s.steps ?? 16, s.stepMs ?? 12);
   else if (s.drag) await drag(px(s.drag[0], 'x'), px(s.drag[1], 'y'), px(s.drag[2], 'x'), px(s.drag[3], 'y'), s.steps ?? 20, s.stepMs ?? 14);
   else if (s.eval) console.log(s.label ?? 'eval', JSON.stringify(await page.evaluate(s.eval)));
+  else if (s.waitPhase) {
+    for (let i = 0; i < 120; i++) {
+      const ph = await page.evaluate('window.game.debugState().phase');
+      if (ph === s.waitPhase) break;
+      await page.waitForTimeout(500);
+    }
+    console.log('phase', await page.evaluate('window.game.debugState().phase'));
+  }
   else if (s.viewport) {
     await page.setViewportSize({ width: s.viewport[0], height: s.viewport[1] });
     W = s.viewport[0]; H = s.viewport[1];

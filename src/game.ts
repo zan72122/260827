@@ -145,6 +145,7 @@ export class Game {
   private configIndex = 0;
   private tray: TrayBell[] = [];
   private carrying: TrayBell | null = null;
+  private hoverSocket = -1;
   private socketMarkers: Mesh[] = [];
   private shakeMittens: Group[] = [];
   private strikes: BellStrike[] = [];
@@ -836,7 +837,18 @@ export class Game {
     if (this.carrying) {
       if (this.pointerOnBench(_v)) {
         const lift = BELL_RADIUS[this.carrying.size] * 1.6 + 0.035;
-        this.carrying.mesh.position.lerp(_v.setY(BENCH_TOP + 0.05 + lift), Math.min(1, dt * 18));
+        _v.y = BENCH_TOP + 0.05 + lift;
+        // Once the bell is over the strap it hovers on the nearest free hole
+        // rather than under the fingertip, so a four-year-old can see exactly
+        // where it is about to go - and let go anywhere near it.
+        this.hoverSocket = this.nearestFreeSocket(ptr.screen);
+        if (this.hoverSocket >= 0) {
+          const f = this.strap.frameAtParam(SOCKETS[this.hoverSocket], this.tmpFrame);
+          _v.x = f.pos.x;
+          _v.z = f.pos.z;
+          _v.y = f.pos.y + lift * 0.75;
+        }
+        this.carrying.mesh.position.lerp(_v, Math.min(1, dt * 18));
       }
       // Picking a bell up rights it: the shank turns down toward the strap.
       const k = Math.min(1, dt * 7);
@@ -863,7 +875,15 @@ export class Game {
       marker.quaternion.setFromRotationMatrix(
         this.basisFrom(f.tangent, f.binormal, f.normal),
       );
-      const want = taken || !usable ? 0 : this.carrying ? 0.3 + pulse * 0.22 : 0.1 + pulse * 0.12;
+      const hovered = this.hoverSocket === i;
+      const want =
+        taken || !usable
+          ? 0
+          : hovered
+            ? 0.75
+            : this.carrying
+              ? 0.3 + pulse * 0.22
+              : 0.1 + pulse * 0.12;
       const mat = marker.material as MeshBasicMaterial;
       mat.opacity += (want - mat.opacity) * Math.min(1, dt * 6);
       marker.visible = mat.opacity > 0.01;
@@ -905,28 +925,40 @@ export class Game {
     return this.basisScratch.makeBasis(x, y, z);
   }
 
+  /**
+   * Nearest empty, usable socket to a point on screen.
+   *
+   * Deliberately measured in pixels rather than in metres: the bench is seen
+   * at a shallow angle, so a couple of centimetres of height error becomes
+   * ten centimetres of depth error, and a child aims with their eyes.
+   */
+  private nearestFreeSocket(screen: Vector2): number {
+    let best = -1;
+    let bestD = this.grabRadius * 1.15;
+    for (let i = 0; i < SOCKETS.length; i++) {
+      if (this.bells.hasSocket(i)) continue;
+      if (!CONFIG_SOCKETS[this.configIndex].includes(i)) continue;
+      const f = this.strap.frameAtParam(SOCKETS[i], this.tmpFrame);
+      const d = this.screenOf(f.pos).distanceTo(screen);
+      if (d < bestD) {
+        bestD = d;
+        best = i;
+      }
+    }
+    return best;
+  }
+
   private dropCarried(): void {
     const carried = this.carrying;
     this.carrying = null;
     if (!carried) return;
     carried.carried = false;
 
-    // The catch area is measured across the bench, ignoring how high the bell
-    // is being held: a four-year-old aims at the hole, not at its altitude.
-    let bestSocket = -1;
-    let bestD = 0.135;
-    for (let i = 0; i < SOCKETS.length; i++) {
-      if (this.bells.hasSocket(i)) continue;
-      if (!CONFIG_SOCKETS[this.configIndex].includes(i)) continue;
-      const f = this.strap.frameAtParam(SOCKETS[i], this.tmpFrame);
-      const dx = f.pos.x - carried.mesh.position.x;
-      const dz = f.pos.z - carried.mesh.position.z;
-      const d = Math.hypot(dx, dz);
-      if (d < bestD) {
-        bestD = d;
-        bestSocket = i;
-      }
-    }
+    const bestSocket =
+      this.hoverSocket >= 0 && !this.bells.hasSocket(this.hoverSocket)
+        ? this.hoverSocket
+        : this.nearestFreeSocket(this.app.input.frame.screen);
+    this.hoverSocket = -1;
 
     if (bestSocket >= 0) {
       this.bells.add(carried.size, bestSocket, SOCKETS[bestSocket]);
