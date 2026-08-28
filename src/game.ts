@@ -1271,6 +1271,9 @@ export class Game {
           _v.y - 0.52,
           _v.z + Math.cos(yaw) * 1.86 - Math.sin(yaw) * 1.5,
         );
+        // Keep the lens inside the room whatever the horse does.
+        out.x = Math.max(out.x, -2.65);
+        out.z = Math.min(out.z, 1.15);
       },
       target: (out) => {
         this.chestPoint(_v);
@@ -1311,7 +1314,9 @@ export class Game {
     this.hoofs.length = 0;
     const moved = this.horse.update(dt, 0, this.hoofs);
     if (moved > 0) {
-      this.horse.group.position.x -= moved;
+      // The horse steps toward the open door, but never so far that the
+      // camera would have to follow it through a wall.
+      this.horse.group.position.x = Math.max(HORSE_POS.x - 1.15, this.horse.group.position.x - moved);
     }
     this.emitHoofFeedback();
 
@@ -1695,11 +1700,13 @@ export class Game {
   private playStrikes(): void {
     this.strikeTotal += this.strikes.length;
     if (!this.audio.ready) return;
+    // Tens of milliseconds of spread by index and size, so a stride never
+    // lands as one chord; the spread tightens as the gait quickens.
+    const tilt = Math.max(0, Math.min(1, (this.horse.speed - 1.4) / 1.9));
     for (const s of this.strikes) {
-      // Tens of milliseconds of spread by index and size, so a stride never
-      // lands as one chord.
-      const stagger = (s.index % 5) * 0.006 + Math.random() * 0.016 + s.size * 0.004;
-      this.bellBus.strike(s.size, s.intensity, s.detune, this.panOf(s.pos), stagger);
+      const stagger =
+        ((s.index % 5) * 0.006 + Math.random() * 0.016 + s.size * 0.004) * (1 - tilt * 0.45);
+      this.bellBus.strike(s.size, s.intensity, s.detune, this.panOf(s.pos), stagger, tilt);
     }
   }
 

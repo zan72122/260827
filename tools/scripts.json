@@ -1060,5 +1060,439 @@
   {
    "shot": "end"
   }
+ ],
+ "pfull": [
+  {
+   "wait": 5000
+  },
+  {
+   "shot": "p01-intro"
+  },
+  {
+   "wait": 4000
+  },
+  {
+   "shot": "p02-fitting"
+  },
+  {
+   "dragBell": {
+    "from": 0,
+    "to": 0
+   }
+  },
+  {
+   "wait": 500
+  },
+  {
+   "dragBell": {
+    "from": 0,
+    "to": 1
+   }
+  },
+  {
+   "wait": 500
+  },
+  {
+   "dragBell": {
+    "from": 0,
+    "to": 2
+   }
+  },
+  {
+   "wait": 500
+  },
+  {
+   "dragBell": {
+    "from": 0,
+    "to": 3
+   }
+  },
+  {
+   "wait": 500
+  },
+  {
+   "dragBell": {
+    "from": 0,
+    "to": 4
+   }
+  },
+  {
+   "wait": 500
+  },
+  {
+   "dragBell": {
+    "from": 0,
+    "to": 5
+   }
+  },
+  {
+   "wait": 500
+  },
+  {
+   "dragBell": {
+    "from": 0,
+    "to": 6
+   }
+  },
+  {
+   "wait": 500
+  },
+  {
+   "dragBell": {
+    "from": 0,
+    "to": 7
+   }
+  },
+  {
+   "wait": 500
+  },
+  {
+   "dragBell": {
+    "from": 0,
+    "to": 8
+   }
+  },
+  {
+   "wait": 500
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "shot": "p03-fitted"
+  },
+  {
+   "eval": "({p:window.game.debugState().phase,b:window.game.debugState().bells})",
+   "label": "fitted"
+  },
+  {
+   "swipe": [
+    "25%",
+    "45%",
+    "75%",
+    "45%"
+   ],
+   "steps": 10,
+   "stepMs": 22
+  },
+  {
+   "swipe": [
+    "75%",
+    "45%",
+    "25%",
+    "45%"
+   ],
+   "steps": 10,
+   "stepMs": 22
+  },
+  {
+   "swipe": [
+    "25%",
+    "45%",
+    "75%",
+    "45%"
+   ],
+   "steps": 10,
+   "stepMs": 22
+  },
+  {
+   "swipe": [
+    "75%",
+    "45%",
+    "25%",
+    "45%"
+   ],
+   "steps": 10,
+   "stepMs": 22
+  },
+  {
+   "swipe": [
+    "25%",
+    "45%",
+    "75%",
+    "45%"
+   ],
+   "steps": 10,
+   "stepMs": 22
+  },
+  {
+   "swipe": [
+    "75%",
+    "45%",
+    "25%",
+    "45%"
+   ],
+   "steps": 10,
+   "stepMs": 22
+  },
+  {
+   "swipe": [
+    "25%",
+    "45%",
+    "75%",
+    "45%"
+   ],
+   "steps": 10,
+   "stepMs": 22
+  },
+  {
+   "swipe": [
+    "75%",
+    "45%",
+    "25%",
+    "45%"
+   ],
+   "steps": 10,
+   "stepMs": 22
+  },
+  {
+   "swipe": [
+    "25%",
+    "45%",
+    "75%",
+    "45%"
+   ],
+   "steps": 10,
+   "stepMs": 22
+  },
+  {
+   "swipe": [
+    "75%",
+    "45%",
+    "25%",
+    "45%"
+   ],
+   "steps": 10,
+   "stepMs": 22
+  },
+  {
+   "wait": 2000
+  },
+  {
+   "shot": "p04-shake"
+  },
+  {
+   "eval": "window.game.debugState().phase",
+   "label": "afterShake"
+  },
+  {
+   "dragStrap": true
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "shot": "p05-harness"
+  },
+  {
+   "eval": "window.game.debugState().phase",
+   "label": "afterDrop"
+  },
+  {
+   "swipe": [
+    "22%",
+    "55%",
+    "82%",
+    "55%"
+   ],
+   "steps": 14,
+   "stepMs": 22
+  },
+  {
+   "wait": 500
+  },
+  {
+   "swipe": [
+    "22%",
+    "55%",
+    "82%",
+    "55%"
+   ],
+   "steps": 14,
+   "stepMs": 22
+  },
+  {
+   "wait": 500
+  },
+  {
+   "swipe": [
+    "22%",
+    "55%",
+    "82%",
+    "55%"
+   ],
+   "steps": 14,
+   "stepMs": 22
+  },
+  {
+   "wait": 500
+  },
+  {
+   "swipe": [
+    "22%",
+    "55%",
+    "82%",
+    "55%"
+   ],
+   "steps": 14,
+   "stepMs": 22
+  },
+  {
+   "wait": 500
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "shot": "p06-buckled"
+  },
+  {
+   "eval": "({p:window.game.debugState().phase,b:window.game.debugState().buckle})",
+   "label": "afterBuckle"
+  },
+  {
+   "swipe": [
+    "50%",
+    "70%",
+    "50%",
+    "54%"
+   ],
+   "steps": 8,
+   "stepMs": 25
+  },
+  {
+   "wait": 2500
+  },
+  {
+   "shot": "p07-step1"
+  },
+  {
+   "swipe": [
+    "50%",
+    "70%",
+    "50%",
+    "54%"
+   ],
+   "steps": 8,
+   "stepMs": 25
+  },
+  {
+   "wait": 4500
+  },
+  {
+   "shot": "p08-step2"
+  },
+  {
+   "eval": "({p:window.game.debugState().phase,s:window.game.debugState().steps})",
+   "label": "afterSteps"
+  },
+  {
+   "wait": 6000
+  },
+  {
+   "shot": "p09-field"
+  },
+  {
+   "eval": "({p:window.game.debugState().phase,a:window.game.debugState().audio})",
+   "label": "field"
+  }
+ ],
+ "steps2": [
+  {
+   "wait": 5000
+  },
+  {
+   "shot": "s0"
+  },
+  {
+   "swipe": [
+    "50%",
+    "70%",
+    "50%",
+    "54%"
+   ],
+   "steps": 8,
+   "stepMs": 25
+  },
+  {
+   "wait": 2500
+  },
+  {
+   "shot": "s1"
+  },
+  {
+   "swipe": [
+    "50%",
+    "70%",
+    "50%",
+    "54%"
+   ],
+   "steps": 8,
+   "stepMs": 25
+  },
+  {
+   "wait": 2500
+  },
+  {
+   "shot": "s2"
+  },
+  {
+   "eval": "({p:window.game.debugState().phase,h:window.game.debugState().horsePos,c:window.game.debugState().camera})",
+   "label": "after"
+  }
+ ],
+ "mute": [
+  {
+   "wait": 4000
+  },
+  {
+   "tap": [
+    "50%",
+    "60%"
+   ]
+  },
+  {
+   "wait": 2500
+  },
+  {
+   "eval": "window.game.debugState().audio",
+   "label": "before"
+  },
+  {
+   "eval": "(()=>{document.querySelector('#hud button').click();return 'clicked'})()",
+   "label": "click"
+  },
+  {
+   "wait": 1500
+  },
+  {
+   "eval": "window.game.debugState().audio",
+   "label": "muted"
+  },
+  {
+   "eval": "(()=>{const i=document.querySelector('#hud .vol input');i.value='30';i.dispatchEvent(new Event('input',{bubbles:true}));return i.value})()",
+   "label": "vol"
+  },
+  {
+   "wait": 1000
+  },
+  {
+   "eval": "window.game.debugState().audio",
+   "label": "afterVol"
+  },
+  {
+   "eval": "(()=>{document.querySelector('#hud button').click();return 'unclick'})()",
+   "label": "unclick"
+  },
+  {
+   "wait": 1200
+  },
+  {
+   "eval": "window.game.debugState().audio",
+   "label": "unmuted"
+  },
+  {
+   "shot": "mute"
+  }
  ]
 }

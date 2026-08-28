@@ -128,10 +128,20 @@ export class BellBus {
   }
 
   /**
-   * @param when   context time, already offset by the caller's stagger
-   * @param pan    -1..1 across the frame
+   * @param when context time, already offset by the caller's stagger
+   * @param pan  -1..1 across the frame
+   * @param tilt 0 at a walk, 1 at a trot. A trot is not just louder: the
+   *             shorter, sharper swings excite the light shells more and open
+   *             the top end, so the same strap changes colour with the gait.
    */
-  strike(size: BellSize, intensity: number, detuneCents: number, pan: number, when = 0): void {
+  strike(
+    size: BellSize,
+    intensity: number,
+    detuneCents: number,
+    pan: number,
+    when = 0,
+    tilt = 0,
+  ): void {
     const ctx = this.engine.ctx;
     if (!ctx || !this.ready) return;
     const list = this.buffers[size];
@@ -149,11 +159,14 @@ export class BellBus {
     // A soft strike excites fewer high partials: filter, do not just duck.
     const lp = ctx.createBiquadFilter();
     lp.type = 'lowpass';
-    lp.frequency.value = 1400 + Math.pow(intensity, 0.7) * 12000;
+    lp.frequency.value = (1400 + Math.pow(intensity, 0.7) * 12000) * (1 + tilt * 0.5);
     lp.Q.value = 0.4;
 
+    // At a trot the small shells come forward and the largest sits back a
+    // little, which is what turns a string of separate notes into a band.
+    const balance = size === 0 ? 1 + tilt * 0.35 : size === 2 ? 1 - tilt * 0.2 : 1;
     const g = ctx.createGain();
-    g.gain.value = SPECS[size].gain * (0.12 + intensity * 0.95);
+    g.gain.value = SPECS[size].gain * (0.12 + intensity * 0.95) * balance;
 
     const panner = ctx.createStereoPanner();
     panner.pan.value = Math.max(-1, Math.min(1, pan));

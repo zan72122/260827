@@ -258,7 +258,7 @@ export class Horse {
 
   /** Ask for exactly one stride, used for the very first step. */
   requestStep(): void {
-    this.stepBudget = Math.max(this.stepBudget, STRIDE.walk * 0.55);
+    this.stepBudget = Math.max(this.stepBudget, STRIDE.walk * 0.4);
   }
 
   get stepping(): boolean {
