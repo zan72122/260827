@@ -517,8 +517,8 @@ export function buildScene(env: THREE.Texture, quality: QualitySettings): SceneB
 
   // ---- the deck stays wet where water comes over the coaming
   const apronShape = new THREE.Shape();
-  const ax = hx + 0.62;
-  const az = hz + 0.56;
+  const ax = hx + 0.3;
+  const az = hz + 0.42;
   apronShape.moveTo(-ax, -az);
   apronShape.lineTo(ax, -az);
   apronShape.lineTo(ax, az);
@@ -552,9 +552,22 @@ export function buildScene(env: THREE.Texture, quality: QualitySettings): SceneB
   scene.add(apron);
 
   // ---- cabin shell
+  // the cabin lining is the same painted ply as the deck, run horizontally
+  const liningMap = deckMaps.map.clone();
+  liningMap.needsUpdate = true;
+  liningMap.repeat.set(2, 1.1);
+  liningMap.rotation = Math.PI / 2;
+  liningMap.center.set(0.5, 0.5);
+  const liningRough = deckMaps.roughnessMap.clone();
+  liningRough.needsUpdate = true;
+  liningRough.repeat.copy(liningMap.repeat);
+  liningRough.rotation = liningMap.rotation;
+  liningRough.center.copy(liningMap.center);
   const wallMat = new THREE.MeshStandardMaterial({
-    color: 0x3f3a31,
-    roughness: 0.92,
+    map: liningMap,
+    roughnessMap: liningRough,
+    color: 0xb9a98d,
+    roughness: 1,
     metalness: 0,
     side: THREE.FrontSide,
   });
@@ -696,7 +709,7 @@ export function buildScene(env: THREE.Texture, quality: QualitySettings): SceneB
   tank.group.rotation.y = Math.PI / 2 - 0.26;
 
   // a small task light over the observation tank
-  const tankLight = new THREE.SpotLight(0xf2ead9, 2.4, 1.5, 0.66, 0.85, 1.5);
+  const tankLight = new THREE.SpotLight(0xf2ead9, 3.4, 1.6, 0.66, 0.85, 1.5);
   tankLight.position.set(0.62, WORLD.deckY + 0.62, 0.36);
   tankLight.target.position.set(0.6, WORLD.deckY + 0.05, 0.3);
   scene.add(tankLight, tankLight.target);
