@@ -289,7 +289,9 @@ export class Game {
         if (this.grabbedPetal >= 0) {
           const i = this.grabbedPetal;
           this.grabbedPetal = -1;
-          if (this.bell.petalFold[i] > 0.28) {
+          // a short, hesitant pull still finishes the fold: at this age the
+          // drag is rarely long enough on the first try
+          if (this.bell.petalFold[i] > 0.16) {
             this.petalAnim.push({ i, from: this.bell.petalFold[i], t: 0 });
           } else {
             this.petalAnim.push({ i, from: this.bell.petalFold[i], t: -1 });
@@ -674,8 +676,8 @@ export class Game {
       let along = (moveX * dirX + moveY * dirY) / len;
       // wrong way: heavy resistance, and it never damages anything
       if (along < 0) along *= 0.16;
-      const target = clamp(this.petalGrabProgress + along / 115, 0, 1);
-      bell.petalFold[i] = damp(bell.petalFold[i], target, 22, dt);
+      const target = clamp(this.petalGrabProgress + along / 100, 0, 1);
+      bell.petalFold[i] = damp(bell.petalFold[i], target, 30, dt);
       bell.markPetalDirty(i);
       if (bell.petalFold[i] > 0.995) {
         this.grabbedPetal = -1;
