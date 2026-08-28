@@ -154,6 +154,27 @@ export class Tackle {
     const lens = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.004, 0.02), glassMat)
     lens.position.set(0.026, 0.061, 0)
     reel.add(lens)
+    // crank handle and level wind: without them it does not read as a reel
+    const handleArm = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.062, 0.010), bodyMat)
+    handleArm.position.set(0.052, 0.022, 0)
+    handleArm.rotation.x = 0.0
+    reel.add(handleArm)
+    const knobM = new THREE.Mesh(new THREE.CapsuleGeometry(0.010, 0.020, 4, 8), rubberMat)
+    knobM.position.set(0.058, 0.052, 0)
+    knobM.rotation.z = Math.PI / 2
+    reel.add(knobM)
+    const lw = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, 0.082, 8), bodyMat)
+    lw.rotation.z = Math.PI / 2
+    lw.position.set(0, 0.012, 0.040)
+    reel.add(lw)
+    const lwEye = new THREE.Mesh(new THREE.TorusGeometry(0.0075, 0.0022, 6, 12), bodyMat)
+    lwEye.rotation.y = Math.PI / 2
+    lwEye.position.set(-0.006, 0.012, 0.040)
+    reel.add(lwEye)
+    const clutch = new THREE.Mesh(new THREE.BoxGeometry(0.070, 0.010, 0.016), bodyMat)
+    clutch.position.set(0, 0.006, -0.040)
+    clutch.rotation.x = -0.25
+    reel.add(clutch)
     this.reelButton.position.set(-0.018, 0.078, 0)
     reel.add(this.reelButton)
 

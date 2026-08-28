@@ -225,15 +225,15 @@ export class CurrentTells {
   private buildPile(ropeMat: THREE.Material) {
     const pileMat = applyUnderwater(new THREE.MeshStandardMaterial({ color: 0x585c50, roughness: 1, metalness: 0 }))
     const pile = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.10, 7.2, 10), pileMat)
-    pile.position.set(-3.25, WATER_Y - 3.2, -1.75)
+    pile.position.set(-4.85, WATER_Y - 3.2, -4.30)
     this.group.add(pile)
     const growth = new THREE.Mesh(new THREE.CylinderGeometry(0.105, 0.115, 1.4, 10), applyUnderwater(new THREE.MeshStandardMaterial({ color: 0x3b4436, roughness: 1 })))
-    growth.position.set(-3.25, WATER_Y - 0.75, -1.75)
+    growth.position.set(-4.85, WATER_Y - 0.75, -4.30)
     this.group.add(growth)
     const pts: THREE.Vector3[] = []
     for (let i = 0; i <= 16; i++) {
       const t = i / 16
-      pts.push(new THREE.Vector3(-3.25 + t * 0.5, WATER_Y + 0.5 - t * 3.4, -1.75 + t * 0.22))
+      pts.push(new THREE.Vector3(-4.85 + t * 0.5, WATER_Y + 0.5 - t * 3.4, -4.30 + t * 0.22))
     }
     const rope = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 24, 0.019, 6, false), ropeMat)
     this.group.add(rope)
@@ -243,7 +243,7 @@ export class CurrentTells {
       geo.translate(0, h / 2, 0)
       const m = new THREE.Mesh(geo, this.weedMat)
       const a = Math.random() * 6.28
-      m.position.set(-3.25 + Math.cos(a) * 0.09, WATER_Y - 0.4 - i * 0.32, -1.75 + Math.sin(a) * 0.09)
+      m.position.set(-4.85 + Math.cos(a) * 0.09, WATER_Y - 0.4 - i * 0.32, -4.30 + Math.sin(a) * 0.09)
       m.rotation.y = a
       this.weeds.push({ mesh: m, phase: Math.random() * 6.28, base: Float32Array.from((geo.attributes.position as THREE.BufferAttribute).array) })
       this.group.add(m)

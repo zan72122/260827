@@ -219,13 +219,13 @@ export class School {
     // then it pulls in a neighbour at a time. the shoal's shape changes
     // over several seconds, never all at once
     this.recruitClock += dt
-    if (this.firstTurnAge > 1.3 && this.recruitClock > 0.4) {
+    if (this.firstTurnAge > 1.6 && this.recruitClock > 0.5) {
       this.recruitClock = 0
       const R2 = 1.7 * 1.7
       for (let i = 0; i < N; i++) {
         const a = this.fish[i]
         if (a.interest <= 0 || a.delay > 0 || a.caught) continue
-        if (Math.random() > 0.45) continue
+        if (Math.random() > 0.28) continue
         for (let j = 0; j < N; j++) {
           const b = this.fish[j]
           if (b.interest > 0 || b.delay > 0 || b.caught) continue

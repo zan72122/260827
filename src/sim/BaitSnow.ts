@@ -89,7 +89,7 @@ export class BaitSnow {
   }
 
   /** Shed one fragment from a hook. */
-  spawn(x: number, y: number, z: number, spread = 0.02) {
+  spawn(x: number, y: number, z: number, spread = 0.02, sizeScale = 1) {
     const i = this.free.pop()
     if (i === undefined) return
     const p = this.pool[i]
@@ -102,7 +102,7 @@ export class BaitSnow {
     // wet krill scraps: heavier pieces drop, shreds hang in the water
     const grade = Math.random()
     p.sink = 0.035 + grade * grade * 0.20
-    p.size = 0.0075 + grade * 0.0125
+    p.size = (0.0075 + grade * 0.0125) * sizeScale
     p.maxLife = 11 + Math.random() * 9
     p.life = 0
     p.rx = Math.random() * 6.28; p.ry = Math.random() * 6.28; p.rz = Math.random() * 6.28

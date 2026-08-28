@@ -272,7 +272,7 @@ export class Game {
         // the guide starts parked at one end: that end counts as the
         // starting side, so the first full sweep across is one pass
         this.lastEdge = -1
-        this.attendant.setAnchor(new THREE.Vector3(0.185, 1.50, 1.07), new THREE.Euler(0.25, -0.15, 0.55))
+        this.attendant.setAnchor(new THREE.Vector3(-0.06, 1.60, 1.06), new THREE.Euler(0.28, 0.30, -0.42))
         this.setShot('tub', 1.4)
         break
       case 'descend':
@@ -427,12 +427,14 @@ export class Game {
     for (let i = 0; i < 3; i++) {
       const load = this.rig.hooks[i].load
       if (load <= 0.001) continue
-      const rate = (0.35 + 0.9 * load) * (moving ? 2.0 : 1.0)
+      const rate = (0.22 + 1.35 * load) * (moving ? 2.0 : 1.0)
       this.shedAcc[i] += rate * dt
       while (this.shedAcc[i] >= 1) {
         this.shedAcc[i] -= 1
         this.rig.hookWorld(i, this.tmp)
-        this.snow.spawn(this.tmp.x, this.tmp.y, this.tmp.z, 0.03)
+        // a heavier load sheds bigger pieces over a wider spread, so two
+        // passes read as thicker snow and not merely as more of it
+        this.snow.spawn(this.tmp.x, this.tmp.y, this.tmp.z, 0.028 + 0.022 * load, 0.82 + 0.3 * load)
         this.rig.consume(i, HOOK_LOAD_PER_GRAIN)
       }
     }
@@ -466,7 +468,7 @@ export class Game {
         // reel is in frame and in reach
         if (this.phaseT > 6.5) this.setShot('reelShot', 1.0)
         this.hint(dt, 9, () => {
-          this.attendant.setAnchor(new THREE.Vector3(0.52, 1.02, 0.62), new THREE.Euler(0.5, -0.3, 0.5))
+          this.attendant.setAnchor(new THREE.Vector3(-0.12, 1.30, 0.86), new THREE.Euler(0.5, 0.2, -0.3))
         })
         if (this.phaseT > 26 && !this.reelHeld) { this.reelHeld = true; this.setPhase('retrieve') }
         break
@@ -567,7 +569,7 @@ export class Game {
         this.shedBait(dt, false)
         this.tackle.setLoad(0.8 + Math.sin(this.time * 5) * 0.12)
         this.hint(dt, 4, () => {
-          this.attendant.setAnchor(new THREE.Vector3(0.52, 1.02, 0.62), new THREE.Euler(0.5, -0.3, 0.5))
+          this.attendant.setAnchor(new THREE.Vector3(-0.12, 1.30, 0.86), new THREE.Euler(0.5, 0.2, -0.3))
         })
         if (this.phaseT > 9) this.setPhase('reelup')
         break
@@ -708,17 +710,21 @@ export class Game {
     const vfov = THREE.MathUtils.degToRad(fov)
     const hfov = 2 * Math.atan(Math.tan(vfov / 2) * Math.max(0.35, this.aspect))
     const use = Math.min(vfov, hfov)
-    const dist = THREE.MathUtils.clamp((sep * margin) / Math.tan(use / 2), 2.3, 9.5)
+    // beyond about six metres the water eats the contrast anyway, so the
+    // shot pulls back only that far and lets the shoal run off frame
+    const dist = THREE.MathUtils.clamp((sep * margin) / Math.tan(use / 2), 2.3, 6.0)
     this.view.fov = fov
     this.view.target.copy(mid)
-    this.seaCam(mid.x + side.x * dist, mid.y + side.y * dist, mid.z + side.z * dist)
+    // an underwater subject must not be framed from above the surface
+    const maxY = mid.y < WATER_Y - 0.2 ? WATER_Y - 0.30 : 3.0
+    this.seaCam(mid.x + side.x * dist, mid.y + side.y * dist, mid.z + side.z * dist, maxY)
   }
 
   /** Keep an underwater camera in the water: off the quay face, off the bed. */
-  private seaCam(x: number, y: number, z: number) {
+  private seaCam(x: number, y: number, z: number, maxY = 3.0) {
     this.view.pos.set(
       THREE.MathUtils.clamp(x, -6.5, 6.5),
-      THREE.MathUtils.clamp(y, WATER_Y - 7.4, 3.0),
+      THREE.MathUtils.clamp(y, WATER_Y - 7.4, maxY),
       Math.min(z, -0.85),
     )
   }
@@ -745,9 +751,11 @@ export class Game {
     const rig = this.rigRoot.position
     switch (shot) {
       case 'wide':
-        p.set(port ? 3.5 : 4.4, port ? 2.3 : 2.2, port ? 3.8 : 4.0)
-        t.set(-0.35, port ? 0.50 : 0.45, -1.3)
-        this.view.fov = port ? 56 : 46
+        // the whole station: bench and bait tub, the rod at the rail, the
+        // attendant, and the water and far quay beyond
+        p.set(port ? 4.4 : 5.0, port ? 2.7 : 2.5, port ? 4.4 : 4.6)
+        t.set(-0.50, port ? 0.62 : 0.58, -0.55)
+        this.view.fov = port ? 58 : 47
         break
       case 'seat':
         // stand to the left of the bait tub: rod, water and the shoal

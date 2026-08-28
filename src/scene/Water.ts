@@ -14,7 +14,7 @@ export const QUAY_Z = 0.15
 export const waterUniforms = {
   uWaterY: { value: WATER_Y },
   /** per-metre extinction, red first: coastal green water, not blue glass */
-  uAtten: { value: new THREE.Vector3(0.30, 0.115, 0.175) },
+  uAtten: { value: new THREE.Vector3(0.235, 0.105, 0.16) },
   uNearWater: { value: new THREE.Vector3(0.33, 0.44, 0.42) },
   uDeepWater: { value: new THREE.Vector3(0.055, 0.115, 0.125) },
   uTime: { value: 0 },
@@ -42,12 +42,21 @@ const UNDERWATER_GLSL = /* glsl */ `
     else if (a > 0.0 && b > 0.0) frac = 0.0;
     else if (a > 0.0) frac = -b / (a - b);
     else frac = a / (a - b);
-    float sub = dist * clamp(frac, 0.0, 1.0);
-    if (sub <= 0.0001) return col;
-    float midDepth = max(0.0, uWaterY - (min(wpos.y, uWaterY) + min(camPos.y, uWaterY)) * 0.5);
-    vec3 body = waterBodyColor(midDepth);
-    vec3 trans = exp(-uAtten * sub);
-    return mix(body, col, trans);
+    frac = clamp(frac, 0.0, 1.0);
+    float sub = dist * frac;
+    if (sub > 0.0001) {
+      float midDepth = max(0.0, uWaterY - (min(wpos.y, uWaterY) + min(camPos.y, uWaterY)) * 0.5);
+      col = mix(waterBodyColor(midDepth), col, exp(-uAtten * sub));
+    }
+    // aerial perspective: the same sea haze the water fades into, applied
+    // to everything above the surface so the far quay separates by
+    // distance instead of by a blur
+    float air = dist * (1.0 - frac);
+    if (air > 1.0) {
+      float h = 1.0 - 1.0 / (1.0 + (air - 1.0) * 0.0055);
+      col = mix(col, vec3(0.80, 0.792, 0.752), clamp(h, 0.0, 1.0) * 0.94);
+    }
+    return col;
   }
 `
 

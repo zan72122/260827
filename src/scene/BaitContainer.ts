@@ -28,6 +28,7 @@ export class BaitContainer {
   readonly grooveY = 0.472
 
   private mass!: THREE.Mesh
+  private grains!: THREE.InstancedMesh
   private massBase!: Float32Array
   private massFurrow!: Float32Array
   private massShift = 0
@@ -136,7 +137,7 @@ export class BaitContainer {
       const x = pos.getX(i), z = pos.getZ(i)
       const dish = -Math.cos((x / w) * Math.PI) * Math.cos((z / d) * Math.PI) * 0.006
       const lump = Math.sin(x * 74 + z * 12) * 0.0022 + Math.cos(z * 96 + x * 31) * 0.0018 + Math.sin(x * 150 + z * 60) * 0.0011
-      pos.setY(i, this.amiTop + dish + lump)
+      pos.setY(i, this.amiTop + dish + lump + this.heapAt(x, z))
     }
     geo.computeVertexNormals()
     const a = amiMass()
@@ -157,6 +158,64 @@ export class BaitContainer {
     const fill = new THREE.Mesh(new THREE.BoxGeometry(w, this.amiTop - this.wall, d), mat)
     fill.position.y = (this.amiTop + this.wall) / 2 - 0.002
     this.group.add(fill)
+    // the top layer is fresher and paler than the packed mass below it
+    const grainTex = amiMass(true)
+    grainTex.map.repeat.set(1, 1)
+    const grainMat = applyUnderwater(new THREE.MeshStandardMaterial({
+      map: grainTex.map, roughnessMap: grainTex.roughnessMap,
+      color: 0xffffff, roughness: 0.36, metalness: 0,
+    }))
+    this.mats.push(grainMat)
+    this.buildGrains(w, d, grainMat)
+  }
+
+  /**
+   * The top layer of krill as real grains. A texture alone reads as
+   * gravel once the camera is close; individual bodies with their own
+   * silhouette and a wet highlight read as shrimp.
+   */
+  private buildGrains(w: number, d: number, mat: THREE.Material) {
+    const geo = new THREE.IcosahedronGeometry(1, 0)
+    const pos = geo.attributes.position as THREE.BufferAttribute
+    let s = 991
+    const rnd = () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296 }
+    for (let i = 0; i < pos.count; i++) {
+      const k = 0.6 + rnd() * 0.7
+      pos.setXYZ(i, pos.getX(i) * k * 1.7, pos.getY(i) * k * 0.55, pos.getZ(i) * k * 0.7)
+    }
+    geo.computeVertexNormals()
+    const n = 520
+    const inst = new THREE.InstancedMesh(geo, mat, n)
+    inst.castShadow = true
+    inst.receiveShadow = true
+    const m4 = new THREE.Matrix4()
+    const q = new THREE.Quaternion()
+    const e = new THREE.Euler()
+    const v = new THREE.Vector3()
+    const sc = new THREE.Vector3()
+    for (let i = 0; i < n; i++) {
+      const x = (rnd() - 0.5) * w * 0.98
+      const z = (rnd() - 0.5) * d * 0.98
+      const dish = -Math.cos((x / w) * Math.PI) * Math.cos((z / d) * Math.PI) * 0.006
+      const heap = this.heapAt(x, z)
+      v.set(x, this.amiTop + dish + heap + (rnd() - 0.5) * 0.004, z)
+      e.set(rnd() * 6.28, rnd() * 6.28, rnd() * 6.28)
+      q.setFromEuler(e)
+      const g = 0.0035 + rnd() * 0.0045
+      sc.set(g, g, g)
+      m4.compose(v, q, sc)
+      inst.setMatrixAt(i, m4)
+    }
+    inst.instanceMatrix.needsUpdate = true
+    this.grains = inst
+    this.group.add(inst)
+  }
+
+  /** Krill does not sit level: it heaps to one side and keeps a scoop mark. */
+  private heapAt(x: number, z: number) {
+    const heap = Math.exp(-(Math.pow((x + 0.075) / 0.10, 2) + Math.pow(z / 0.075, 2))) * 0.016
+    const scoop = -Math.exp(-(Math.pow((x - 0.085) / 0.055, 2) + Math.pow((z - 0.02) / 0.05, 2))) * 0.020
+    return heap + scoop
   }
 
   private buildGuideRails() {
@@ -304,5 +363,8 @@ export class BaitContainer {
     return { minX: this.tmpV.x - this.travel, maxX: this.tmpV.x + this.travel, centerX: this.tmpV.x }
   }
 
-  dispose() { this.mats.forEach((m) => m.dispose()) }
+  dispose() {
+    this.grains.geometry.dispose()
+    this.mats.forEach((m) => m.dispose())
+  }
 }

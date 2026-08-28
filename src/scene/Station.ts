@@ -15,8 +15,8 @@ export class Attendant {
   private fore!: THREE.Mesh
   private shoulder = new THREE.Vector3(0.78, 1.40, 1.30)
   private steadyT = -1
-  private anchor = new THREE.Vector3(0.30, 1.52, 1.06)
-  private anchorRot = new THREE.Euler(0.30, -0.45, 0.66)
+  private anchor = new THREE.Vector3(-0.06, 1.60, 1.06)
+  private anchorRot = new THREE.Euler(0.28, 0.30, -0.42)
   private handPos = new THREE.Vector3()
   private elbow = new THREE.Vector3()
   private tmp = new THREE.Vector3()
@@ -79,13 +79,15 @@ export class Attendant {
       this.group.add(m)
       return m
     }
-    this.upper = seg(0.056, 0.046, jacketMat)
-    this.fore = seg(0.046, 0.036, jacketMat)
+    this.upper = seg(0.058, 0.048, jacketMat)
+    this.fore = seg(0.048, 0.038, jacketMat)
 
     // ---- the rest of the attendant: an adult standing at the station ----
     const body = new THREE.Group()
-    body.position.set(0.92, 0, 1.42)
-    body.rotation.y = -0.42
+    // the attendant stands to the far side of the bench, facing the tub,
+    // close enough that the arm holding the line actually reaches it
+    body.position.set(-0.55, 0, 1.16)
+    body.rotation.y = 0.35
     const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.20, 0.34, 6, 14), jacketMat)
     torso.scale.set(1, 1, 0.62)
     torso.position.y = 1.18
@@ -100,8 +102,10 @@ export class Attendant {
       leg.position.set(sx * 0.11, 0.50, 0)
       leg.castShadow = true
       body.add(leg)
-      const boot = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.20, 0.26), bootMat)
-      boot.position.set(sx * 0.11, 0.10, 0.03)
+      const boot = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.19, 0.26), bootMat)
+      boot.position.set(sx * 0.11, 0.095, 0.03)
+      boot.castShadow = true
+      boot.receiveShadow = true
       body.add(boot)
     }
     // left arm hangs at the side; the right arm is the working one above
@@ -122,17 +126,18 @@ export class Attendant {
     body.add(head)
     const capMat = applyUnderwater(new THREE.MeshStandardMaterial({ color: 0x2f3a44, roughness: 0.9 }))
     this.mats.push(capMat)
-    const cap = new THREE.Mesh(new THREE.SphereGeometry(0.092, 14, 8, 0, Math.PI * 2, 0, Math.PI * 0.55), capMat)
-    cap.position.y = 1.575
+    const cap = new THREE.Mesh(new THREE.SphereGeometry(0.097, 16, 10, 0, Math.PI * 2, 0, Math.PI * 0.72), capMat)
+    cap.position.y = 1.582
+    cap.castShadow = true
     body.add(cap)
-    const peak = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.014, 0.09), capMat)
-    peak.position.set(0, 1.565, 0.10)
+    const peak = new THREE.Mesh(new THREE.BoxGeometry(0.165, 0.014, 0.095), capMat)
+    peak.position.set(0, 1.566, 0.105)
     peak.rotation.x = -0.16
     body.add(peak)
     this.group.add(body)
     // the shoulder the working arm hangs from, in world space
-    this.shoulder.set(0.92, 0, 1.42)
-    this.shoulder.add(new THREE.Vector3(Math.cos(-0.42) * 0.20 - 0, 1.34, Math.sin(-0.42) * -0.20))
+    // right shoulder in world space, from the body transform above
+    this.shoulder.set(-0.55 + 0.20 * Math.cos(0.35), 1.34, 1.16 - 0.20 * Math.sin(0.35))
   }
 
   /** Steady the top of the rig: a small, quiet motion, no pointing. */
@@ -172,7 +177,7 @@ export class Attendant {
     // two bone arm: elbow swings out and down from the shoulder
     this.handPos.copy(this.hand.position)
     this.handPos.y += 0.11
-    const upperLen = 0.30, foreLen = 0.29
+    const upperLen = 0.34, foreLen = 0.30
     this.tmp.subVectors(this.handPos, this.shoulder)
     const d = Math.min(this.tmp.length(), upperLen + foreLen - 0.01)
     this.tmp.normalize()
@@ -180,7 +185,7 @@ export class Attendant {
     const h = Math.sqrt(Math.max(0, upperLen * upperLen - a * a))
     this.elbow.copy(this.shoulder).addScaledVector(this.tmp, a)
     // push the elbow outboard and down, the way an arm actually folds
-    this.tmp2.set(this.tmp.z, -0.55, -this.tmp.x).normalize()
+    this.tmp2.set(-this.tmp.z, -0.55, this.tmp.x).normalize()
     this.elbow.addScaledVector(this.tmp2, h)
     this.aim(this.upper, this.shoulder, this.elbow, 1)
     this.aim(this.fore, this.elbow, this.handPos, 1)

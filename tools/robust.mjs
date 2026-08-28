@@ -1,0 +1,50 @@
+// Rough handling: rapid taps, aborted drags, rotation at every phase.
+import { page, browser, state, swipe, press, logs, W, H } from './drive.mjs'
+const phase = () => page.evaluate(() => window.__app.game.phase)
+const wait = async (p, ms = 45000) => { const t = Date.now(), w = [].concat(p)
+  while (Date.now() - t < ms) { if (w.includes(await phase())) return true; await page.waitForTimeout(200) }
+  console.log('!!timeout', p, await phase()); return false }
+const tapBurst = async (n) => { for (let i = 0; i < n; i++) { await page.mouse.click(W * (0.2 + 0.6 * Math.random()), H * (0.2 + 0.6 * Math.random())); await page.waitForTimeout(40) } }
+
+await page.click('#start'); await page.waitForTimeout(1200)
+console.log('start    ', JSON.stringify(await state()))
+await tapBurst(20)
+console.log('taps@seat', JSON.stringify(await state()))
+await swipe(W*0.5, H*0.4, W*0.52, H*0.42, 3)
+await swipe(W*0.5, H*0.2, W*0.5, H*0.8, 20)
+await wait('watch')
+await tapBurst(15)
+await page.setViewportSize({ width: H, height: W }); await page.waitForTimeout(900)
+console.log('rot@watch', JSON.stringify(await state()))
+await page.setViewportSize({ width: W, height: H }); await page.waitForTimeout(600)
+await press(W*0.5, H*0.6, 4500); await wait('bait')
+await tapBurst(20)
+for (let i = 0; i < 3; i++) { await swipe(W*0.3, H*0.6, W*0.5, H*0.6, 8); await swipe(W*0.5, H*0.6, W*0.3, H*0.6, 8) }
+console.log('halfsweep', JSON.stringify(await state()))
+await page.setViewportSize({ width: H, height: W }); await page.waitForTimeout(900)
+console.log('rot@bait ', JSON.stringify(await state()))
+await swipe(H*0.2, W*0.6, H*0.8, W*0.6, 24); await page.waitForTimeout(1500)
+console.log('pass(land)', JSON.stringify(await state()))
+await page.setViewportSize({ width: W, height: H }); await page.waitForTimeout(800)
+await swipe(W*0.5, H*0.15, W*0.5, H*0.8, 22)
+await wait('snow', 30000)
+await tapBurst(25)
+console.log('taps@snow', JSON.stringify(await state()))
+const t0 = Date.now()
+while (Date.now() - t0 < 60000) { if (await page.evaluate(() => window.__app.game.school.atHook) > 0) break; await page.waitForTimeout(400) }
+await swipe(W*0.5, H*0.6, W*0.5, H*0.5, 6, 150); await page.waitForTimeout(300)
+console.log('bite     ', await wait('bite', 40000))
+await page.waitForTimeout(7000)
+console.log('afterMiss', JSON.stringify(await state()))
+const t1 = Date.now()
+while (Date.now() - t1 < 60000) { if (await phase() === 'bite') break; await page.waitForTimeout(300) }
+await swipe(W*0.5, H*0.6, W*0.5, H*0.42, 3); await page.waitForTimeout(500)
+console.log('retry    ', JSON.stringify(await state()))
+await wait(['hooked','reelup'], 15000)
+await press(W*0.5, H*0.66, 6000)
+await wait('settle', 30000); await page.waitForTimeout(1000)
+console.log('done     ', JSON.stringify(await state()))
+await wait('bait', 20000)
+console.log('trial2   ', JSON.stringify(await state()))
+console.log('console:', logs.length ? logs.join('\n') : '(clean)')
+await browser.close()
