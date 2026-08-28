@@ -25,10 +25,10 @@ type ShotTable = Record<ShotName, Shot>;
  */
 const LANDSCAPE: ShotTable = {
   intro:  { yaw:  36, pitch: 31, dist: 0.98, target: [0, 0.05, -0.01], fov: 31 },
-  press:  { yaw: -22, pitch: 27, dist: 1.30, target: [-0.03, 0.10, 0.06], fov: 36 },
-  drop:   { yaw:   8, pitch: 62, dist: 1.24, target: [0, 0.03, -0.02], fov: 32 },
+  press:  { yaw: -22, pitch: 27, dist: 1.10, target: [-0.02, 0.10, 0.05], fov: 36 },
+  drop:   { yaw:   8, pitch: 62, dist: 0.94, target: [0, 0.03, -0.02], fov: 32 },
   petals: { yaw:  26, pitch: 42, dist: 1.16, target: [0, 0.07, -0.01], fov: 31 },
-  clinch: { yaw:  20, pitch: 30, dist: 1.50, target: [0, 0.10, 0.04], fov: 36 },
+  clinch: { yaw:  20, pitch: 30, dist: 1.26, target: [0, 0.10, 0.04], fov: 36 },
   polish: { yaw:  12, pitch: 24, dist: 1.02, target: [0, 0.12, 0], fov: 32 },
   cord:   { yaw:  14, pitch: 22, dist: 1.14, target: [0, 0.15, 0.02], fov: 34 },
   lift:   { yaw:  12, pitch: 14, dist: 1.30, target: [0, 0.26, 0], fov: 32 },
@@ -37,10 +37,10 @@ const LANDSCAPE: ShotTable = {
 
 const PORTRAIT: ShotTable = {
   intro:  { yaw:  30, pitch: 38, dist: 0.90, target: [0, 0.05, -0.02], fov: 45 },
-  press:  { yaw: -16, pitch: 34, dist: 1.14, target: [0, 0.08, 0.06], fov: 48 },
-  drop:   { yaw:   6, pitch: 66, dist: 1.02, target: [0, 0.04, -0.01], fov: 44 },
+  press:  { yaw: -16, pitch: 34, dist: 1.02, target: [0, 0.08, 0.05], fov: 48 },
+  drop:   { yaw:   6, pitch: 66, dist: 0.88, target: [0, 0.04, -0.01], fov: 44 },
   petals: { yaw:  18, pitch: 46, dist: 1.08, target: [0, 0.08, -0.01], fov: 42 },
-  clinch: { yaw:  16, pitch: 36, dist: 1.28, target: [0, 0.10, 0.04], fov: 46 },
+  clinch: { yaw:  16, pitch: 36, dist: 1.14, target: [0, 0.10, 0.04], fov: 46 },
   polish: { yaw:  10, pitch: 24, dist: 0.80, target: [0, 0.13, 0], fov: 40 },
   cord:   { yaw:  12, pitch: 24, dist: 0.96, target: [0, 0.15, 0.02], fov: 42 },
   lift:   { yaw:  10, pitch: 16, dist: 1.02, target: [0, 0.28, 0], fov: 42 },

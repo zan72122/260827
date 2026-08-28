@@ -80,7 +80,7 @@ export class Bell {
       metalness: 1.0,
       roughness: 1.0,
       envMap: opts.env,
-      envMapIntensity: 1.1,
+      envMapIntensity: 1.3,
       color: new THREE.Color(0xffffff),
     });
     const polishTex = this.polishTex;

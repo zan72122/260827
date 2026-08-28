@@ -221,11 +221,12 @@ export class Lever {
   private maxAngle = 1.12;
 
   constructor(env: THREE.Texture, knobColor: number, shape: 'ball' | 'grip') {
+    // blackened steel, not bright: the control should never out-shine the work
     const steel = new THREE.MeshStandardMaterial({
-      color: 0x8a9199, metalness: 0.85, roughness: 0.55, envMap: env, envMapIntensity: 0.6,
+      color: 0x44494f, metalness: 0.55, roughness: 0.72, envMap: env, envMapIntensity: 0.3,
     });
     const dark = new THREE.MeshStandardMaterial({
-      color: 0x2b3036, metalness: 0.2, roughness: 0.88, envMap: env, envMapIntensity: 0.2,
+      color: 0x181b1f, metalness: 0.0, roughness: 0.95, envMap: env, envMapIntensity: 0.1,
     });
     const pedestal = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.125, 0.13, 20), dark);
     pedestal.position.y = 0.065;

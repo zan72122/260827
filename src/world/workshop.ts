@@ -100,9 +100,9 @@ export class Workshop {
 
     // a few small tools lying about, low and dark
     const toolMat = steelMat.clone();
-    toolMat.color = new THREE.Color(0x6c7076);
+    toolMat.color = new THREE.Color(0x50565c);
     const handleMat = new THREE.MeshStandardMaterial({
-      color: 0x4a3524, roughness: 0.85, metalness: 0.0, envMap: env, envMapIntensity: 0.25,
+      color: 0x2e2116, roughness: 0.92, metalness: 0.0, envMap: env, envMapIntensity: 0.14,
     });
     for (let i = 0; i < 3; i++) {
       const g = new THREE.Group();
@@ -180,7 +180,7 @@ export class Workshop {
     this.root.add(rail);
 
     // ------------------------------------------------------------- lighting
-    this.keyLight = new THREE.DirectionalLight(0xcfe2f2, 3.4);
+    this.keyLight = new THREE.DirectionalLight(0xcfe2f2, 4.0);
     this.keyLight.position.set(-2.1, 2.0, 1.15);
     this.keyLight.target.position.set(0, 0.16, 0);
     this.keyLight.castShadow = true;
@@ -188,18 +188,20 @@ export class Workshop {
     this.keyLight.shadow.camera.near = 0.6;
     this.keyLight.shadow.camera.far = 6.5;
     const c = this.keyLight.shadow.camera;
-    c.left = -0.95; c.right = 0.95; c.top = 0.95; c.bottom = -0.95;
+    c.left = -0.62; c.right = 0.62; c.top = 0.68; c.bottom = -0.62;
     c.updateProjectionMatrix();
     this.keyLight.shadow.bias = -0.0009;
     this.keyLight.shadow.normalBias = 0.012;
     this.root.add(this.keyLight, this.keyLight.target);
 
-    this.lamp = new THREE.SpotLight(0xffd0a0, 8.5, 4.6, 0.82, 0.8, 1.5);
+    // a tight pool on the work: the tooling around it stays in cooler ambient,
+    // so the eye goes to the metal rather than to the controls
+    this.lamp = new THREE.SpotLight(0xffd0a0, 15, 4.2, 0.5, 0.85, 1.5);
     this.lamp.position.set(1.05, 1.18, 0.72);
     this.lamp.target.position.set(0.02, 0.2, -0.04);
     this.root.add(this.lamp, this.lamp.target);
 
-    const hemi = new THREE.HemisphereLight(0xa8c0d4, 0x40301f, 1.15);
+    const hemi = new THREE.HemisphereLight(0xa8c0d4, 0x40301f, 1.4);
     this.root.add(hemi);
 
     // dim wash on the far wall only: keeps the room legible without lifting
