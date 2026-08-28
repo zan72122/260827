@@ -36,9 +36,11 @@ npm run build      # typecheck + production bundle into dist/
 npm run preview    # serve the production build
 ```
 
-Requires WebGL2. Tested at 390×844 and 844×390 (iPhone) and 820×1180 and
-1180×820 (iPad), in both orientations, and across an orientation change at every
-step.
+Requires WebGL2. Verified at 390×844 and 844×390 (iPhone) and 820×1180 and
+1180×820 (iPad), in both orientations, across an orientation change at every
+step (one canvas throughout, nothing lost), and at device pixel ratios 2 and 3
+— the renderer clamps to 2, and the drawing buffer follows a rotation without a
+second context being created.
 
 ### URL options
 

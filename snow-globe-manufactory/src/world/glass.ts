@@ -173,8 +173,12 @@ export class Glass {
     this.frontMat.uniforms.uReflect.value = 0.85 * t + 0.12
     this.frontMat.uniforms.uRimAlpha.value = 0.72 * t + 0.05
     if (this.backMat) {
-      this.backMat.uniforms.uReflect.value = 0.85 * t + 0.3
-      this.backMat.uniforms.uRimAlpha.value = 0.72 * t + 0.12
+      // From inside, the far wall of the shell is what carries the workshop
+      // light: give it enough presence to read as a lit room beyond the glass
+      // rather than as an empty dark field.
+      this.backMat.uniforms.uReflect.value = 0.85 * t + 0.55
+      this.backMat.uniforms.uRimAlpha.value = 0.72 * t + 0.16
+      this.backMat.uniforms.uBaseAlpha.value = 0.072 + k * 0.11
     }
   }
 
