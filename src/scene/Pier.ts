@@ -63,7 +63,7 @@ export class Pier {
     const c = concrete()
     const wallTex = c.map.clone()
     wallTex.needsUpdate = true
-    wallTex.repeat.set(16, 6)
+    wallTex.repeat.set(34, 12)
     const mat = this.std({ map: wallTex, roughness: 0.95, metalness: 0, color: 0xb2b0a6 })
     const wall = new THREE.Mesh(new THREE.BoxGeometry(30, 11, 0.5), mat)
     wall.position.set(0, -5.5, QUAY_Z - 0.25)
@@ -225,15 +225,15 @@ export class CurrentTells {
   private buildPile(ropeMat: THREE.Material) {
     const pileMat = applyUnderwater(new THREE.MeshStandardMaterial({ color: 0x585c50, roughness: 1, metalness: 0 }))
     const pile = new THREE.Mesh(new THREE.CylinderGeometry(0.085, 0.10, 7.2, 10), pileMat)
-    pile.position.set(-1.95, WATER_Y - 3.2, -0.62)
+    pile.position.set(-3.25, WATER_Y - 3.2, -1.75)
     this.group.add(pile)
     const growth = new THREE.Mesh(new THREE.CylinderGeometry(0.105, 0.115, 1.4, 10), applyUnderwater(new THREE.MeshStandardMaterial({ color: 0x3b4436, roughness: 1 })))
-    growth.position.set(-1.95, WATER_Y - 0.75, -0.62)
+    growth.position.set(-3.25, WATER_Y - 0.75, -1.75)
     this.group.add(growth)
     const pts: THREE.Vector3[] = []
     for (let i = 0; i <= 16; i++) {
       const t = i / 16
-      pts.push(new THREE.Vector3(-1.95 + t * 0.5, WATER_Y + 0.5 - t * 3.4, -0.62 + t * 0.22))
+      pts.push(new THREE.Vector3(-3.25 + t * 0.5, WATER_Y + 0.5 - t * 3.4, -1.75 + t * 0.22))
     }
     const rope = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 24, 0.019, 6, false), ropeMat)
     this.group.add(rope)
@@ -243,7 +243,7 @@ export class CurrentTells {
       geo.translate(0, h / 2, 0)
       const m = new THREE.Mesh(geo, this.weedMat)
       const a = Math.random() * 6.28
-      m.position.set(-1.95 + Math.cos(a) * 0.09, WATER_Y - 0.4 - i * 0.32, -0.62 + Math.sin(a) * 0.09)
+      m.position.set(-3.25 + Math.cos(a) * 0.09, WATER_Y - 0.4 - i * 0.32, -1.75 + Math.sin(a) * 0.09)
       m.rotation.y = a
       this.weeds.push({ mesh: m, phase: Math.random() * 6.28, base: Float32Array.from((geo.attributes.position as THREE.BufferAttribute).array) })
       this.group.add(m)

@@ -77,8 +77,8 @@ export class Game {
 
   private aspect = 1
   private tmp3 = new THREE.Vector3()
-  private sideDir = new THREE.Vector3(0.93, 0.28, 0.26).normalize()
-  private sideDirWide = new THREE.Vector3(0.90, 0.32, 0.30).normalize()
+  private sideDir = new THREE.Vector3(0.95, 0.26, 0.16).normalize()
+  private sideDirWide = new THREE.Vector3(0.92, 0.30, 0.20).normalize()
   private tipW = new THREE.Vector3()
   private tmp = new THREE.Vector3()
   private tmp2 = new THREE.Vector3()
@@ -719,7 +719,7 @@ export class Game {
     this.view.pos.set(
       THREE.MathUtils.clamp(x, -6.5, 6.5),
       THREE.MathUtils.clamp(y, WATER_Y - 7.4, 3.0),
-      Math.min(z, -0.62),
+      Math.min(z, -0.85),
     )
   }
 

@@ -40,7 +40,7 @@ export class School {
   private grad = { x: 0, y: 0, z: 0 }
   private qRoll = new THREE.Quaternion()
   private one = new THREE.Vector3(1, 1, 1)
-  readonly center = new THREE.Vector3(-0.4, -3.85, -2.6)
+  readonly center = new THREE.Vector3(-0.5, -3.85, -3.1)
   private centerVel = new THREE.Vector3()
   private t = 0
   private recruitClock = 0
@@ -115,7 +115,7 @@ export class School {
     this.firstTurnAge = -1
     this.interested = 0
     this.biteArmed = false
-    this.center.set(-0.4, bandY, -2.6)
+    this.center.set(-0.5, bandY, -3.1)
     this.centerVel.set(0, 0, 0)
     this.t = 0
     this.recruitClock = 0
@@ -183,7 +183,7 @@ export class School {
 
     // the shoal patrols the quay: a slow wander, unaffected by the rig
     this.centerVel.x += (Math.sin(this.t * 0.26) * 0.9 - this.center.x - 0.2) * dt * 0.25
-    this.centerVel.z += (Math.sin(this.t * 0.19 + 1.7) * 1.0 - this.center.z - 2.1) * dt * 0.25
+    this.centerVel.z += (Math.sin(this.t * 0.19 + 1.7) * 1.0 - this.center.z - 2.6) * dt * 0.25
     this.centerVel.multiplyScalar(1 - dt * 0.9)
     this.center.addScaledVector(this.centerVel, dt)
     this.center.y += (this.bandY - this.center.y) * Math.min(1, dt * 0.6)
