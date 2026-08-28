@@ -1,0 +1,700 @@
+:root {
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-l: env(safe-area-inset-left, 0px);
+  --safe-r: env(safe-area-inset-right, 0px);
+  --pad: 14px;
+  --ink: #f4f7fb;
+  --panel: rgba(12, 20, 32, 0.52);
+  --panel-solid: rgba(12, 20, 32, 0.82);
+  --accent: #ffcf7a;
+  --font: system-ui, -apple-system, 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #0b1622;
+  font-family: var(--font);
+  color: var(--ink);
+  overscroll-behavior: none;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+#app {
+  position: fixed;
+  inset: 0;
+}
+
+#scene {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+#hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+
+#hud > * {
+  pointer-events: auto;
+}
+
+/* ---------------------------------------------------------------- boot -- */
+#boot {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  background: radial-gradient(120% 90% at 50% 30%, #1d3350 0%, #0b1622 70%);
+  transition: opacity 0.6s ease;
+}
+#boot.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+.boot-tree {
+  font-size: 64px;
+  filter: drop-shadow(0 6px 18px rgba(0, 0, 0, 0.5));
+}
+.boot-title {
+  font-size: clamp(20px, 5vw, 34px);
+  font-weight: 800;
+  text-align: center;
+  line-height: 1.35;
+  letter-spacing: 0.02em;
+  text-shadow: 0 3px 14px rgba(0, 0, 0, 0.6);
+}
+.boot-title span {
+  font-size: 0.62em;
+  font-weight: 700;
+  opacity: 0.92;
+}
+.boot-bar {
+  width: min(56vw, 280px);
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  overflow: hidden;
+}
+.boot-bar i {
+  display: block;
+  height: 100%;
+  width: 8%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #ffd79a, #ff9c5b);
+  transition: width 0.3s ease;
+}
+#boot-start {
+  margin-top: 6px;
+  padding: 18px 44px;
+  font-size: 24px;
+  font-weight: 800;
+  font-family: var(--font);
+  color: #26160a;
+  background: linear-gradient(180deg, #ffe0a8, #ffb457);
+  border: none;
+  border-radius: 999px;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.45);
+}
+#boot-start:active {
+  transform: translateY(2px);
+}
+
+/* ------------------------------------------------------------- chrome -- */
+.steps {
+  position: absolute;
+  top: calc(var(--safe-t) + var(--pad));
+  left: calc(var(--safe-l) + var(--pad));
+  display: flex;
+  gap: 7px;
+  padding: 8px 11px;
+  border-radius: 999px;
+  background: var(--panel);
+  backdrop-filter: blur(7px);
+  pointer-events: none;
+}
+.steps b {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.24);
+  transition: background 0.35s ease, transform 0.35s ease;
+}
+.steps b.done {
+  background: #9fe6a0;
+}
+.steps b.now {
+  background: var(--accent);
+  transform: scale(1.42);
+}
+
+.toggles {
+  position: absolute;
+  top: calc(var(--safe-t) + var(--pad));
+  right: calc(var(--safe-r) + var(--pad));
+  display: flex;
+  gap: 9px;
+}
+.toggles button {
+  width: 54px;
+  height: 54px;
+  border-radius: 18px;
+  border: none;
+  font-size: 24px;
+  color: var(--ink);
+  background: var(--panel);
+  backdrop-filter: blur(7px);
+  display: grid;
+  place-items: center;
+}
+.toggles button[aria-pressed='false'] {
+  background: rgba(255, 207, 122, 0.9);
+  color: #241505;
+}
+
+.title-card {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--safe-t) + 78px);
+  transform: translateX(-50%);
+  max-width: calc(100vw - 32px);
+  padding: 10px 20px;
+  border-radius: 18px;
+  background: var(--panel);
+  backdrop-filter: blur(7px);
+  font-size: clamp(15px, 3.6vw, 21px);
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: opacity 0.4s ease;
+}
+.title-card .glyph {
+  font-size: 1.3em;
+}
+
+/* ------------------------------------------------------------ controls -- */
+.control-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.control-layer > * {
+  pointer-events: auto;
+}
+
+.pad {
+  position: absolute;
+  border: none;
+  border-radius: 26px;
+  background: var(--panel-solid);
+  backdrop-filter: blur(8px);
+  color: var(--ink);
+  font-family: var(--font);
+  font-weight: 800;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.38);
+  touch-action: none;
+}
+.pad.done {
+  background: rgba(70, 150, 92, 0.86);
+}
+.pad .arrow {
+  font-size: 34px;
+  line-height: 1;
+}
+.pad .cap {
+  font-size: 14px;
+  margin-top: 2px;
+  opacity: 0.9;
+}
+
+@keyframes nudge {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(var(--nx, 0), var(--ny, 0)) scale(1.04);
+  }
+}
+.hint {
+  animation: nudge 1.5s ease-in-out 2;
+}
+
+/* Guidance swipe pad (act 1) */
+.guide-pad {
+  left: 50%;
+  bottom: calc(var(--safe-b) + 26px);
+  transform: translateX(-50%);
+  width: min(64vw, 320px);
+  height: 108px;
+  --nx: 12px;
+}
+.guide-pad .arrow {
+  font-size: 44px;
+}
+
+/* Outrigger cross */
+.rig-cross {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--safe-b) + 18px);
+  transform: translateX(-50%);
+  width: min(78vw, 330px);
+  height: min(78vw, 330px);
+  max-height: 44vh;
+  pointer-events: none;
+}
+.rig-cross .pad {
+  width: 33%;
+  height: 33%;
+  border-radius: 22px;
+}
+.rig-cross .p0 {
+  left: 0;
+  top: 33.5%;
+  --nx: -12px;
+}
+.rig-cross .p1 {
+  right: 0;
+  top: 33.5%;
+  --nx: 12px;
+}
+.rig-cross .p2 {
+  left: 33.5%;
+  top: 0;
+  --ny: -12px;
+}
+.rig-cross .p3 {
+  left: 33.5%;
+  bottom: 0;
+  --ny: 12px;
+}
+.rig-cross .core {
+  position: absolute;
+  left: 33.5%;
+  top: 33.5%;
+  width: 33%;
+  height: 33%;
+  display: grid;
+  place-items: center;
+  font-size: 30px;
+  border-radius: 20px;
+  background: rgba(12, 20, 32, 0.36);
+}
+.jack-bar {
+  left: 50%;
+  bottom: calc(var(--safe-b) + 18px);
+  transform: translateX(-50%);
+  width: min(80vw, 380px);
+  height: 118px;
+  --ny: 12px;
+}
+.jack-bar .arrow {
+  font-size: 40px;
+}
+
+/* Sling pucks */
+.puck {
+  position: absolute;
+  width: 104px;
+  height: 104px;
+  border-radius: 50%;
+  border: 4px solid rgba(255, 255, 255, 0.75);
+  display: grid;
+  place-items: center;
+  font-size: 34px;
+  font-weight: 900;
+  color: #fff;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.42);
+  touch-action: none;
+  bottom: calc(var(--safe-b) + 22px);
+}
+.puck.red {
+  background: linear-gradient(180deg, #d4453c, #93231d);
+  left: calc(var(--safe-l) + 22px);
+}
+.puck.blue {
+  background: linear-gradient(180deg, #3f7ed0, #1c4a86);
+  left: calc(var(--safe-l) + 142px);
+}
+.puck.done {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+.drop-target {
+  position: absolute;
+  width: 132px;
+  height: 132px;
+  margin-left: -66px;
+  margin-top: -66px;
+  border-radius: 50%;
+  border: 5px dashed rgba(255, 255, 255, 0.8);
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.drop-target.red {
+  border-color: rgba(255, 138, 128, 0.92);
+}
+.drop-target.blue {
+  border-color: rgba(140, 190, 255, 0.92);
+}
+.drop-target.near {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+/* Crane lever */
+.lever {
+  position: absolute;
+  right: calc(var(--safe-r) + 18px);
+  bottom: calc(var(--safe-b) + 92px);
+  width: 108px;
+  height: min(52vh, 340px);
+  border-radius: 54px;
+  background: var(--panel-solid);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
+  touch-action: none;
+  overflow: hidden;
+}
+.lever .track {
+  position: absolute;
+  inset: 12px 46px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+}
+.lever .knob {
+  position: absolute;
+  left: 8px;
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #ffe0a8, #f0a24d);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
+  display: grid;
+  place-items: center;
+  font-size: 30px;
+  color: #3a2205;
+}
+.lever .caps {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  font-size: 22px;
+  opacity: 0.65;
+  pointer-events: none;
+}
+
+/* Tag-line rope strip */
+.rope-strip {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(var(--safe-b) + 16px);
+  width: min(70vw, 420px);
+  height: 74px;
+  border-radius: 37px;
+  background: var(--panel-solid);
+  backdrop-filter: blur(8px);
+  touch-action: none;
+  overflow: hidden;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.36);
+}
+.rope-strip .rope-knob {
+  position: absolute;
+  top: 6px;
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #d9c39a, #9c8050);
+  display: grid;
+  place-items: center;
+  font-size: 26px;
+}
+.rope-strip .hintline {
+  position: absolute;
+  inset: 0 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 20px;
+  opacity: 0.42;
+  pointer-events: none;
+}
+.rope-strip .hintline span:nth-child(2) {
+  font-size: 15px;
+  opacity: 0.75;
+}
+
+/* Capstan */
+.capstan {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(var(--safe-b) + 20px);
+  width: min(58vw, 230px);
+  height: min(58vw, 230px);
+  border-radius: 50%;
+  background: var(--panel-solid);
+  backdrop-filter: blur(8px);
+  touch-action: none;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.42);
+  display: grid;
+  place-items: center;
+}
+.capstan .spokes {
+  position: absolute;
+  inset: 14px;
+  border-radius: 50%;
+  border: 8px solid rgba(255, 255, 255, 0.28);
+}
+.capstan .handle {
+  position: absolute;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+.capstan .glyph {
+  font-size: 46px;
+  pointer-events: none;
+}
+
+/* Spiral trace */
+.spiral {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(var(--safe-b) + 16px);
+  width: min(62vw, 250px);
+  height: min(62vw, 250px);
+  touch-action: none;
+}
+.spiral svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.spiral .bg {
+  fill: rgba(12, 20, 32, 0.62);
+}
+.spiral .guide {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.26);
+  stroke-width: 13;
+  stroke-linecap: round;
+}
+.spiral .done {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 13;
+  stroke-linecap: round;
+}
+.spiral .dot {
+  fill: #fff;
+}
+
+/* Big switch (finale) */
+.big-switch {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(var(--safe-b) + 22px);
+  width: min(46vw, 190px);
+  height: min(46vh, 260px);
+  border-radius: 34px;
+  background: var(--panel-solid);
+  backdrop-filter: blur(8px);
+  touch-action: none;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+.big-switch .slot {
+  position: absolute;
+  inset: 16px 62px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+}
+.big-switch .handle {
+  position: absolute;
+  left: 14px;
+  width: calc(100% - 28px);
+  height: 84px;
+  border-radius: 24px;
+  background: linear-gradient(180deg, #ff8f6b, #c93c22);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
+  display: grid;
+  place-items: center;
+  font-size: 34px;
+}
+
+/* Star fitting */
+.star-btn {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(var(--safe-b) + 24px);
+  width: min(52vw, 210px);
+  height: 132px;
+  border-radius: 30px;
+  background: var(--panel-solid);
+  backdrop-filter: blur(8px);
+  display: grid;
+  place-items: center;
+  font-size: 54px;
+  touch-action: none;
+  --ny: -12px;
+}
+
+/* Replay menu */
+.menu {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(var(--safe-b) + 18px);
+  display: flex;
+  gap: 9px;
+  flex-wrap: nowrap;
+  justify-content: center;
+  max-width: calc(100vw - 32px);
+}
+.menu button {
+  border: none;
+  border-radius: 22px;
+  padding: 12px 10px;
+  min-width: 104px;
+  min-height: 88px;
+  font-family: var(--font);
+  font-size: 15px;
+  font-weight: 800;
+  color: #26160a;
+  background: linear-gradient(180deg, #ffe6bb, #ffbe6d);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.menu button span {
+  font-size: 27px;
+}
+.menu button:active {
+  transform: translateY(2px);
+}
+
+/* Landscape re-placement: controls move to the sides, never a crop. */
+@media (orientation: landscape) {
+  .title-card {
+    top: calc(var(--safe-t) + 14px);
+  }
+  .rig-cross {
+    left: auto;
+    right: calc(var(--safe-r) + 16px);
+    transform: none;
+    width: min(38vh, 290px);
+    height: min(38vh, 290px);
+    max-height: 62vh;
+    bottom: calc(var(--safe-b) + 14px);
+  }
+  .jack-bar {
+    left: auto;
+    right: calc(var(--safe-r) + 16px);
+    transform: none;
+    width: min(46vh, 320px);
+    height: 104px;
+  }
+  .capstan {
+    left: auto;
+    right: calc(var(--safe-r) + 20px);
+    transform: none;
+    width: min(34vh, 210px);
+    height: min(34vh, 210px);
+  }
+  .spiral {
+    left: auto;
+    right: calc(var(--safe-r) + 18px);
+    transform: none;
+    width: min(38vh, 230px);
+    height: min(38vh, 230px);
+  }
+  .big-switch {
+    left: auto;
+    right: calc(var(--safe-r) + 22px);
+    transform: none;
+    width: min(24vh, 170px);
+    height: min(56vh, 250px);
+  }
+  .star-btn {
+    left: auto;
+    right: calc(var(--safe-r) + 22px);
+    transform: none;
+  }
+  .rope-strip {
+    width: min(46vw, 420px);
+    left: calc(var(--safe-l) + 20px);
+    transform: none;
+  }
+  .lever {
+    bottom: calc(var(--safe-b) + 16px);
+    height: min(62vh, 320px);
+  }
+  .guide-pad {
+    left: auto;
+    right: calc(var(--safe-r) + 20px);
+    transform: none;
+    width: min(40vw, 300px);
+  }
+  .puck {
+    bottom: calc(var(--safe-b) + 18px);
+  }
+}
+
+@media (max-height: 430px) {
+  .lever {
+    width: 88px;
+    height: min(64vh, 240px);
+  }
+  .lever .knob {
+    width: 72px;
+    height: 72px;
+  }
+  .rope-strip {
+    height: 62px;
+  }
+  .rope-strip .rope-knob {
+    width: 50px;
+    height: 50px;
+  }
+}
