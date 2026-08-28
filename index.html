@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#25333b" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <title>エサ雪 ― 小魚の群れを呼ぼう</title>
+    <style>
+      :root { color-scheme: dark; }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body {
+        width: 100%; height: 100%; overflow: hidden; background: #10171b;
+        -webkit-user-select: none; user-select: none;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: none; overscroll-behavior: none;
+        font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif;
+      }
+      #app { position: fixed; inset: 0; }
+      #gl { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
+      #touch { position: absolute; inset: 0; touch-action: none; }
+      #title {
+        position: absolute; inset: 0; display: flex; flex-direction: column;
+        align-items: center; justify-content: flex-end;
+        padding: 0 6vmin 12vmin; gap: 4vmin;
+        background: linear-gradient(180deg, rgba(12,20,25,0) 40%, rgba(10,16,20,0.72) 100%);
+        transition: opacity 0.7s ease; opacity: 1;
+      }
+      #title.hidden { opacity: 0; pointer-events: none; }
+      #title h1 {
+        font-size: clamp(26px, 7.2vmin, 58px); font-weight: 700; letter-spacing: 0.06em;
+        color: #f2ece2; text-shadow: 0 2px 14px rgba(0,0,0,0.65); text-align: center; line-height: 1.35;
+      }
+      #title h1 small { display: block; font-size: 0.5em; font-weight: 500; opacity: 0.82; letter-spacing: 0.12em; margin-top: 0.5em; }
+      #start {
+        appearance: none; border: none; cursor: pointer;
+        padding: 3.4vmin 9vmin; border-radius: 999px;
+        font-size: clamp(18px, 4.4vmin, 32px); font-weight: 700; letter-spacing: 0.1em;
+        color: #17242a; background: linear-gradient(180deg, #f6e8cf 0%, #dcc59d 100%);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.6);
+      }
+      #start:active { transform: translateY(2px); }
+      #loading {
+        position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+        color: #b9c6cc; font-size: 14px; letter-spacing: 0.2em; background: #10171b;
+        transition: opacity .5s ease;
+      }
+      #loading.hidden { opacity: 0; pointer-events: none; }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="gl"></canvas>
+      <div id="touch"></div>
+      <div id="title">
+        <h1>エサ雪<small>小魚の群れを呼ぼう</small></h1>
+        <button id="start">はじめる</button>
+      </div>
+      <div id="loading">よみこみちゅう</div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
