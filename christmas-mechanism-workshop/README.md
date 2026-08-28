@@ -23,6 +23,7 @@ npm run preview    # ビルド結果をローカル配信
 node scripts/autoplay.mjs            # 自動プレイ（横画面）＋スクリーンショット
 node scripts/autoplay.mjs --portrait # 縦画面で自動プレイ
 node scripts/autoplay.mjs --rotate   # 途中で画面を回転させて状態保持を確認
+node scripts/shot.mjs                # 冒頭の一枚だけを撮る（見た目の確認用）
 ```
 
 技術構成：Vite + TypeScript + Three.js（WebGL2）。
