@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <title>サンタ郵便中央局</title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+    />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='8' width='26' height='17' rx='2' fill='%23e9dcc0' stroke='%238d7a58' stroke-width='1.5'/%3E%3Cpath d='M3 9 L16 18 L29 9' fill='none' stroke='%238d7a58' stroke-width='1.5'/%3E%3Ccircle cx='23' cy='13' r='4.5' fill='none' stroke='%23334a72' stroke-width='1.5'/%3E%3C/svg%3E" />
+    <meta name="theme-color" content="#1b1410" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="description" content="架空のクリスマス郵便中央局で、一通の手紙を仕分けて世界へ送る、4歳児向けの手ざわりゲーム。" />
+    <style>
+      :root {
+        --safe-t: env(safe-area-inset-top, 0px);
+        --safe-b: env(safe-area-inset-bottom, 0px);
+        --safe-l: env(safe-area-inset-left, 0px);
+        --safe-r: env(safe-area-inset-right, 0px);
+      }
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow: hidden;
+        background: #14100d;
+        -webkit-tap-highlight-color: transparent;
+        -webkit-user-select: none;
+        user-select: none;
+        touch-action: none;
+        overscroll-behavior: none;
+        font-family: "Hiragino Maru Gothic ProN", "Hiragino Sans", system-ui, sans-serif;
+      }
+      #app { position: fixed; inset: 0; }
+      canvas { display: block; width: 100%; height: 100%; }
+
+      #hud {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        padding: calc(var(--safe-t) + 10px) calc(var(--safe-r) + 10px)
+                 calc(var(--safe-b) + 10px) calc(var(--safe-l) + 10px);
+      }
+      .hud-row {
+        position: absolute;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+      .hud-row.top-left { top: calc(var(--safe-t) + 10px); left: calc(var(--safe-l) + 10px); }
+      .hud-row.top-right { top: calc(var(--safe-t) + 10px); right: calc(var(--safe-r) + 10px); }
+
+      .pips { display: flex; gap: 7px; }
+      .pip {
+        width: 13px; height: 13px; border-radius: 50%;
+        background: rgba(240, 228, 205, 0.22);
+        border: 1.5px solid rgba(240, 228, 205, 0.4);
+        transition: background 220ms ease, transform 220ms ease;
+      }
+      .pip.done { background: #e8d3a4; transform: scale(1.06); }
+      .pip.active { background: #f2c07a; border-color: #f2c07a; }
+
+      .btn {
+        pointer-events: auto;
+        width: 54px; height: 54px;
+        border: none; border-radius: 16px;
+        background: rgba(30, 22, 17, 0.56);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        display: grid; place-items: center;
+        padding: 0; cursor: pointer;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+      }
+      .btn:active { transform: scale(0.94); }
+      .btn svg { width: 30px; height: 30px; }
+      .btn[data-on="true"] { background: rgba(120, 84, 44, 0.7); }
+
+      #childline {
+        position: absolute;
+        left: 50%;
+        bottom: calc(var(--safe-b) + 28px);
+        transform: translateX(-50%) translateY(14px);
+        max-width: min(86vw, 560px);
+        text-align: center;
+        color: #f6e9d2;
+        font-size: clamp(15px, 4.4vw, 22px);
+        line-height: 1.5;
+        letter-spacing: 0.02em;
+        text-shadow: 0 2px 12px rgba(0, 0, 0, 0.75);
+        opacity: 0;
+        transition: opacity 700ms ease, transform 700ms ease;
+      }
+      #childline.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+      #tapstart {
+        position: fixed; inset: 0;
+        display: grid; place-items: center;
+        background: radial-gradient(circle at 50% 45%, #2a2018 0%, #100c09 70%);
+        z-index: 10;
+        transition: opacity 600ms ease;
+      }
+      #tapstart.hidden { opacity: 0; pointer-events: none; }
+      #tapstart svg { width: min(38vw, 190px); height: auto; }
+
+      #loading {
+        position: fixed;
+        left: 50%; bottom: calc(var(--safe-b) + 18px);
+        transform: translateX(-50%);
+        width: 108px; height: 4px; border-radius: 2px;
+        background: rgba(240, 228, 205, 0.16);
+        overflow: hidden; z-index: 11;
+      }
+      #loading > i { display: block; height: 100%; width: 12%; background: #e0c48d; transition: width 300ms ease; }
+      #loading.hidden { opacity: 0; transition: opacity 400ms ease; }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+
+    <div id="hud">
+      <div class="hud-row top-left">
+        <div class="pips" id="pips" aria-hidden="true"></div>
+      </div>
+      <div class="hud-row top-right">
+        <button class="btn" id="btn-mode" aria-label="one condition mode">
+          <svg viewBox="0 0 32 32" fill="none" stroke="#f0dfbe" stroke-width="2.1"
+               stroke-linecap="round" stroke-linejoin="round">
+            <rect x="4" y="9" width="11" height="14" rx="2" />
+            <rect x="17" y="9" width="11" height="14" rx="2" id="mode-second" />
+            <path d="M7.5 16.5 L9.5 18.5 L12 14" />
+          </svg>
+        </button>
+        <button class="btn" id="btn-replay" aria-label="replay">
+          <svg viewBox="0 0 32 32" fill="none" stroke="#f0dfbe" stroke-width="2.1"
+               stroke-linecap="round" stroke-linejoin="round">
+            <path d="M26 16a10 10 0 1 1-3.2-7.3" />
+            <path d="M26 5.5V10h-4.6" />
+          </svg>
+        </button>
+      </div>
+      <p id="childline"></p>
+    </div>
+
+    <div id="tapstart">
+      <svg viewBox="0 0 120 120" fill="none" aria-hidden="true">
+        <rect x="14" y="34" width="92" height="58" rx="5" fill="#e9dcc0" stroke="#8d7a58" stroke-width="2" />
+        <path d="M14 38 L60 68 L106 38" stroke="#8d7a58" stroke-width="2" fill="none" />
+        <circle cx="86" cy="52" r="11" stroke="#a8553f" stroke-width="2.4" fill="none" />
+        <path d="M86 45.5v13M79.5 52h13" stroke="#a8553f" stroke-width="2" />
+        <path d="M60 100c0 0 8-6 8-11" stroke="#e9dcc0" stroke-width="0" />
+      </svg>
+    </div>
+
+    <div id="loading"><i></i></div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
