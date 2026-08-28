@@ -629,7 +629,13 @@ export class Game {
 
   private onPelletImpact(speed: number, kind: 'bench' | 'shell') {
     const now = performance.now() / 1000;
-    if (kind === 'bench') { this.audio.wood(clamp(speed * 1.6, 0.1, 1)); return; }
+    if (kind === 'bench') {
+      // the pellet lands on the steel die, which passes the knock into the bench
+      const v = clamp(speed * 1.6, 0.1, 1);
+      this.audio.dullMetal(v * 0.55);
+      this.audio.wood(v * 0.45);
+      return;
+    }
     if (this.phase === 'shake') {
       if (speed < 0.075) {
         if (now - this.lastTickAt > 0.25) { this.lastTickAt = now; this.audio.dullMetal(0.05); }

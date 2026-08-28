@@ -39,7 +39,7 @@ const PORTRAIT: ShotTable = {
   intro:  { yaw:  30, pitch: 38, dist: 0.90, target: [0, 0.05, -0.02], fov: 45 },
   press:  { yaw: -16, pitch: 34, dist: 1.14, target: [0, 0.08, 0.06], fov: 48 },
   drop:   { yaw:   6, pitch: 66, dist: 1.02, target: [0, 0.04, -0.01], fov: 44 },
-  petals: { yaw:  18, pitch: 46, dist: 0.96, target: [0, 0.08, -0.01], fov: 42 },
+  petals: { yaw:  18, pitch: 46, dist: 1.08, target: [0, 0.08, -0.01], fov: 42 },
   clinch: { yaw:  16, pitch: 36, dist: 1.28, target: [0, 0.10, 0.04], fov: 46 },
   polish: { yaw:  10, pitch: 24, dist: 0.80, target: [0, 0.13, 0], fov: 40 },
   cord:   { yaw:  12, pitch: 24, dist: 0.96, target: [0, 0.15, 0.02], fov: 42 },

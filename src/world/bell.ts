@@ -229,7 +229,7 @@ export class Bell {
     const tipR = (v: number) => 1 - 0.022 * Math.pow(v, 4);
     const sAt = (i: number, v: number) => sB + A * (i / nu) * tipR(v);
     const fadeTip = (i: number) => 1 - smoothstep(0.76, 1.0, i / nu);
-    const lapV = (v: number, i: number) => v + 0.17 * fadeTip(i) * smoothstep(0.5, 1.0, v);
+    const lapV = (v: number, i: number) => v + 0.12 * fadeTip(i) * smoothstep(0.55, 1.0, v);
 
     const place = (i: number, j: number, out: THREE.Vector3, normal: THREE.Vector3) => {
       const v = (j / nv) * 2 - 1;
@@ -241,7 +241,7 @@ export class Bell {
       const sa = Math.sin(_prof.a), ca = Math.cos(_prof.a);
       normal.set(sa * Math.cos(phi), -ca, sa * Math.sin(phi));
       if (normal.lengthSq() < 1e-9) normal.set(0, -1, 0); else normal.normalize();
-      const lift = self.thickness * smoothstep(0.45, 0.92, v) * fadeTip(i);
+      const lift = self.thickness * smoothstep(0.5, 0.94, v) * fadeTip(i);
       out.set(_prof.r * Math.cos(phi), _prof.y, _prof.r * Math.sin(phi));
       out.addScaledVector(normal, lift);
     };

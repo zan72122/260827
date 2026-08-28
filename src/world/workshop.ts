@@ -209,6 +209,12 @@ export class Workshop {
     far.target.position.set(0, 1.0, -2.6);
     this.root.add(far, far.target);
 
+    // a soft, close fill straight down into the tooling: without it the drawn
+    // cup reads as a black hole rather than a bowl you can drop a ball into
+    const cupFill = new THREE.PointLight(0xffdcb4, 0.55, 1.1, 2);
+    cupFill.position.set(0.05, 0.5, 0.24);
+    this.root.add(cupFill);
+
     // cold kick from the window side so the far edge of the metal separates
     const rim = new THREE.PointLight(0x9cc0dd, 2.4, 4.2, 2);
     rim.position.set(-1.35, 0.9, -0.9);
