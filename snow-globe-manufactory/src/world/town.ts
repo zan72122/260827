@@ -522,10 +522,12 @@ export class Town {
   /** 0 = daylight globe on the bench, 1 = the town's own lamps burning. */
   setLit(v: number) {
     this.lit = THREE.MathUtils.clamp(v, 0, 1)
+    // Kept below the point where the tone mapper clips them: a lantern should
+    // read as a warm lamp, not a white block.
     for (const rec of this.placed.values()) {
-      for (const m of rec.build.glow) m.emissiveIntensity = 0.1 + this.lit * 1.9
+      for (const m of rec.build.glow) m.emissiveIntensity = 0.08 + this.lit * 1.15
     }
-    for (const m of this.glowMats) m.emissiveIntensity = 0.08 + this.lit * 1.4
+    for (const m of this.glowMats) m.emissiveIntensity = 0.06 + this.lit * 0.95
     for (const l of this.lampLights) l.intensity = this.lit * 0.14
   }
 

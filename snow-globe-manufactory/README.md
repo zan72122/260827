@@ -89,6 +89,13 @@ keeps the highlight from sticking to the camera when the globe turns. The rim
 Fresnel and the thick-edge band carry the read; the centre of the sphere stays
 almost clear so the town is never hidden.
 
+**The way in is chosen from the town you built.** The camera scores frontal
+bearings by how far the nearest miniature is and flies down the clearest one, so
+it never ends up nose to nose with a street lamp, whatever the player placed.
+The lens widens to 68 degrees on the way in: the interior is half a metre
+across, and a 46 degree lens in portrait leaves a horizontal field of barely 22
+degrees, which one tree fills.
+
 **No binary assets.** Wood, frost, snow, enamel and the winter sky beyond the
 pane are all generated into canvases at boot, and every sound is synthesised on
 first touch.

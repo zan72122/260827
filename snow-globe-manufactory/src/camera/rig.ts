@@ -89,6 +89,17 @@ export class CameraRig {
     this.snapNext = true
   }
 
+  /**
+   * Sets the lens directly. Used to widen it on the way into the globe: the
+   * interior is only half a metre across, and in portrait a 46 degree lens
+   * leaves a horizontal field of barely 22 degrees, which one tree fills.
+   */
+  setFov(v: number) {
+    this.curFov = v
+    this.camera.fov = v
+    this.camera.updateProjectionMatrix()
+  }
+
   get inPath(): boolean {
     return this.path !== null
   }

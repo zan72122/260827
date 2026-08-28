@@ -40,6 +40,9 @@ const LIFT_SEAT = 0.3
 /** Travel of the gasket from the player's hand down onto the rim. */
 const GASKET_TRAVEL = 0.24
 
+/** Lens used once the camera is inside the globe. */
+const INSIDE_FOV = 68
+
 const SNOW_MIN = 0.28
 const TILT_LIMIT = 0.2
 
@@ -905,18 +908,24 @@ export class Flow {
     // stays a few centimetres inside the glass so the fence and the near trees
     // sweep past the lens on the way down.
     this.bearing = this.clearBearing()
+    // Keep a little drift alive: the globe was just shaken, and the near-field
+    // flakes crossing the lens are half of what makes being inside work.
+    g.snow.shake(this.v3.set(0, 1, 0), 0.7)
     const b = this.bearing
     const at = (bear: number, r: number, y: number) => this.inner(bear, r, y, new THREE.Vector3())
-    const eye = GROUND_Y + 0.075
+    const eye = GROUND_Y + 0.1
     const keys = [
       { pos: this.app.camera.position.clone(), look: g.root.position.clone() },
       { pos: at(b, 1.0, 0.12), look: at(b, 0, -0.02) },
       { pos: at(b, 0.55, 0.02), look: at(b + 0.3, 0.1, -0.12) },
       { pos: at(b, 0.46, -0.1), look: at(b + 1.2, 0.14, -0.18) },
-      { pos: at(b, 0.41, -0.19), look: at(b + 2.4, 0.16, eye + 0.01) },
-      { pos: at(b, 0.385, eye), look: at(b + Math.PI * 1.08, 0.16, eye + 0.012) },
+      { pos: at(b, 0.41, -0.19), look: at(b + 2.6, 0.2, eye - 0.01) },
+      { pos: at(b, 0.385, eye), look: at(b + Math.PI + 0.45, 0.14, eye - 0.008) },
     ]
-    this.app.rig.playPath(keys, this.app.settings.calmCamera ? 6.5 : 5.2, () => this.goto('inside'))
+    const dur = this.app.settings.calmCamera ? 6.5 : 5.2
+    const fov0 = this.app.camera.fov
+    this.tw.add(dur * 0.8, (k) => this.app.rig.setFov(THREE.MathUtils.lerp(fov0, INSIDE_FOV, k)))
+    this.app.rig.playPath(keys, dur, () => this.goto('inside'))
   }
 
   private enterInside() {
@@ -925,11 +934,11 @@ export class Flow {
     this.litTarget = 1
     const b = this.bearing
     const at = (bear: number, r: number, y: number) => this.inner(bear, r, y, new THREE.Vector3())
-    const eye = GROUND_Y + 0.075
+    const eye = GROUND_Y + 0.1
     // A slow drift along the rim, always looking across the town.
     const keys = [0, 0.16, 0.34, 0.52].map((d) => ({
       pos: at(b + d, 0.385, eye),
-      look: at(b + d + Math.PI * 1.08, 0.16, eye + 0.012),
+      look: at(b + d + Math.PI + 0.45, 0.14, eye - 0.008),
     }))
     this.app.rig.playPath(keys, this.app.settings.calmCamera ? 20 : 15, () => this.exitGlobe())
     this.coach('tap', 'あかりを タップしてみて', 4)
@@ -970,7 +979,10 @@ export class Flow {
       { pos: at(b, 0.95, 0.12), look: c.clone() },
       { pos: out, look: c.clone() },
     ]
-    this.app.rig.playPath(keys, this.app.settings.calmCamera ? 5.5 : 4.2, () => {
+    const dur = this.app.settings.calmCamera ? 5.5 : 4.2
+    const fov0 = this.app.camera.fov
+    this.tw.add(dur * 0.75, (k) => this.app.rig.setFov(THREE.MathUtils.lerp(fov0, 46, k)))
+    this.app.rig.playPath(keys, dur, () => {
       this.exiting = false
       this.goto('finale')
     })

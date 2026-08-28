@@ -82,7 +82,7 @@ export function createMaterials(): MatKit {
     metalness: 0.0,
   })
   // Fine enough to hold up when the camera is standing on it.
-  snow.map!.repeat.set(9, 9)
+  snow.map!.repeat.set(16, 16)
 
   const frostMat = new THREE.MeshBasicMaterial({ map: frost, color: 0xcfe0ea })
 

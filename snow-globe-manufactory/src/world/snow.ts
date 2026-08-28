@@ -313,7 +313,9 @@ export class SnowSystem {
     // Water damps hard; the dry sphere lets flakes drop briskly.
     const damp = THREE.MathUtils.lerp(0.985, 0.918, submerged)
     const gScale = THREE.MathUtils.lerp(0.9, 0.115, submerged)
-    const swirlDecay = Math.exp(-h * THREE.MathUtils.lerp(3.4, 1.05, submerged))
+    // Water keeps a vortex alive for several seconds; dry air does not. This is
+    // the part the player is really watching after they let go.
+    const swirlDecay = Math.exp(-h * THREE.MathUtils.lerp(3.4, 0.55, submerged))
     this.swirl.multiplyScalar(swirlDecay)
     this.stirred = Math.max(0, this.stirred - h * 0.5)
 

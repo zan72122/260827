@@ -139,9 +139,10 @@ export function snowTexture(): THREE.Texture {
       for (let x = 0; x < w; x++) {
         const u = x / w
         const v = y / h
-        const lumps = fbm(u * 9, v * 9, 5, 4)
+        const lumps = fbm(u * 6, v * 6, 5, 4)
+        const drift = fbm(u * 2.5, v * 2.5, 41, 3)
         const grain = fbm(u * 120, v * 120, 17, 2)
-        const t = 0.78 + lumps * 0.15 + grain * 0.09
+        const t = 0.7 + lumps * 0.16 + drift * 0.14 + grain * 0.09
         const i = (y * w + x) * 4
         d[i] = Math.min(255, t * 250)
         d[i + 1] = Math.min(255, t * 252)
