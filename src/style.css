@@ -1,0 +1,132 @@
+:root {
+  --safe-b: env(safe-area-inset-bottom, 0px);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #05070a;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  user-select: none;
+  touch-action: none;
+  overscroll-behavior: none;
+}
+
+#app {
+  position: fixed;
+  inset: 0;
+}
+
+#view {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.title {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(
+    ellipse at 50% 45%,
+    rgba(18, 24, 31, 0.55) 0%,
+    rgba(5, 7, 10, 0.92) 70%
+  );
+  transition: opacity 700ms ease;
+  z-index: 3;
+}
+
+.title--hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.title__inner {
+  text-align: center;
+  color: #d9dee3;
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
+  padding: 0 8vw;
+}
+
+.title__inner h1 {
+  font-size: clamp(28px, 8.2vw, 52px);
+  font-weight: 400;
+  letter-spacing: 0.22em;
+  text-indent: 0.22em;
+  color: #e6ebef;
+}
+
+.title__tap {
+  margin-top: 2.4em;
+  font-size: clamp(13px, 3.6vw, 18px);
+  letter-spacing: 0.16em;
+  text-indent: 0.16em;
+  color: #8e979f;
+  animation: breathe 3.4s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.95;
+  }
+}
+
+.hint {
+  position: absolute;
+  left: 50%;
+  bottom: 40px;
+  transform: translateX(-50%);
+  width: 74px;
+  height: 74px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 600ms ease;
+  z-index: 2;
+}
+
+.hint--on {
+  opacity: 1;
+}
+
+.hint--off {
+  opacity: 0 !important;
+}
+
+.hint__ring {
+  position: absolute;
+  inset: 0;
+  border: 1.5px solid rgba(226, 232, 236, 0.72);
+  border-radius: 50%;
+  animation: press 2.2s ease-out infinite;
+}
+
+@keyframes press {
+  0% {
+    transform: scale(1);
+    opacity: 0;
+  }
+  25% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: scale(0.62);
+    opacity: 0;
+  }
+}
