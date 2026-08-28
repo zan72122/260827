@@ -208,8 +208,8 @@ export class Chimes {
       this.candleMeshes.push(g);
     }
 
-    this.clusterLight = new THREE.PointLight(0xffa254, 0, 1.15, 2.4);
-    this.clusterLight.position.set(0, CANDLE_BASE + CANDLE_H + 0.02, 0);
+    this.clusterLight = new THREE.PointLight(0xffa254, 0, 0.95, 2);
+    this.clusterLight.position.set(0, CANDLE_BASE + CANDLE_H + 0.050, 0);
     this.group.add(this.clusterLight);
 
     this.bodyHit = hitBox(0.20, 0.30, 0.20, 'chimes');
@@ -466,7 +466,7 @@ export class Chimes {
 
     let lit = 0;
     for (let i = 0; i < CH_CANDLES; i++) lit += flames.brightness(this.flameBase + i);
-    this.clusterLight.intensity = lit * 0.26;
+    this.clusterLight.intensity = lit * 0.100;
   }
 
   get running() { return Math.abs(this.omega) > 0.06; }

@@ -173,8 +173,8 @@ export class Pyramid {
 
     /* ---------- lights and picking ---------- */
     // one warm light for the whole candle ring; the rest is emissive + env
-    this.clusterLight = new THREE.PointLight(0xff9a48, 0, 1.35, 2.4);
-    this.clusterLight.position.set(0, CANDLE_BASE + CANDLE_H + 0.02, 0);
+    this.clusterLight = new THREE.PointLight(0xff9a48, 0, 1.10, 2);
+    this.clusterLight.position.set(0, CANDLE_BASE + CANDLE_H + 0.055, 0);
     this.group.add(this.clusterLight);
 
     this.bodyHit = hitBox(0.26, 0.50, 0.26, 'pyramid');
@@ -434,7 +434,7 @@ export class Pyramid {
     // candle light: one shared source, flicker-modulated by its flames
     let lit = 0;
     for (let i = 0; i < PY_CANDLES; i++) lit += flames.brightness(this.flameBase + i);
-    this.clusterLight.intensity = lit * 0.30;
+    this.clusterLight.intensity = lit * 0.115;
     this.clusterLight.color.setRGB(1.0, 0.62 + 0.05 * Math.sin(time * 6.1), 0.30);
   }
 

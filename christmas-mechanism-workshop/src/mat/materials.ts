@@ -229,10 +229,10 @@ export class Materials {
     this.skinPaint = mk([224, 178, 146], [0.4, 0.9], 53, 0.8);
 
     /* ---- metals ---- */
-    const br = makeBrass(5, 0.55);
+    const br = makeBrass(5, 0.42);
     this.brass = this.std({
       map: br.map, roughnessMap: br.rough, metalness: 0.92, roughness: 0.36,
-      color: 0xffffff, envMapIntensity: 1.5,
+      color: 0xffe8c4, envMapIntensity: 1.5,
     });
     const brD = makeBrass(19, 0.92);
     this.brassDark = this.std({
@@ -243,7 +243,7 @@ export class Materials {
     const brB = makeBrass(31, 0.3);
     this.brassBell = this.std({
       map: brB.map, roughnessMap: brB.rough, metalness: 0.93, roughness: 0.26,
-      envMapIntensity: 1.9, side: THREE.DoubleSide,
+      color: 0xffeccc, envMapIntensity: 1.9, side: THREE.DoubleSide,
     });
 
     const st = makeSteel(9);

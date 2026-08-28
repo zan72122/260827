@@ -62,7 +62,7 @@ export class SmokeEmitter {
     this.material = new THREE.ShaderMaterial({
       uniforms: {
         tSmoke: { value: tex },
-        uTint: { value: new THREE.Color(0.62, 0.60, 0.58) },
+        uTint: { value: new THREE.Color(0.50, 0.49, 0.48) },
         uWarm: { value: new THREE.Color(1.0, 0.72, 0.45) },
       },
       vertexShader: /* glsl */ `
@@ -186,7 +186,7 @@ export class SmokeEmitter {
       const size = 0.0042 + Math.pow(a, 0.78) * 0.040;
       const fadeIn = clamp(a / 0.06, 0, 1);
       const fadeOut = Math.pow(1 - a, 1.55);
-      const alpha = fadeIn * fadeOut * 0.34 * this.strength;
+      const alpha = fadeIn * fadeOut * 0.29 * this.strength;
 
       this.aOffset.setXYZ(i, p.px, p.py, p.pz);
       this.aParams.setXYZW(i, size, p.rot, alpha, p.seed);

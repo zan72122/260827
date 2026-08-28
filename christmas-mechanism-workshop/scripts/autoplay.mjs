@@ -123,6 +123,7 @@ const shotAt = new Map([
 let last = '';
 let stall = 0;
 let steps = 0;
+let rotated = false;
 const seen = new Set();
 const t0 = Date.now();
 
@@ -140,6 +141,24 @@ while (Date.now() - t0 < 2600000) {
       await shot(name);
     }
   }
+  // rotate the device in the middle of the build: everything already lit,
+  // turning or smoking must survive it, and the rest must be playable
+  if (ROTATE && !rotated && state.step === 'ch_angels') {
+    rotated = true;
+    const before = state;
+    console.log('  rotating mid-build ->', PORTRAIT ? 'landscape' : 'portrait');
+    await page.setViewportSize(PORTRAIT ? LANDSCAPE : PORTRAIT_VP);
+    await page.waitForTimeout(3500);
+    const after = (await read()).state;
+    console.log('   before:', before.orientation, 'py', before.pyramidOmega,
+                'ch', before.chimesOmega, 'smoking', before.smoking,
+                'vanes', before.counts.vanes, 'strikes', before.counts.strikes);
+    console.log('   after :', after.orientation, 'py', after.pyramidOmega,
+                'ch', after.chimesOmega, 'smoking', after.smoking,
+                'vanes', after.counts.vanes, 'strikes', after.counts.strikes);
+    await shot('19-after-rotation');
+  }
+
   if (state.free) break;
   if (hint) { await perform(hint); steps++; stall = 0; }
   else { await page.waitForTimeout(500); stall++; }
@@ -154,14 +173,12 @@ await page.waitForTimeout(2500);
 await shot('14-finished-room');
 
 if (ROTATE) {
-  console.log('rotating to portrait mid-play...');
-  await page.setViewportSize(PORTRAIT_VP);
-  await page.waitForTimeout(2500);
+  console.log('rotating the finished room back...');
+  await page.setViewportSize(PORTRAIT ? PORTRAIT_VP : LANDSCAPE);
+  await page.waitForTimeout(3500);
   st = (await read()).state;
-  console.log('after rotate:', JSON.stringify(st));
-  await shot('15-portrait-after-rotate');
-  await page.setViewportSize(LANDSCAPE);
-  await page.waitForTimeout(1500);
+  console.log('finished room after rotating back:', JSON.stringify(st));
+  await shot('15-rotated-back');
 }
 
 /* ---- free play: reopen the smoker, then change the vane angle ---- */

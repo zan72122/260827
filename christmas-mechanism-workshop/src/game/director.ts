@@ -194,8 +194,10 @@ export class Director {
     const sm = w.smoker, py = w.pyramid, ch = w.chimes;
     const S = (s: Step) => this.steps.push(s);
 
+    // portrait has to hold 1.3 m of bench across a narrow frame, so it stands
+    // further back and looks down more; landscape gets the wider, flatter read
     const overview = () => this.pose('overview', V(0.05, BENCH_TOP + 0.13, 0.0), 1.92, 0.05, 0.20,
-      { fov: 40, pDist: 2.42, pFov: 43, pTargetY: 0.05 });
+      { fov: 40, pDist: 2.72, pFov: 44, pTargetY: 0.02, pPitch: 0.26 });
 
     /* ---------- opening ---------- */
     S({
@@ -672,7 +674,7 @@ export class Director {
     this.freeT = 0;
     const w = this.w;
     this.rig.go(this.pose('overview', V(0.05, BENCH_TOP + 0.13, 0.0), 1.92, 0.05, 0.20,
-      { fov: 40, pDist: 2.42, pFov: 43, pTargetY: 0.05 }), 2.6);
+      { fov: 40, pDist: 2.72, pFov: 44, pTargetY: 0.02, pPitch: 0.26 }), 2.6);
     this.look(V(0.1, BENCH_TOP + 0.15, 0));
     w.interaction.mode = {
       kind: 'tap',
@@ -753,8 +755,11 @@ export class Director {
 
   private freeHint(): Hint {
     const w = this.w;
-    if (this.freeMode === 'idle')
+    if (this.freeMode === 'idle') {
+      // let the finished room be looked at before offering anything to press
+      if (this.freeT < 6) return null;
       return { kind: 'tap', at: w.pyramid.group.position.clone().add(V(0, 0.30, 0)) };
+    }
     if (this.freeMode === 'smoker')
       return this.smokerReopen === 0
         ? { kind: 'swipe', at: w.smoker.upperHandleWorld(), dir: 'up' }
