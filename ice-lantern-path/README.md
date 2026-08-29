@@ -76,6 +76,20 @@ The finale uses at most three real point lights (foreground only); the rest of
 the row is an `InstancedMesh` driven by instance colour into emissive, with the
 light on the snow painted by instanced gradient decals.
 
+## What was checked
+
+* the whole chain driven through the real pointer input, in pieces so a
+  software rasteriser could keep up: start → assemble → decorate → fill →
+  shelve → freeze, then pullInner → pullOuter → led → lit, then lit → sled
+  cutscene → path → all lit → replay
+* `tools/framing.mjs`: for every beat, on iPhone and iPad in both
+  orientations, the thing the player must touch is inside the frame
+* `tools/rotate.mjs`: water level, freeze progress, demoulded state and lit
+  state all survive an orientation change and a change back
+* `tools/round2.mjs`: the "make another one" loop returns to beat 1 as
+  round 2
+* `npm run build` (tsc + vite) clean
+
 ## Capture harness
 
 `tools/` drives the real pointer input through the whole game and takes
