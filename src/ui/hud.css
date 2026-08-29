@@ -1,0 +1,147 @@
+:root {
+  color-scheme: light;
+  --ink: #3a3330;
+  --panel: rgba(255, 253, 249, 0.88);
+  --edge: rgba(120, 106, 96, 0.22);
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #efe9e2;
+  font-family: "Hiragino Maru Gothic ProN", "Hiragino Sans", "Yu Gothic",
+    system-ui, -apple-system, sans-serif;
+  color: var(--ink);
+  overscroll-behavior: none;
+  user-select: none;
+}
+
+#app {
+  position: fixed;
+  inset: 0;
+}
+
+#stage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+#hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  padding: max(14px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right))
+    max(16px, env(safe-area-inset-bottom)) max(14px, env(safe-area-inset-left));
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.hud-say {
+  max-width: min(88vw, 620px);
+  padding: 10px 20px;
+  border-radius: 22px;
+  background: var(--panel);
+  border: 1px solid var(--edge);
+  backdrop-filter: blur(6px);
+  font-size: clamp(15px, 4.2vw, 22px);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-align: center;
+  line-height: 1.4;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.hud-say.on {
+  opacity: 1;
+  transform: none;
+}
+
+.hud-say small {
+  display: block;
+  margin-top: 3px;
+  font-size: 0.72em;
+  font-weight: 500;
+  opacity: 0.62;
+}
+
+.hud-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.hud-btn {
+  pointer-events: auto;
+  min-width: 116px;
+  min-height: 54px;
+  padding: 0 24px;
+  border-radius: 27px;
+  border: 1px solid var(--edge);
+  background: var(--panel);
+  color: var(--ink);
+  font: inherit;
+  font-size: clamp(15px, 4vw, 20px);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 2px 10px rgba(90, 74, 62, 0.12);
+  transition: transform 0.12s ease, background 0.2s ease;
+}
+
+.hud-btn:active {
+  transform: scale(0.96);
+}
+
+.hud-btn.primary {
+  background: rgba(93, 78, 68, 0.92);
+  color: #fdfaf5;
+  border-color: rgba(60, 48, 40, 0.4);
+}
+
+/* Landscape keeps the middle of the screen clear: the cut face lives there. */
+@media (orientation: landscape) {
+  #hud {
+    align-items: stretch;
+  }
+
+  .hud-say {
+    align-self: flex-start;
+    max-width: min(52vw, 460px);
+  }
+
+  .hud-actions {
+    justify-content: flex-end;
+  }
+}
+
+#boot {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: #efe9e2;
+  transition: opacity 0.6s ease;
+  font-size: 16px;
+  letter-spacing: 0.16em;
+  color: #8d8177;
+}
+
+#boot.gone {
+  opacity: 0;
+  pointer-events: none;
+}
