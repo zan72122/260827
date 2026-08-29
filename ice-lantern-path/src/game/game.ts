@@ -687,7 +687,7 @@ export class Game {
       return { point, radius: 0.15, commit: (obj, w) => this.placeDecor(obj, w) };
     }
     if (kind === 'pitcher' && this.phase === 'fill') {
-      const point = this.moldRig.localToWorld(new THREE.Vector3(-0.19, 0.33, -0.12));
+      const point = this.moldRig.localToWorld(new THREE.Vector3(-0.19, 0.29, -0.12));
       return { point, radius: 0.36, commit: () => this.lockPitcher() };
     }
     if (kind === 'led' && this.phase === 'led' && this.ice) {
@@ -758,7 +758,7 @@ export class Game {
   private lockPitcher() {
     const g = this.pitcher.group;
     g.userData.locked = true;
-    const to = this.moldRig.localToWorld(new THREE.Vector3(-0.19, 0.33, -0.12));
+    const to = this.moldRig.localToWorld(new THREE.Vector3(-0.19, 0.29, -0.12));
     const from = g.position.clone();
     this.tween.add(0.4, (k) => {
       g.position.lerpVectors(from, to, k);
@@ -1381,7 +1381,7 @@ export class Game {
     else if (name === 'gap5') this.moldRig.localToWorld(v.set(0.09, D.outerFloor + 0.02, 0.08));
     else if (name === 'gap6') this.moldRig.localToWorld(v.set(-0.02, D.outerFloor + 0.02, 0.125));
     else if (name === 'pitcher') this.pitcher.group.getWorldPosition(v).add(new THREE.Vector3(0, 0.12, 0));
-    else if (name === 'pourPose') this.moldRig.localToWorld(v.set(-0.19, 0.33, -0.12));
+    else if (name === 'pourPose') this.moldRig.localToWorld(v.set(-0.19, 0.29, -0.12));
     else if (name === 'outer') this.outer.group.getWorldPosition(v).add(new THREE.Vector3(0, 0.2, 0));
     else if (name === 'handle') this.outer.handles[0].getWorldPosition(v);
     else if (name === 'led') this.led.group.getWorldPosition(v).add(new THREE.Vector3(0, 0.03, 0));

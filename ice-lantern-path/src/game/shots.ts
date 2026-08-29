@@ -65,7 +65,8 @@ export const SHOTS: Record<string, Shot> = {
     fov: 44,
     fovPortrait: 52,
     minDist: 0.58,
-    portrait: { target: v(-0.02, BENCH_Y + 0.08, 0.04), dir: v(0.18, 0.95, 0.6), halfW: 0.25, halfH: 0.34 },
+    bias: 0.05,
+    portrait: { target: v(-0.02, BENCH_Y + 0.08, 0.04), dir: v(0.18, 0.95, 0.6), halfW: 0.26, halfH: 0.37, bias: 0.06 },
   },
   shelve: {
     target: v(0.6, BENCH_Y + 0.12, -0.05),
