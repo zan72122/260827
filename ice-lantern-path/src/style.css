@@ -1,0 +1,153 @@
+:root {
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-l: env(safe-area-inset-left, 0px);
+  --safe-r: env(safe-area-inset-right, 0px);
+  --ink: #f2f7fb;
+  font-family: "Hiragino Maru Gothic ProN", "Hiragino Sans", "Yu Gothic", system-ui, -apple-system, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #0b1420;
+  color: var(--ink);
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: none;
+}
+
+#app { position: fixed; inset: 0; }
+
+#stage { display: block; width: 100%; height: 100%; touch-action: none; }
+
+#hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  padding: calc(var(--safe-t) + 10px) calc(var(--safe-r) + 12px) calc(var(--safe-b) + 12px) calc(var(--safe-l) + 12px);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.hud-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+.hud-bottom { display: flex; justify-content: center; align-items: flex-end; gap: 12px; }
+
+.chip {
+  pointer-events: none;
+  background: rgba(12, 24, 38, 0.52);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(190, 220, 240, 0.18);
+  border-radius: 999px;
+  padding: 10px 18px;
+  font-size: clamp(15px, 3.6vmin, 24px);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  line-height: 1.25;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  max-width: min(78vw, 620px);
+  opacity: 0;
+  transform: translateY(-6px);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+.chip.show { opacity: 1; transform: translateY(0); }
+
+.step {
+  font-size: clamp(11px, 2.4vmin, 15px);
+  font-weight: 700;
+  opacity: 0.72;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(12, 24, 38, 0.45);
+  border: 1px solid rgba(190, 220, 240, 0.14);
+  white-space: nowrap;
+}
+
+.btn {
+  pointer-events: auto;
+  appearance: none;
+  border: 0;
+  font: inherit;
+  font-weight: 800;
+  color: #10202f;
+  background: linear-gradient(180deg, #ffe4b3, #ffc477);
+  border-radius: 999px;
+  padding: clamp(14px, 2.6vmin, 20px) clamp(26px, 6vmin, 46px);
+  font-size: clamp(17px, 3.8vmin, 26px);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.55);
+  transform: translateY(14px) scale(0.96);
+  opacity: 0;
+  transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.2, 1.2, 0.4, 1);
+  min-width: 44vmin;
+  min-height: 62px;
+  touch-action: manipulation;
+}
+.btn.show { opacity: 1; transform: translateY(0) scale(1); }
+.btn:active { transform: translateY(2px) scale(0.98); }
+.btn.ghost {
+  color: #eaf4fb;
+  background: rgba(20, 38, 56, 0.72);
+  border: 1px solid rgba(180, 214, 236, 0.32);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.32);
+  min-width: 32vmin;
+}
+
+.hud-hint {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--safe-b) + 96px);
+  transform: translateX(-50%);
+  font-size: clamp(13px, 2.8vmin, 18px);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+  background: rgba(10, 20, 32, 0.4);
+  padding: 7px 16px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.hud-hint.show { opacity: 0.9; }
+
+#boot {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(120% 90% at 50% 40%, #1b3247 0%, #0b1420 70%);
+  transition: opacity 0.6s ease;
+  z-index: 5;
+}
+#boot.hide { opacity: 0; pointer-events: none; }
+.boot-title { font-size: clamp(22px, 6vmin, 44px); font-weight: 800; letter-spacing: 0.06em; }
+.boot-sub { margin-top: 12px; text-align: center; opacity: 0.66; font-size: clamp(13px, 3vmin, 18px); }
+.boot-inner { text-align: center; }
+
+/* short landscape screens: keep the buttons out of the middle of the frame */
+@media (orientation: landscape) and (max-height: 540px) {
+  .hud-bottom { justify-content: flex-end; }
+  .btn {
+    min-width: 28vmin;
+    min-height: 50px;
+    padding: 11px 22px;
+    font-size: clamp(15px, 4.4vmin, 20px);
+  }
+  .hud-hint { bottom: calc(var(--safe-b) + 76px); }
+}
+
+.quality-note {
+  position: absolute;
+  right: calc(var(--safe-r) + 12px);
+  bottom: calc(var(--safe-b) + 10px);
+  font-size: 10px;
+  opacity: 0.28;
+  letter-spacing: 0.05em;
+}
