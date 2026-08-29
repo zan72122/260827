@@ -1,0 +1,36 @@
+{
+  "name": "sleeping-giant-tree",
+  "version": "1.0.0",
+  "description": "A mobile web game for four-year-olds: a giant conifer is craned upright in a city plaza and lit.",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "playwright test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zan72122/260827.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/zan72122/260827/issues"
+  },
+  "homepage": "https://github.com/zan72122/260827#readme",
+  "dependencies": {
+    "three": "^0.185.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1",
+    "@types/node": "^26.4.0",
+    "@types/three": "^0.185.4",
+    "typescript": "^7.0.2",
+    "vite": "^8.2.2"
+  },
+  "type": "module",
+  "private": true
+}
