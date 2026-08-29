@@ -1,10 +1,10 @@
 import { PARTICLES, LIQUIDS, byId, describe } from './materials.js';
-import { Dome, R as DR } from './particles.js';
+import { Dome } from './particles.js';
 import { drawDome, shapeScale } from './dome_render.js';
 import { renderStatic, paintLightWash } from './scene.js';
 import { getSpriteSet, offscreen } from './sprites.js';
 import * as UI from './ui.js';
-import { makeRng, rand, clamp, lerp } from './rng.js';
+import { lerp } from './rng.js';
 
 const PAINT_A = { top: '#4d6b58', mid: '#3f5b4a', dark: '#2c4034' };
 const PAINT_B = { top: '#6b4f4a', mid: '#5a4139', dark: '#402d27' };
@@ -66,8 +66,9 @@ export function render(G) {
 // ------------------------------------------------------------------ static
 function ensureStatic(G) {
   if (!G.staticDirty && G.static) return;
-  G.static = renderStatic(G.W, G.H, G.dpr, G.cam, G.L);
-  G.staticCam = { x: G.cam.x, y: G.cam.y, zoom: G.cam.zoom };
+  const cam = G.coverCam || G.cam;
+  G.static = renderStatic(G.W, G.H, G.dpr, cam, G.L);
+  G.staticCam = { x: cam.x, y: cam.y, zoom: cam.zoom };
   G.staticDirty = false;
 }
 

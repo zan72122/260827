@@ -1,14 +1,14 @@
-import { PARTICLES, LIQUIDS, byId, describe } from './materials.js';
-import { Dome, R as DR, FLOOR } from './particles.js';
-import { drawDome, shapeScale } from './dome_render.js';
-import { renderStatic, paintLightWash } from './scene.js';
+import { PARTICLES, LIQUIDS, byId } from './materials.js';
+import { Dome, R as DR } from './particles.js';
+import { shapeScale } from './dome_render.js';
 import { Camera } from './camera.js';
-import { getSpriteSet, offscreen } from './sprites.js';
-import * as UI from './ui.js';
 import * as A from './audio.js';
-import { makeRng, rand, clamp, lerp, easeOut } from './rng.js';
+import { rand, clamp, lerp } from './rng.js';
 
 const SHELF_KEY = 'material-lab-shelf-v2';
+// 2台を同時に動かす比較モードでは粒をやや控える(違いの見え方は変わらない)
+const CMP_FILL = 0.7;
+const cmpCount = (mat) => Math.max(24, Math.round(mat.count * CMP_FILL));
 const MAX_SAVED = 12;
 
 // 工程ごとのカメラ。素材選び=中景、注ぐ=接写、ふる=3/4、観察=寄り。
@@ -57,7 +57,7 @@ export class Game {
     this.muted = false;
     this.hintIndex = 0;
     this.fps = 60; this._fpsAcc = 0; this._fpsN = 0;
-    this.cam.onSettle = () => { this.staticDirty = true; };
+    this.cam.onSettle = () => { this.coverCam = null; this.staticDirty = true; };
     this.resize();
     this.gotoStage('pick_particle', true);
   }
@@ -175,7 +175,7 @@ export class Game {
       stripY: Math.round(H * 0.905),
     };
     L.cmp.cy = Math.round(L.benchTopY + H * 0.075 + L.cmp.r * 0.08);
-    L.cmp.tagY = L.cmp.cy + Math.round(L.cmp.r * 1.30);
+    L.cmp.tagY = L.cmp.cy + Math.round(L.cmp.r * 1.52);   // 台座より下、下段の棚より上
     return L;
   }
 
@@ -185,8 +185,19 @@ export class Game {
     this.stageT = 0;
     const shot = SHOTS[name] || SHOTS.pick_particle;
     const [x, y, z] = shot(this.L);
-    if (instant) { this.cam.snap(x, y, z); this.staticDirty = true; }
-    else this.cam.moveTo(x, y, z, 0.8);
+    if (instant) {
+      this.cam.snap(x, y, z);
+      this.coverCam = null;
+      this.staticDirty = true;
+    } else if (Math.abs(x - this.cam.toX) > 0.5 || Math.abs(y - this.cam.toY) > 0.5
+               || Math.abs(z - this.cam.toZoom) > 0.005) {
+      // 移動の間は、行き先と今の両方が入る範囲で背景を焼いておく。
+      // そうしないと引きの構図へ移るときに画面のふちが空く。
+      const from = { x: this.cam.x, y: this.cam.y, zoom: this.cam.zoom };
+      this.cam.moveTo(x, y, z, 0.8);
+      this.coverCam = coverBoth(from, { x, y, zoom: z }, this.W, this.H);
+      this.staticDirty = true;
+    }
     if (name === 'pour_particle' || name === 'pour_liquid') {
       this.pourIdle = 0; this.releaseAt = -1; this.topping = false;
     }
@@ -205,7 +216,7 @@ export class Game {
       const d = side === 'B' ? this.domeB : this.dome;
       const liq = d.liq || byId(LIQUIDS, 'normal');
       d.setRecipe(mat, liq, Math.floor(Math.random() * 900) + 1);
-      d.addParticles(mat.count);
+      d.addParticles(cmpCount(mat));
       d.liquidLevel = 1;
       d.shake(0.55, side === 'B' ? -1 : 1);
       A.tap();
@@ -225,7 +236,7 @@ export class Game {
       if (!d.mat) return;
       const keep = d.mat;
       d.setRecipe(keep, liq, Math.floor(Math.random() * 900) + 1);
-      d.addParticles(keep.count);
+      d.addParticles(cmpCount(keep));
       d.liquidLevel = 1;
       d.shake(0.55, side === 'B' ? -1 : 1);
       A.tap();
@@ -251,7 +262,7 @@ export class Game {
     const other = this.saved.find((s) => s.p !== this.mat.id) ||
       { p: PARTICLES.find((p) => p.id !== this.mat.id).id, l: 'thick' };
     this.domeB = new Dome(byId(PARTICLES, other.p), byId(LIQUIDS, other.l), 77);
-    this.domeB.addParticles(this.domeB.mat.count);
+    this.domeB.addParticles(cmpCount(this.domeB.mat));
     this.domeB.liquidLevel = 1;
     this.dome.liquidLevel = 1;
     this.lidT = 1;
@@ -281,7 +292,7 @@ export class Game {
     if (this.compare) {
       const d = side === 'B' ? this.domeB : this.dome;
       d.setRecipe(mat, liq, Math.floor(Math.random() * 900) + 1);
-      d.addParticles(mat.count); d.liquidLevel = 1;
+      d.addParticles(cmpCount(mat)); d.liquidLevel = 1;
       d.shake(0.5, side === 'B' ? -1 : 1);
     } else {
       this.mat = mat; this.liq = liq;
@@ -502,7 +513,7 @@ export class Game {
       return;
     }
     if (this.stage === 'shake' || this.stage === 'watch') {
-      if (this.stage === 'watch') this.gotoStage('shake');
+      // 触っただけでは構図を変えない。実際に横へ動かしてから「ふる」に入る。
       this.dragging = { kind: 'shake', x: sx, y: sy, lastX: sx, t: this.time };
       return;
     }
@@ -546,6 +557,7 @@ export class Game {
       d.lastX = sx;
       const R = this.L.domeR;
       if (Math.abs(dx) > 0.4) {
+        if (this.stage === 'watch') this.gotoStage('shake');
         const strength = clamp(Math.abs(dx) / (R * 1.6), 0, 0.30);
         const dir = Math.sign(dx);
         this.dome.shake(strength, dir);
@@ -622,6 +634,21 @@ export class Game {
     }));
     return { jars, bottles, y, pitch };
   }
+}
+
+// ふたつの構図をどちらも含む「広めの」カメラ。移動中の背景キャッシュに使う。
+function coverBoth(a, b, W, H) {
+  const r = (c) => ({
+    x0: c.x - W / 2 / c.zoom, y0: c.y - H / 2 / c.zoom,
+    x1: c.x + W / 2 / c.zoom, y1: c.y + H / 2 / c.zoom,
+  });
+  const ra = r(a), rb = r(b);
+  const x0 = Math.min(ra.x0, rb.x0), y0 = Math.min(ra.y0, rb.y0);
+  const x1 = Math.max(ra.x1, rb.x1), y1 = Math.max(ra.y1, rb.y1);
+  return {
+    x: (x0 + x1) / 2, y: (y0 + y1) / 2,
+    zoom: Math.min(W / (x1 - x0), H / (y1 - y0)),
+  };
 }
 
 // -------------------------------------------------------------------- store

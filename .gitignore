@@ -1,2 +1,4 @@
 .DS_Store
 **/.DS_Store
+.verify-shots/
+node_modules/

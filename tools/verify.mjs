@@ -1,9 +1,18 @@
 // 実機相当の画面サイズで起動し、素材選択→注入→ふる→観察→保存→比較を実際に通す。
-import { chromium } from 'file:///opt/node22/lib/node_modules/playwright/index.mjs';
 import fs from 'fs';
+import { execSync } from 'child_process';
+
+// playwright はローカルにあってもグローバルにあっても使えるようにする
+let chromium;
+try {
+  ({ chromium } = await import('playwright'));
+} catch (e) {
+  const root = execSync('npm root -g').toString().trim();
+  ({ chromium } = await import(`file://${root}/playwright/index.mjs`));
+}
 
 const BASE = process.env.BASE || 'http://127.0.0.1:8123/index.html';
-const OUT = process.env.OUT || '/tmp/claude-0/-home-user-260827/353cbd42-e761-5f5d-b924-ff5a17cbc70e/scratchpad/shots';
+const OUT = process.env.OUT || new URL('../.verify-shots/', import.meta.url).pathname;
 fs.mkdirSync(OUT, { recursive: true });
 
 const DEVICES = {
@@ -37,6 +46,12 @@ async function screenPos(page, kind, index) {
     const s = g.cam.toScreen(it.x, it.y - it.h * 0.5, innerWidth, innerHeight);
     return { x: s.x, y: s.y };
   }, [kind, index]);
+}
+
+// 固定時間で待つと、注ぐ速さの違う液体で取りこぼす。工程が進むのを待つ。
+async function waitStage(page, name, ms = 15000) {
+  await page.waitForFunction((n) => window.__game.stage === n, name, { timeout: ms });
+  await page.waitForTimeout(250);
 }
 
 async function hold(page, x, y, ms) {
@@ -89,7 +104,7 @@ async function run(browser, name, dev) {
 
   // 押しつづけて注ぐ
   await hold(page, dev.width * 0.5, dev.height * 0.62, 2600);
-  await page.waitForTimeout(1400);
+  await waitStage(page, 'pick_liquid');
   const s3 = await state(page);
   say('  粒を注いだ:', JSON.stringify(s3));
   await page.screenshot({ path: `${OUT}/${name}-3-pick-liquid.png` });
@@ -99,13 +114,13 @@ async function run(browser, name, dev) {
   await page.mouse.click(p.x, p.y);
   await page.waitForTimeout(900);
   await hold(page, dev.width * 0.5, dev.height * 0.55, 3200);
-  await page.waitForTimeout(1500);
+  await waitStage(page, 'close');
   say('  液体を注いだ:', JSON.stringify(await state(page)));
   await page.screenshot({ path: `${OUT}/${name}-4-close.png` });
 
   // フタを閉じる
   await page.mouse.click(dev.width * 0.5, dev.height * 0.4);
-  await page.waitForTimeout(1400);
+  await waitStage(page, 'shake');
   say('  フタを閉じた:', JSON.stringify(await state(page)));
 
   // ふる
@@ -113,7 +128,8 @@ async function run(browser, name, dev) {
   await page.waitForTimeout(500);
   say('  ふった直後:', JSON.stringify(await state(page)));
   await page.screenshot({ path: `${OUT}/${name}-5-shake.png` });
-  await page.waitForTimeout(3500);
+  await page.waitForFunction(() => window.__game.stage === 'watch', null, { timeout: 30000 });
+  await page.waitForTimeout(2500);
   say('  しずみ中:', JSON.stringify(await state(page)));
   await page.screenshot({ path: `${OUT}/${name}-6-watch.png` });
 

@@ -1,5 +1,5 @@
 import { getSpriteSet } from './sprites.js';
-import { makeRng, rand, clamp } from './rng.js';
+import { makeRng, rand } from './rng.js';
 
 // ---------------------------------------------------------------------------
 // 触るものはすべて「中身が見える瓶」か「絵の描いてあるボタン」。文字は読まなくてよい。

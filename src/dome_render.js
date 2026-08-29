@@ -119,30 +119,40 @@ function drawPile(ctx, dome, cx, cy, rad) {
   const m = dome.mat;
   if (!m) return;
   const prof = dome.pileProfile();
-  let any = 0;
-  for (let i = 0; i < BINS; i++) any = Math.max(any, prof[i]);
-  if (any < 0.25) return;
   const k = rad / R;
   const fr = FLOOR_R * k, fy = cy + FLOOR * k;
+  // 高さは上限をつけ、隣どうしをならして稜線をなめらかにする
+  const h = [];
+  let any = 0;
+  for (let i = 0; i < BINS; i++) {
+    const a = prof[Math.max(0, i - 1)], b = prof[i], c = prof[Math.min(BINS - 1, i + 1)];
+    const v = Math.min(R * 0.17, (a + b * 2 + c) / 4) + 1.6;
+    h.push(v * k);
+    any = Math.max(any, v);
+  }
+  if (any < 2.0) return;
   ctx.save();
   ctx.beginPath();
-  // 上の稜線
+  ctx.moveTo(cx - fr, fy);
   for (let i = 0; i < BINS; i++) {
     const t = (i + 0.5) / BINS * 2 - 1;
-    const x = cx + t * fr;
-    const y = fy - (prof[i] * 1.7 + 1.8) * k;
-    if (i === 0) { ctx.moveTo(cx - fr, fy); ctx.lineTo(x, y); }
-    else ctx.lineTo(x, y);
+    const x = cx + t * fr, y = fy - h[i];
+    if (i === 0) ctx.lineTo(x, y);
+    else {
+      const pt = (i - 0.5) / BINS * 2 - 1;
+      const px = cx + pt * fr, py = fy - h[i - 1];
+      ctx.quadraticCurveTo((px + x) / 2, (py + y) / 2, x, y);
+    }
   }
   ctx.lineTo(cx + fr, fy);
   // 手前のふち(床の楕円に沿う)
   ctx.ellipse(cx, fy, fr, fr * 0.26, 0, 0, Math.PI);
   ctx.closePath();
-  const g = ctx.createLinearGradient(0, fy - (any * 1.7 + 1.8) * k, 0, fy + fr * 0.26);
+  const g = ctx.createLinearGradient(0, fy - any * k, 0, fy + fr * 0.26);
   g.addColorStop(0, m.colors[0]);
   g.addColorStop(0.55, m.colors[1] || m.colors[0]);
   g.addColorStop(1, m.colors[2] || m.colors[0]);
-  ctx.globalAlpha = 0.88;
+  ctx.globalAlpha = 0.80;
   ctx.fillStyle = g; ctx.fill();
   // 稜線の陰
   ctx.globalAlpha = 0.18;

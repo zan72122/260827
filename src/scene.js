@@ -1,4 +1,4 @@
-import { makeRng, rand, clamp, lerp } from './rng.js';
+import { makeRng, rand } from './rng.js';
 import { offscreen } from './sprites.js';
 
 // ---------------------------------------------------------------------------
@@ -438,7 +438,10 @@ export function renderStatic(W, H, dpr, cam, L) {
   const near = offscreen(Math.ceil(W * dpr), Math.ceil(H * dpr));
   const half = offscreen(Math.ceil(W * dpr * 0.5), Math.ceil(H * dpr * 0.5));
 
-  const view = cam.visibleRect(W, H);
+  const view = {
+    x0: cam.x - W / 2 / cam.zoom, y0: cam.y - H / 2 / cam.zoom,
+    x1: cam.x + W / 2 / cam.zoom, y1: cam.y + H / 2 / cam.zoom,
+  };
   const apply = (g, scale) => {
     g.setTransform(dpr * scale * cam.zoom, 0, 0, dpr * scale * cam.zoom,
       dpr * scale * (W / 2 - cam.x * cam.zoom), dpr * scale * (H / 2 - cam.y * cam.zoom));
