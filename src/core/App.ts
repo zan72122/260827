@@ -366,7 +366,7 @@ export class App {
       {
         target: this.wedgeCentre.clone().add(new THREE.Vector3(0, 0.008, 0)),
         azimuth,
-        elevation: (this.portrait ? 22 : 18) * (Math.PI / 180),
+        elevation: (this.portrait ? 26 : 20) * (Math.PI / 180),
         // Room above and below the slice so the two buttons never sit on it.
         fitH: this.portrait ? 0.064 : 0.112,
         fitV: this.portrait ? 0.098 : 0.086,
@@ -907,7 +907,7 @@ export class App {
       server.position.y = Math.sin(k * Math.PI) * 0.012 + CAKE.creamBase * 0.5;
       this.plate.visible = k > 0.35;
       this.plate.position.copy(outward).multiplyScalar(0.112);
-      this.plate.position.y = -0.0072;
+      this.plate.position.y = -0.0016;
       this.wedgeCentre.copy(outward).multiplyScalar(CAKE.radius * 0.58 + k * 0.108);
       this.wedgeCentre.y = CAKE.creamBase + 0.014;
       if (t >= 1) {
@@ -1238,7 +1238,7 @@ export class App {
       this.wedgeCentre.y = CAKE.creamBase + 0.014;
       this.plate.visible = true;
       this.plate.position.copy(outward).multiplyScalar(0.112);
-      this.plate.position.y = -0.0072;
+      this.plate.position.y = -0.0016;
       this.enter('reveal');
     },
     /** Skip the camera move; the harness screenshots do not wait for tweens. */

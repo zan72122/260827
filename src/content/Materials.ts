@@ -75,10 +75,10 @@ export class Materials {
       map: creamCutMaps.map,
       normalMap: creamCutMaps.normalMap,
       roughnessMap: creamCutMaps.roughnessMap,
-      normalScale: new THREE.Vector2(0.7, 0.7),
+      normalScale: new THREE.Vector2(0.5, 0.5),
       roughness: 1,
       metalness: 0,
-      color: 0xefe9dd,
+      color: 0xf6efe0,
       sheen: 0.35,
       sheenRoughness: 0.85,
       sheenColor: new THREE.Color(0xfff2e6),
@@ -92,7 +92,7 @@ export class Materials {
       normalScale: new THREE.Vector2(0.9, 0.9),
       roughness: 1,
       metalness: 0,
-      color: 0xdcd2c2,
+      color: 0xe4dac6,
     });
     this.coating = new THREE.MeshStandardMaterial({
       map: creamMaps.map,

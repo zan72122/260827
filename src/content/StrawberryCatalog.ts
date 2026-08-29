@@ -566,22 +566,22 @@ function buildFleshMap(v: BerryVariant, size: number, anisotropy: number): {
       (contour[i].x - contour[i - 1].x) / bw,
       (contour[i].y - contour[i - 1].y) / bh,
     ) * size;
-    if (acc < step * rng.range(0.6, 1.5)) continue;
+    if (acc < step * rng.range(0.5, 1.8)) continue;
     acc = 0;
     const p = contour[i];
-    const inwardX = (size * 0.5 - ((p.x - box.min.x) / bw) * size) * 0.028;
-    const inwardY = (size * 0.5 - (1 - (p.y - box.min.y) / bh) * size) * 0.028;
+    const inwardX = (size * 0.5 - ((p.x - box.min.x) / bw) * size) * 0.055;
+    const inwardY = (size * 0.5 - (1 - (p.y - box.min.y) / bh) * size) * 0.055;
     const [x, y] = toPx(p);
-    const rx = rng.range(3.2, 6.0) * (size / 1024);
+    const rx = rng.range(2.4, 5.4) * (size / 1024);
     ctx.save();
     ctx.translate(x + inwardX, y + inwardY);
     ctx.rotate(rng.next() * Math.PI);
     ctx.beginPath();
     ctx.ellipse(0, 0, rx, rx * rng.range(0.55, 0.8), 0, 0, Math.PI * 2);
     ctx.fillStyle = v.seedCoat;
-    ctx.globalAlpha = 0.95;
+    ctx.globalAlpha = rng.range(0.55, 0.85);
     ctx.fill();
-    ctx.globalAlpha = 0.5;
+    ctx.globalAlpha = 0.32;
     ctx.strokeStyle = 'rgba(122,20,26,0.7)';
     ctx.lineWidth = 1.1 * (size / 1024);
     ctx.stroke();
@@ -592,7 +592,7 @@ function buildFleshMap(v: BerryVariant, size: number, anisotropy: number): {
 
   // Skin ring plus the pale vascular line just inside it.
   ctx.strokeStyle = v.skin;
-  ctx.lineWidth = size * 0.011;
+  ctx.lineWidth = size * 0.0072;
   ctx.stroke(path);
   ctx.strokeStyle = 'rgba(252,238,232,0.42)';
   ctx.lineWidth = size * 0.0045;

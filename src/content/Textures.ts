@@ -204,19 +204,20 @@ export function creamSection(size: number, anisotropy: number): SurfaceMaps {
         // face: streaks vary across the surface, not along it.
         const streak = noise.fbm(u * 5.5, v * 0.16, 9, 3);
         const grain = noise.fbm(u + 5.5, v + 2.2, 34, 3);
-        const t = streak * 0.66 + grain * 0.34;
+        const t = streak * 0.5 + grain * 0.5;
         const o = (y * size + x) * 4;
-        img.data[o] = 252 + (t - 0.5) * 7;
-        img.data[o + 1] = 249 + (t - 0.5) * 9;
-        img.data[o + 2] = 241 + (t - 0.5) * 12;
+        // Dairy white: warm, never grey and never paper.
+        img.data[o] = 253 + (t - 0.5) * 5;
+        img.data[o + 1] = 248 + (t - 0.5) * 7;
+        img.data[o + 2] = 236 + (t - 0.5) * 10;
         img.data[o + 3] = 255;
-        height[y * size + x] = 0.5 + (streak - 0.5) * 0.35 + (grain - 0.5) * 0.2;
+        height[y * size + x] = 0.5 + (streak - 0.5) * 0.22 + (grain - 0.5) * 0.24;
       }
     }
     ctx.putImageData(img, 0, 0);
 
     // Air pockets left by the piping bag.
-    const bubbles = Math.round((size * size) / 5200);
+    const bubbles = Math.round((size * size) / 2600);
     for (let i = 0; i < bubbles; i++) {
       const cx = rng.next() * size;
       const cy = rng.next() * size;

@@ -116,7 +116,7 @@ export function buildKitchen(materials: Materials): THREE.Group {
 
   // A second rack behind the bench keeps the far side of the room occupied.
   const rack2 = rack.clone();
-  rack2.position.set(-1.15, -0.1, 1.95);
+  rack2.position.set(0.62, -0.1, 1.9);
   rack2.rotation.y = 0.42;
   room.add(rack2);
 
