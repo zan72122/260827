@@ -13,7 +13,7 @@ import type { QualityBudget } from '../core/quality';
 import { Materials } from '../world/materials';
 import { BALER_POS, GATE_HALF_WIDTH, GATE_POS, SHAKER_POS, TREE_PAD, Yard } from '../world/yard';
 import { Baler, AXIS_Y, CONE_LEN } from '../world/baler';
-import { Shaker } from '../world/shaker';
+import { SHAKER_BUTT_Y, Shaker } from '../world/shaker';
 import { Hall, HALL_STAND } from '../world/hall';
 import { Tree } from '../tree/tree';
 import { NetSleeve } from '../tree/net';
@@ -297,11 +297,13 @@ export class Game {
         };
       }
       case Phase.ToShaker:
+        // the tree is held clear of the ground by the clamp, so the framing has
+        // to be centred on where it actually stands
         return {
-          target: new THREE.Vector3(SHAKER_POS.x, h * 0.5, SHAKER_POS.z),
+          target: new THREE.Vector3(SHAKER_POS.x, SHAKER_BUTT_Y + h * 0.5, SHAKER_POS.z),
           dir: dirFrom(Math.PI * (p ? 0.79 : 0.72), 0.06),
           fitW: p ? 2.4 : 3.0,
-          fitH: h * 0.58,
+          fitH: h * 0.62,
           lambda: 1.35,
           lift: p ? 0.16 : 0.08,
         };
@@ -309,10 +311,10 @@ export class Game {
         // side on, far enough to read the whole trunk-to-tip travel of the
         // vibration, with the lever turned toward the camera
         return {
-          target: new THREE.Vector3(SHAKER_POS.x + 0.15, h * 0.5, SHAKER_POS.z),
+          target: new THREE.Vector3(SHAKER_POS.x + 0.15, SHAKER_BUTT_Y + h * 0.5, SHAKER_POS.z),
           dir: dirFrom(Math.PI * (p ? 0.81 : 0.74), 0.09),
           fitW: p ? 2.5 : 3.1,
-          fitH: h * 0.58,
+          fitH: h * 0.62,
           lambda: 1.1,
           lift: p ? 0.18 : 0.08,
         };
@@ -566,7 +568,9 @@ export class Game {
         this.hud.hideHint();
       }
     } else if (!pressing && (hinting || this.idle > 2.2)) {
-      const a = this.project(this.tmp.set(SHAKER_POS.x, this.tree.height * 0.5, SHAKER_POS.z));
+      const a = this.project(
+        this.tmp.set(SHAKER_POS.x, SHAKER_BUTT_Y + this.tree.height * 0.45, SHAKER_POS.z),
+      );
       const b = this.project(this.tmp2.set(BALER_POS.x - 1.0, AXIS_Y + 0.4, BALER_POS.z));
       this.hud.showHint('swipe', a.x, a.y, b.x, b.y, !hinting);
     }
