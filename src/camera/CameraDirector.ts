@@ -277,7 +277,7 @@ export class CameraDirector {
   }
 
   private shotFinale(ctx: ShotContext): void {
-    const dist = this.fitDistance(ctx.socket, ctx.star, this.portrait ? 1.34 : 1.5);
+    const dist = this.fitDistance(ctx.socket, ctx.star, this.portrait ? 1.45 : 1.6);
     const mid = this.tmp.copy(ctx.socket).lerp(ctx.star, 0.5);
     this.orbit(mid, -0.6 - ctx.time * 0.035, 0.12, clamp(dist, 20, 60));
     this.desiredTarget.copy(mid);

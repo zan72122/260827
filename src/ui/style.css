@@ -93,11 +93,12 @@ body {
 }
 
 .banner {
+  /* Sits above the controls, never across the thing it is congratulating. */
   position: absolute;
-  top: 50%;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + var(--control) * 1.85);
   left: 50%;
-  transform: translate(-50%, -50%) scale(0.9);
-  font-size: clamp(24px, 7vw, 46px);
+  transform: translate(-50%, 8px) scale(0.94);
+  font-size: clamp(20px, 5.4vw, 34px);
   font-weight: 700;
   letter-spacing: 0.08em;
   padding: 14px 30px;
@@ -110,7 +111,7 @@ body {
 
 .banner.visible {
   opacity: 1;
-  transform: translate(-50%, -50%) scale(1);
+  transform: translate(-50%, 0) scale(1);
 }
 
 /* ---- three mechanical indicator lamps ---- */
