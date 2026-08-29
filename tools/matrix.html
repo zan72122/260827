@@ -1,0 +1,40 @@
+<!DOCTYPE html><html lang="ja"><head><meta charset="utf-8"><title>素材 × 液体</title>
+<style>
+ body{margin:0;background:#241a12;color:#e6d9bd;font:13px/1.4 "Hiragino Maru Gothic ProN",sans-serif}
+ canvas{display:block}
+</style></head><body>
+<canvas id="c"></canvas>
+<script type="module">
+import { PARTICLES, LIQUIDS, describe } from '../src/materials.js';
+import { Dome } from '../src/particles.js';
+import { drawDome } from '../src/dome_render.js';
+import * as UI from '../src/ui.js';
+
+const T = Number(new URLSearchParams(location.search).get('t') || 2.0);
+const cell = 190, pad = 16, top = 54, left = 132;
+const c = document.getElementById('c');
+const cols = LIQUIDS.length, rows = PARTICLES.length;
+c.width = left + cols * (cell + pad); c.height = top + rows * (cell + pad) + 10;
+const g = c.getContext('2d');
+g._dpr = 1;
+g.fillStyle = '#241a12'; g.fillRect(0, 0, c.width, c.height);
+g.fillStyle = '#e6d9bd'; g.font = '15px sans-serif'; g.textAlign = 'center';
+LIQUIDS.forEach((l, i) => g.fillText(l.name, left + i * (cell + pad) + cell / 2, 30));
+g.textAlign = 'right';
+PARTICLES.forEach((m, r) => {
+  g.fillText(m.name, left - 14, top + r * (cell + pad) + cell * 0.5);
+  LIQUIDS.forEach((l, i) => {
+    const d = new Dome(m, l, 3 + r * 7 + i);
+    d.addParticles(m.count); d.liquidLevel = 1;
+    for (let k = 0; k < 240; k++) d.update(1 / 60);     // まず落ち着かせる
+    d.shake(1.1, 1);
+    for (let k = 0; k < Math.round(T * 60); k++) d.update(1 / 60);
+    const cx = left + i * (cell + pad) + cell / 2;
+    const cy = top + r * (cell + pad) + cell * 0.44;
+    drawDome(g, d, cx, cy, cell * 0.40, { lidT: 1, seed: 5 + r });
+    const tags = describe(m, l);
+    tags.forEach((t, k) => UI.drawTag(g, t, cx + (k - (tags.length - 1) / 2) * 28, cy + cell * 0.50, 11));
+  });
+});
+window.__ready = true;
+</script></body></html>
