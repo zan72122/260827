@@ -1,0 +1,118 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #6f767d;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+  touch-action: none;
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Maru Gothic ProN",
+    "Hiragino Sans", system-ui, sans-serif;
+}
+
+#app { position: fixed; inset: 0; }
+
+#stage {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+}
+
+#overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* --- gesture hint (no words: a hand and a path) --- */
+.hint {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 92px;
+  height: 92px;
+  /* the pointing fingertip, not the middle of the graphic, lands on the target */
+  margin: -19px 0 0 -40px;
+  opacity: 0;
+  transition: opacity 340ms ease;
+  will-change: transform, opacity;
+}
+.hint.on { opacity: 0.94; }
+.hint svg { width: 100%; height: 100%; display: block; filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.45)); }
+
+.hint-trail {
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+  transition: opacity 340ms ease;
+}
+.hint-trail.on { opacity: 0.8; }
+.hint-trail svg { display: block; overflow: visible; filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.4)); }
+
+/* --- caption for the grown-ups: one short line, only after the reveal --- */
+.caption {
+  position: absolute;
+  left: 50%;
+  bottom: calc(6.5% + env(safe-area-inset-bottom, 0px));
+  transform: translate(-50%, 14px);
+  padding: 10px 22px;
+  border-radius: 999px;
+  background: rgba(28, 26, 24, 0.52);
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
+  color: #fdf7ec;
+  font-size: clamp(15px, 4.1vw, 25px);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 520ms ease, transform 520ms ease;
+}
+.caption.on { opacity: 1; transform: translate(-50%, 0); }
+
+/* --- replay: a single round button with a rotating arrow, no text --- */
+.replay {
+  position: absolute;
+  right: calc(5% + env(safe-area-inset-right, 0px));
+  bottom: calc(7% + env(safe-area-inset-bottom, 0px));
+  width: 84px;
+  height: 84px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(250, 244, 232, 0.93);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.36);
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  transform: scale(0.7);
+  transition: opacity 380ms ease, transform 380ms cubic-bezier(0.2, 1.5, 0.4, 1);
+  pointer-events: none;
+  touch-action: manipulation;
+}
+.replay.on { opacity: 1; transform: scale(1); pointer-events: auto; }
+.replay:active { transform: scale(0.92); }
+.replay svg { width: 52px; height: 52px; }
+
+/* --- boot veil --- */
+#boot {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: #767d84;
+  transition: opacity 700ms ease;
+}
+#boot.gone { opacity: 0; pointer-events: none; }
+.boot-tree { width: 88px; height: 88px; animation: sway 1.9s ease-in-out infinite; }
+@keyframes sway {
+  0%, 100% { transform: rotate(-4deg); }
+  50% { transform: rotate(4deg); }
+}

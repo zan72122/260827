@@ -1,0 +1,24 @@
+{
+  "name": "tree-shipping-yard",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Mobile web game for 4-year-olds: shake, bale and release a Christmas tree at a winter shipping yard.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "preview": "vite preview --port 4173",
+    "test": "playwright test"
+  },
+  "dependencies": {
+    "three": "^0.180.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1",
+    "@types/node": "^26.4.0",
+    "@types/three": "~0.180.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.2.2"
+  }
+}
