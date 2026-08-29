@@ -51,7 +51,12 @@
 
 ## 確認する
 
-    node tools/verify.mjs      # iPhone/iPad 相当の縦横4画面で全工程を実際に操作する
+    node tools/verify.mjs                 # iPhone/iPad 相当の縦横4画面で全工程を実際に操作する
+    ONLY=ipad-landscape node tools/verify.mjs   # 1画面だけ
+    node --input-type=module -e "..."     # tools/matrix.html は素材×液体の一覧を描く
+
+CPUの少ない環境では、4画面を続けて動かすとブラウザ同士が食い合って
+コマ落ちし、待ち時間が伸びます。1画面ずつ `ONLY=` を付けて回すと安定します。
 
 `tools/verify.mjs` は Playwright で起動し、素材選択 → 注入 → 液体 → フタ →
 ふる → 観察 → 保存 → 棚 → 比較 までを実際にクリックとドラッグで通します。

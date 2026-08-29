@@ -23,6 +23,7 @@ const DEVICES = {
 };
 
 const log = [];
+let runErrors = [];
 const say = (...a) => { const s = a.join(' '); log.push(s); console.log(s); };
 
 async function state(page) { return page.evaluate(() => {
@@ -49,9 +50,31 @@ async function screenPos(page, kind, index) {
 }
 
 // 固定時間で待つと、注ぐ速さの違う液体で取りこぼす。工程が進むのを待つ。
-async function waitStage(page, name, ms = 15000) {
+// 遅い端末や混んだ機械では、1フレームの上限(50ms)に当たってゲーム内の時間が
+// 実時間より遅く進む。工程が終わるのを待つ時間はたっぷり取る。
+async function waitStage(page, name, ms = 90000) {
   await page.waitForFunction((n) => window.__game.stage === n, name, { timeout: ms });
-  await page.waitForTimeout(250);
+  // カメラが動いている間に座標を計算すると、押す場所がずれる
+  await page.waitForFunction(() => !window.__game.cam.moving, null, { timeout: 5000 });
+  await page.waitForTimeout(150);
+}
+
+// 押した先が確実に反応したか確かめ、だめならもう一度押す。
+// (取りこぼしを黙って見逃さないよう、やり直した回数は必ず出す)
+async function tapThing(page, kind, index, expectStage) {
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    const p = await screenPos(page, kind, index);
+    await page.mouse.click(p.x, p.y);
+    try {
+      await page.waitForFunction((n) => window.__game.stage === n, expectStage, { timeout: 4000 });
+      if (attempt > 1) say(`  (${kind}[${index}] は ${attempt} 回目で反応)`);
+      await page.waitForFunction(() => !window.__game.cam.moving, null, { timeout: 6000 });
+      await page.waitForTimeout(150);
+      return;
+    } catch (e) {
+      if (attempt === 3) throw e;
+    }
+  }
 }
 
 async function hold(page, x, y, ms) {
@@ -87,18 +110,18 @@ async function run(browser, name, dev) {
   });
   const page = await ctx.newPage();
   const errors = [];
+  runErrors = errors;
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
   page.on('pageerror', (e) => errors.push('PAGEERROR: ' + (e.stack || e.message).split('\n').slice(0,5).join(' | ')));
   await page.goto(BASE, { waitUntil: 'load' });
   await page.waitForTimeout(1200);
+  await page.waitForFunction(() => window.__game && !window.__game.cam.moving, null, { timeout: 10000 });
   say(`\n=== ${name} (${dev.width}x${dev.height} @${dev.dpr}) ===`);
   say('  起動:', JSON.stringify(await state(page)));
   await page.screenshot({ path: `${OUT}/${name}-1-select.png` });
 
   // 素材を選ぶ(金ラメ = index 2)
-  let p = await screenPos(page, 'jar', 2);
-  await page.mouse.click(p.x, p.y);
-  await page.waitForTimeout(900);
+  await tapThing(page, 'jar', 2, 'pour_particle');
   say('  瓶をタップ:', JSON.stringify(await state(page)));
   await page.screenshot({ path: `${OUT}/${name}-2-pour-particle.png` });
 
@@ -110,9 +133,7 @@ async function run(browser, name, dev) {
   await page.screenshot({ path: `${OUT}/${name}-3-pick-liquid.png` });
 
   // 液体を選ぶ(とろり = index 2)
-  p = await screenPos(page, 'bottle', 2);
-  await page.mouse.click(p.x, p.y);
-  await page.waitForTimeout(900);
+  await tapThing(page, 'bottle', 2, 'pour_liquid');
   await hold(page, dev.width * 0.5, dev.height * 0.55, 3200);
   await waitStage(page, 'close');
   say('  液体を注いだ:', JSON.stringify(await state(page)));
@@ -128,7 +149,7 @@ async function run(browser, name, dev) {
   await page.waitForTimeout(500);
   say('  ふった直後:', JSON.stringify(await state(page)));
   await page.screenshot({ path: `${OUT}/${name}-5-shake.png` });
-  await page.waitForFunction(() => window.__game.stage === 'watch', null, { timeout: 30000 });
+  await page.waitForFunction(() => window.__game.stage === 'watch', null, { timeout: 90000 });
   await page.waitForTimeout(2500);
   say('  しずみ中:', JSON.stringify(await state(page)));
   await page.screenshot({ path: `${OUT}/${name}-6-watch.png` });
@@ -214,6 +235,7 @@ for (const [name, dev] of Object.entries(DEVICES)) {
     allErrors = allErrors.concat(await run(browser, name, dev));
   } catch (e) {
     say(`  ★${name} で失敗: ${e.message}`);
+    if (runErrors.length) say(`     ページ側のエラー: ${JSON.stringify(runErrors.slice(0, 4))}`);
     allErrors.push(`${name}: ${e.message}`);
   }
 }

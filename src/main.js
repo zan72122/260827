@@ -7,7 +7,8 @@ import { clearThumbs } from './render.js';
 const canvas = document.getElementById('stage');
 const game = new Game(canvas);
 window.__game = game;                     // 検証用の入口
-game.onScale = () => { clearSpriteCache(); clearVesselCache(); clearThumbs(); };
+// 解像度が変わっても絵は作り直さない。スプライトも瓶も解像度ごとに別々に
+// 覚えているので、消すと作り直しが重なってかえって重くなる。
 
 let last = performance.now();
 function frame(now) {
@@ -64,6 +65,21 @@ function endPointer(e) {
 }
 canvas.addEventListener('pointerup', endPointer, { passive: false });
 canvas.addEventListener('pointercancel', endPointer, { passive: false });
+
+// 指を離した合図が届かないことがある(端末側で操作が打ち切られた時など)。
+// そのままだと以後どこを押しても反応しなくなるので、窓の側でも受けておく。
+function forceEnd(e) {
+  if (activeId === null) return;
+  if (e && e.pointerId !== undefined && e.pointerId !== activeId) return;
+  activeId = null;
+  if (game.pouring) { game.pouring = false; }
+  game.dragging = null;
+  game.pressed = null;
+}
+window.addEventListener('pointerup', forceEnd);
+window.addEventListener('pointercancel', forceEnd);
+window.addEventListener('blur', () => forceEnd(null));
+document.addEventListener('visibilitychange', () => { if (document.hidden) forceEnd(null); });
 
 // ピンチや二本指のスクロール、ダブルタップ拡大を止める
 ['gesturestart', 'gesturechange', 'gestureend'].forEach((n) =>
