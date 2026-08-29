@@ -145,8 +145,6 @@ function extractLoops(field: Float32Array, res: number, u0: number, v0: number, 
 export interface SectionResult {
   geometry: THREE.BufferGeometry;
   area: number;
-  /** Centre of the section in plane coordinates. */
-  centre: THREE.Vector2;
 }
 
 /**
@@ -196,6 +194,8 @@ export function berrySection(
   cx /= loop.pts.length;
   cy /= loop.pts.length;
 
+  // A cut berry is not flat: the flesh stands very slightly proud of the cream.
+  const bulge = (k: number) => (1 - k * k) * 0.045;
   const RING = 64;
   const rays = new Float32Array(RING);
   for (const q of loop.pts) {
@@ -231,6 +231,7 @@ export function berrySection(
   const tmp = new THREE.Vector3();
 
   plane.toWorld(cx, cy, tmp);
+  tmp.addScaledVector(plane.normal, bulge(0));
   pos.push(tmp.x, tmp.y, tmp.z);
   radial.push(0);
   angle.push(0);
@@ -243,6 +244,7 @@ export function berrySection(
       const a = (k / RING) * Math.PI * 2;
       const r = smooth[k] * RINGS[ri];
       plane.toWorld(cx + Math.cos(a) * r, cy + Math.sin(a) * r, tmp);
+      tmp.addScaledVector(plane.normal, bulge(RINGS[ri]));
       pos.push(tmp.x, tmp.y, tmp.z);
       radial.push(RINGS[ri]);
       angle.push(a);
@@ -266,11 +268,9 @@ export function berrySection(
   g.setAttribute('aAngle', new THREE.Float32BufferAttribute(angle, 1));
   g.setAttribute('aSeed', new THREE.Float32BufferAttribute(seed, 1));
   g.setIndex(idx);
-  const nrm: number[] = [];
-  for (let i = 0; i < pos.length / 3; i++) nrm.push(plane.normal.x, plane.normal.y, plane.normal.z);
-  g.setAttribute('normal', new THREE.Float32BufferAttribute(nrm, 3));
+  g.computeVertexNormals();
   g.computeBoundingSphere();
-  return { geometry: g, area: loop.area, centre: new THREE.Vector2(cx, cy) };
+  return { geometry: g, area: loop.area };
 }
 
 function maxScale(m: THREE.Matrix4): number {

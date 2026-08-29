@@ -37,9 +37,22 @@ function roundedBox(w: number, h: number, d: number, r: number, seg = 3): THREE.
   shape.absarc(x, y + D, r, Math.PI / 2, Math.PI, false);
   shape.lineTo(x - r, y);
   shape.absarc(x, y, r, Math.PI, Math.PI * 1.5, false);
-  const g = new THREE.ExtrudeGeometry(shape, { depth: h, bevelEnabled: true, bevelSize: r * 0.3, bevelThickness: r * 0.3, bevelSegments: seg, curveSegments: 8 });
+  const g = new THREE.ExtrudeGeometry(shape, {
+    depth: h,
+    bevelEnabled: true,
+    bevelSize: r * 0.3,
+    bevelThickness: r * 0.3,
+    bevelSegments: seg,
+    curveSegments: 8,
+  });
   g.rotateX(-Math.PI / 2);
-  g.translate(0, h, 0);
+  // Normalise so the slab occupies exactly y = 0 .. h and rests on its origin.
+  g.computeBoundingBox();
+  const bb = g.boundingBox!;
+  g.translate(0, -bb.min.y, 0);
+  g.scale(1, h / (bb.max.y - bb.min.y), 1);
+  g.computeBoundingBox();
+  g.computeBoundingSphere();
   return g;
 }
 
@@ -207,9 +220,6 @@ export function buildKitchen(mats: MaterialSet): Kitchen {
   const pan = new THREE.Mesh(roundedBox(22, 0.5, 13, 1.4), trayMat);
   pan.receiveShadow = true;
   tray.add(pan);
-  const lip = new THREE.Mesh(new THREE.TorusGeometry(1, 0.16, 5, 4), trayMat);
-  lip.visible = false;
-  tray.add(lip);
   for (const [sx, sz, w, d] of [[0, -6.4, 22, 0.5], [0, 6.4, 22, 0.5], [-10.9, 0, 0.5, 13], [10.9, 0, 0.5, 13]] as const) {
     const wall = new THREE.Mesh(new THREE.BoxGeometry(w, 1.5, d), trayMat);
     wall.position.set(sx, 0.75, sz);

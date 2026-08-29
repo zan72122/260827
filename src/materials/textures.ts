@@ -126,7 +126,7 @@ export async function buildTextures(onStep: (done: number, total: number) => voi
     const big = n.cell(wu, wv, 9);
     const small = n2.cell(wu * 1.0 + 0.31, wv * 1.0 + 0.77, 22);
     // Each cell gets its own pore radius -> strongly varied hole sizes.
-    const rBig = 0.16 + 0.30 * ((Math.sin(big.id * 12.9898) * 43758.5453) % 1 + 1) * 0.5;
+    const rBig = 0.13 + 0.24 * ((Math.sin(big.id * 12.9898) * 43758.5453) % 1 + 1) * 0.5;
     const rSml = 0.10 + 0.22 * ((Math.sin(small.id * 78.233) * 12345.6789) % 1 + 1) * 0.5;
     const a = smoothstep(rBig, rBig * 0.35, big.f1);
     const b = smoothstep(rSml, rSml * 0.4, small.f1) * 0.7;

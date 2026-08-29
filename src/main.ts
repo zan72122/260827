@@ -75,6 +75,7 @@ async function start() {
       return { x: ((p.x + 1) / 2) * app.clientWidth, y: ((-p.y + 1) / 2) * app.clientHeight };
     };
     (window as unknown as Record<string, unknown>).__scene = game.scene;
+    (window as unknown as Record<string, unknown>).__game = game;
     (window as unknown as Record<string, unknown>).__renderer = renderer;
     (window as unknown as Record<string, unknown>).__probe = () => ({
       ...game.snapshot,
@@ -93,7 +94,7 @@ async function start() {
           STATION.build.z + Math.sin((i / 8) * Math.PI * 2) * (CAKE.radius - 1)
         ))
       ),
-      lid: project(new THREE.Vector3(STATION.build.x - 13, BUILD_CAKE_Y + CAKE.sponge2.y0 + 5.5, 6)),
+      lid: project(new THREE.Vector3(STATION.build.x - 7.5, BUILD_CAKE_Y + CAKE.sponge2.y0 + 4.6, 8.5)),
       centre: project(new THREE.Vector3(STATION.build.x, BUILD_CAKE_Y + CAKE.topCoat.y1, STATION.build.z)),
       cutFrom: project(new THREE.Vector3(
         STATION.build.x + Math.cos(game.aimDirection) * (CAKE.radius + 1.5),
@@ -110,7 +111,7 @@ async function start() {
   const loop = () => {
     requestAnimationFrame(loop);
     const now = performance.now();
-    const dt = Math.min(0.1, (now - last) / 1000);
+    const dt = Math.min(0.25, (now - last) / 1000);
     last = now;
 
     const s = { w: app.clientWidth, h: app.clientHeight };

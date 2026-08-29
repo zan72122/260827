@@ -142,6 +142,14 @@ export class Berry {
         idx.push(a, c, b, b, c, d);
       }
     }
+    // Close the shoulder, or the calyx sits over an open shell.
+    if (!half) {
+      const top = heightSeg * cols;
+      const centre = pos.length / 3;
+      pos.push(0, this.halfLength * 0.995, 0);
+      uv.push(0.5, 1);
+      for (let i = 0; i < radialSeg; i++) idx.push(centre, top + i + 1, top + i);
+    }
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
     g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
@@ -324,14 +332,14 @@ export class Berry {
     const rBase = this.radiusAt(0.985, 0) * 0.95;
     for (let i = 0; i < leaves; i++) {
       const ang = (i / leaves) * Math.PI * 2 + rng.range(-0.14, 0.14);
-      const len = rBase * rng.range(0.95, 1.5);
+      const len = rBase * rng.range(0.8, 1.15);
       const wid = rBase * rng.range(0.3, 0.45);
       const shape = new THREE.Shape();
       shape.moveTo(0, 0);
       shape.quadraticCurveTo(wid, len * 0.4, 0, len);
       shape.quadraticCurveTo(-wid, len * 0.4, 0, 0);
       const g = new THREE.ShapeGeometry(shape, 8);
-      const droop = rng.range(0.35, 0.85);
+      const droop = rng.range(0.1, 0.5);
       const m = new THREE.Matrix4().makeRotationX(Math.PI / 2 + droop);
       g.applyMatrix4(m);
       g.applyMatrix4(new THREE.Matrix4().makeRotationY(-ang));

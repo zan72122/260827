@@ -76,10 +76,11 @@ function addNappeStriations(mat: THREE.MeshPhysicalMaterial, kind: 'wall' | 'top
 export function makeBerryCutMaterial(): THREE.MeshPhysicalMaterial {
   const mat = new THREE.MeshPhysicalMaterial({
     color: 0xffffff,
-    roughness: 0.42,
+    roughness: 0.52,
     metalness: 0,
-    clearcoat: 0.32,
-    clearcoatRoughness: 0.34,
+    clearcoat: 0.16,
+    clearcoatRoughness: 0.42,
+    envMapIntensity: 0.5,
     side: THREE.FrontSide,
   });
   mat.onBeforeCompile = (shader) => {
@@ -109,33 +110,32 @@ float bnoise(vec2 p){
   {
     float t = clamp(vRadial, 0.0, 1.0);
     float a = vAngle;
-    float wob = bnoise(vec2(a * 3.5, vSeed * 7.0)) * 0.05;
-    float tt = clamp(t + wob - 0.025, 0.0, 1.0);
+    // Break the perfect bullseye: no berry is a target pattern.
+    float wob = bnoise(vec2(a * 2.0, vSeed * 7.0)) * 0.09
+              + bnoise(vec2(a * 6.0 + 3.0, vSeed * 11.0)) * 0.04 - 0.065;
+    float tt = clamp(t + wob, 0.0, 1.0);
 
-    // A thin darker rim of skin, then flesh nearly all the way in.
-    float skin = smoothstep(0.928, 0.988, tt);
-    // The pale core is a narrow column, not half the berry.
-    float core = 1.0 - smoothstep(0.06, 0.24, tt * (1.0 + 0.3 * sin(a * 2.0 + vSeed * 4.0)));
-    // Fine radial tissue running from the core out towards the skin.
-    float fib = sin(a * 34.0 + sin(a * 7.0 + vSeed * 5.0) * 2.1);
-    fib = pow(max(fib, 0.0), 4.0) * smoothstep(0.1, 0.75, tt) * (1.0 - skin);
-    // Cut achenes: pale flecks in a band just inside the skin.
-    float ring = smoothstep(0.84, 0.92, tt) * (1.0 - smoothstep(0.95, 0.995, tt));
-    float seeds = smoothstep(0.68, 0.96, bnoise(vec2(a * 26.0, vSeed * 3.0 + 1.0))) * ring;
+    float skin = smoothstep(0.918, 0.985, tt);
+    // Pale pith, drifting off centre the way a real core does.
+    float core = 1.0 - smoothstep(0.02, 0.1, tt * (1.0 + 0.35 * sin(a * 1.0 + vSeed * 6.0)));
+    float fib = sin(a * 19.0 + sin(a * 3.0 + vSeed * 5.0) * 2.4);
+    fib = pow(max(fib, 0.0), 5.0) * smoothstep(0.08, 0.7, tt) * (1.0 - skin);
+    float ring = smoothstep(0.8, 0.9, tt) * (1.0 - smoothstep(0.94, 0.99, tt));
+    float seeds = smoothstep(0.7, 0.97, bnoise(vec2(a * 23.0, vSeed * 3.0 + 1.0))) * ring;
 
-    vec3 skinCol  = vec3(0.402, 0.030, 0.044);
-    vec3 fleshOut = vec3(0.760, 0.098, 0.106);
-    vec3 fleshMid = vec3(0.858, 0.208, 0.190);
-    vec3 fleshIn  = vec3(0.905, 0.395, 0.352);
-    vec3 pithCol  = vec3(0.972, 0.918, 0.860);
+    vec3 skinCol  = vec3(0.330, 0.018, 0.030);
+    vec3 fleshOut = vec3(0.660, 0.048, 0.060);
+    vec3 fleshMid = vec3(0.780, 0.105, 0.108);
+    vec3 fleshIn  = vec3(0.855, 0.218, 0.200);
+    vec3 pithCol  = vec3(0.950, 0.880, 0.822);
 
-    vec3 col = mix(fleshIn, fleshMid, smoothstep(0.05, 0.42, tt));
-    col = mix(col, fleshOut, smoothstep(0.42, 0.94, tt));
-    col = mix(col, pithCol, core * 0.8);
-    col = mix(col, vec3(0.965, 0.826, 0.790), fib * 0.34);
-    col = mix(col, vec3(0.90, 0.80, 0.50), seeds * 0.6);
+    vec3 col = mix(fleshIn, fleshMid, smoothstep(0.02, 0.38, tt));
+    col = mix(col, fleshOut, smoothstep(0.38, 0.92, tt));
+    col = mix(col, pithCol, core * 0.55);
+    col = mix(col, vec3(0.930, 0.690, 0.650), fib * 0.2);
+    col = mix(col, vec3(0.88, 0.78, 0.48), seeds * 0.55);
     col = mix(col, skinCol, skin);
-    col *= 0.95 + bnoise(vec2(a * 34.0, tt * 30.0)) * 0.1;
+    col *= 0.92 + bnoise(vec2(a * 21.0, tt * 24.0)) * 0.16;
     diffuseColor.rgb *= col;
   }`
         )
@@ -144,9 +144,10 @@ float bnoise(vec2 p){
           `#include <roughnessmap_fragment>
   {
     float t = clamp(vRadial, 0.0, 1.0);
-    // A very thin juice film: glossier on the flesh, dry at the rim.
-    float juice = (1.0 - smoothstep(0.7, 0.94, t)) * (0.3 + 0.7 * bnoise(vec2(vAngle * 6.0, t * 5.0)));
-    roughnessFactor = clamp(roughnessFactor - juice * 0.18, 0.14, 1.0);
+    // A very thin juice film, pooled in patches rather than a mirror centre.
+    float juice = smoothstep(0.45, 0.9, bnoise(vec2(vAngle * 5.0, t * 6.0)))
+                * (1.0 - smoothstep(0.72, 0.95, t));
+    roughnessFactor = clamp(roughnessFactor - juice * 0.16, 0.26, 1.0);
   }`
         );
   };
@@ -193,7 +194,7 @@ export function createMaterials(t: TextureSet, cakeRadius: number): MaterialSet 
     metalness: 0,
     color: 0xffffff,
   });
-  spongeCut.normalScale.set(0.62, 0.62);
+  spongeCut.normalScale.set(0.45, 0.45);
 
   const spongeBake = new THREE.MeshStandardMaterial({
     map: t.spongeBakeColor,
@@ -274,8 +275,8 @@ export function createMaterials(t: TextureSet, cakeRadius: number): MaterialSet 
   berrySkin.normalScale.set(1.1, 1.1);
 
   const berryHull = new THREE.MeshStandardMaterial({
-    color: 0x4e7a34,
-    roughness: 0.72,
+    color: 0x63913f,
+    roughness: 0.66,
     metalness: 0,
     side: THREE.DoubleSide,
   });

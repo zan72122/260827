@@ -111,15 +111,19 @@ export class Cake {
         const x = Math.cos(a) * r;
         const z = Math.sin(a) * r;
         const spread = this.noise.fbm(x * 0.09 + 3, z * 0.09 + 5, 32, 3) * 0.09;
-        // A shallow dip is pressed into the cream where each slice belongs.
-        let dip = 0;
+        // Each slice sits in a dip pressed into the cream, with the faint lip
+        // of cream that a thumb pushes up around it.
+        let press = 0;
         for (const slot of SLOTS) {
           const dx = x - Math.cos(slot.angle) * slot.radius;
           const dz = z - Math.sin(slot.angle) * slot.radius;
-          const d = Math.hypot(dx, dz) / 2.15;
-          if (d < 1) dip = Math.max(dip, (1 - d * d) * (1 - d * d));
+          const d = Math.hypot(dx, dz) / 2.05;
+          if (d >= 1.4) continue;
+          const down = d < 1 ? Math.pow(1 - d * d, 1.3) * 0.32 : 0;
+          const lip = Math.max(0, 1 - Math.abs(d - 1.12) / 0.26) * 0.085;
+          press += down - lip;
         }
-        pos.push(x, y0 + CAKE.skim + spread - dip * 0.16, z);
+        pos.push(x, y0 + CAKE.skim + spread - Math.min(0.34, press), z);
         uv.push(x / 6 + 0.5, z / 6 + 0.5);
       }
     }
@@ -452,10 +456,10 @@ export class Cake {
       geo.rotateX(-Math.PI / 2);
       geo.translate(0.5, 0, 0);
       const mat = new THREE.MeshStandardMaterial({
-        color: guide ? 0xe4d7c6 : 0x9d8877,
+        color: guide ? 0xcbb9a4 : 0x9d8877,
         roughness: 0.55,
         transparent: true,
-        opacity: guide ? 0.45 : 0.8,
+        opacity: guide ? 0.62 : 0.8,
         depthWrite: false,
       });
       mesh = new THREE.Mesh(geo, mat);
@@ -469,7 +473,7 @@ export class Cake {
     const start = CAKE.radius - len;
     mesh.position.set(Math.cos(angle) * start, CAKE.topCoat.y1 + 0.012, Math.sin(angle) * start);
     mesh.rotation.y = -angle;
-    mesh.scale.set(len, 1, guide ? 0.07 : 0.13);
+    mesh.scale.set(len, 1, guide ? 0.1 : 0.13);
   }
 
   clearScore() {
@@ -657,7 +661,7 @@ export class Cake {
     const big = this.noise.cell(warpU * 0.22, warpV * 0.22, 14);
     const size = 0.14 + 0.3 * (((Math.sin(big.id * 12.9898) * 43758.5453) % 1) + 1) * 0.5;
     const hole = Math.max(0, 1 - big.f1 / size);
-    return Math.pow(hole, 0.7) * 0.13;
+    return Math.pow(hole, 0.7) * 0.07;
   }
 
   /** Layers of one angular sector, each surface with the material it deserves. */
@@ -680,7 +684,7 @@ export class Cake {
           a0,
           a1,
           arcSeg,
-          uvScale: 2.0,
+          uvScale: 1.7,
           capRelief: { seg: [30, 14], depth: (r, y) => this.poreDepth(r, y) },
         },
         ['capStart', 'capEnd']
@@ -701,8 +705,9 @@ export class Cake {
     add(fillCaps.capStart, this.mats.creamCut);
     add(fillCaps.capEnd, this.mats.creamCut);
 
+    // Wall and top coat tile exactly: no open annulus at the rim, no overlap.
     const wall = buildSector(
-      { rInner: CAKE.coreRadius, rOuter: CAKE.radius, y0: -0.02, y1: CAKE.topCoat.y1, a0, a1, arcSeg, uvScale: 6 },
+      { rInner: CAKE.coreRadius, rOuter: CAKE.radius, y0: -0.02, y1: CAKE.topCoat.y0, a0, a1, arcSeg, uvScale: 6 },
       ['outer', 'capStart', 'capEnd']
     );
     add(wall.outer, this.mats.creamOuter);
@@ -710,10 +715,11 @@ export class Cake {
     add(wall.capEnd, this.mats.creamCut);
 
     const cap = buildSector(
-      { rOuter: CAKE.coreRadius, y0: CAKE.topCoat.y0, y1: CAKE.topCoat.y1, a0, a1, arcSeg, uvScale: 6 },
-      ['top', 'capStart', 'capEnd']
+      { rOuter: CAKE.radius, y0: CAKE.topCoat.y0, y1: CAKE.topCoat.y1, a0, a1, arcSeg, uvScale: 6 },
+      ['top', 'outer', 'capStart', 'capEnd']
     );
     add(cap.top, this.mats.creamTop);
+    add(cap.outer, this.mats.creamOuter);
     add(cap.capStart, this.mats.creamCut);
     add(cap.capEnd, this.mats.creamCut);
 
@@ -742,6 +748,7 @@ export class Cake {
     });
     for (const m of this.clipMaterials) m.dispose();
     this.clipMaterials = [];
+    for (const m of [this.coat.wall, this.coat.top, this.coat.underWall, this.coat.underTop]) m.dispose();
     this.root.removeFromParent();
   }
 }

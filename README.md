@@ -52,6 +52,36 @@ slice thickness for every strawberry. That list is the only source of truth:
 There is no pre-rendered cross-section image anywhere in the project, so the
 revealed face cannot disagree with what the player put inside.
 
+## Checked in a real browser
+
+The whole loop was driven end to end in headless Chromium (WebGL 2, software
+rasteriser) — cut, turn, cut, draw the slice out, walk to the build bench,
+place nine slices, change one slice's orientation with a tap, pipe the cream,
+close with the top sponge, watch the coat go on, aim, cut, draw the second
+slice out, and start another round — at:
+
+- 390 x 844 (iPhone-class portrait)
+- 844 x 390 (iPhone-class landscape)
+- 820 x 1180 (iPad-class portrait)
+
+with a device pixel ratio of 2. Every touch target the game asks for is on
+screen at each of those sizes, and the point being filled sits above the
+finger, not under it.
+
+### Known limits
+
+- The cut direction is chosen from 24 detents and the slice is always an
+  eighth of the cake; placements are the eight ring positions plus the
+  centre. Cross-sections are solved for whatever combination results, but the
+  combinations themselves are a finite set.
+- Berries that straddle a cut are truncated with clipping planes and closed
+  with a solved cap, not with a real boolean, so a berry lying almost exactly
+  in the plane of the cut can show a very thin sliver of a face.
+- The turntable settles into its detent on release rather than spinning
+  freely; there is no free-wheeling throw.
+- Audio is synthesised, so it starts only after the first touch (browser
+  autoplay policy).
+
 ## Rendering notes
 
 - WebGL 2 is the baseline; everything the game needs runs on that path.

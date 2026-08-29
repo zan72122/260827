@@ -54,6 +54,15 @@
       #cue.on { opacity: 1; }
       #cue svg { position: absolute; left: -9vmin; top: -9vmin; width: 18vmin; height: 18vmin; overflow: visible; }
 
+      @media (orientation: landscape) and (max-height: 520px) {
+        #hint {
+          font-size: clamp(13px, 4.4vmin, 22px);
+          bottom: calc(env(safe-area-inset-bottom, 0px) + 2vmin);
+          padding: 1.2vmin 3.4vmin;
+        }
+        #cue svg { left: -12vmin; top: -12vmin; width: 24vmin; height: 24vmin; }
+      }
+
       #boot {
         position: fixed; inset: 0; z-index: 20; display: flex;
         align-items: center; justify-content: center; flex-direction: column; gap: 3vmin;

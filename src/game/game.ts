@@ -4,7 +4,7 @@ import { CAKE, chefDesign, makePlacement, POSES as POSE_LIST, SLOTS, type Placem
 import type { MaterialSet } from '../materials';
 import { buildKitchen, STATION, type Kitchen } from '../scene/kitchen';
 import { buildGuide, buildKnife, buildPaletteKnife, buildPipingBag, buildServer, type Guide, type PipingBag } from '../scene/tools';
-import { CameraRig } from '../scene/camera';
+import { CameraRig, type Pose as CameraPose } from '../scene/camera';
 import { Hud } from '../ui/hud';
 import { Pointer, type DragState } from '../input/pointer';
 import { Sfx } from '../audio/audio';
@@ -54,7 +54,6 @@ export class Game {
   private rng = new Rng(7);
 
   private phase: Phase = 'intro';
-  private phaseTime = 0;
   private clock = 0;
   private cutStation!: Station;
   private buildStation!: Station;
@@ -68,6 +67,7 @@ export class Game {
   private busy = false;
 
   private trayBerries: { group: THREE.Group; placement: Placement }[] = [];
+  private trayHomeX = 0;
   private carried: { group: THREE.Group; placement: Placement; home: THREE.Vector3 } | null = null;
   private carriedSlot = -1;
   private downHitBerrySlot = -1;
@@ -163,62 +163,10 @@ export class Game {
     cake.setCoat(0, 0);
     cake.setFill(0);
     cake.root.visible = false;
-    this.addDimples(cake);
-  }
-
-  private dimpleTexture: THREE.Texture | null = null;
-
-  /** The only hint of where a slice goes: a shallow dip in the cream. */
-  private makeDimpleTexture(): THREE.Texture {
-    if (this.dimpleTexture) return this.dimpleTexture;
-    const size = 96;
-    const c = document.createElement('canvas');
-    c.width = c.height = size;
-    const ctx = c.getContext('2d')!;
-    const img = ctx.createImageData(size, size);
-    for (let y = 0; y < size; y++) {
-      for (let x = 0; x < size; x++) {
-        const dx = (x / size - 0.5) * 2;
-        const dy = (y / size - 0.5) * 2;
-        const r = Math.hypot(dx, dy);
-        const dip = Math.max(0, 1 - r * r);
-        // Dark on the far side, a touch brighter on the near lip: a depression.
-        const rim = Math.max(0, 1 - Math.abs(r - 0.72) * 6);
-        const lit = dy < 0;
-        const shade = dip * 0.5 + rim * 0.5;
-        const i = (y * size + x) * 4;
-        img.data[i] = img.data[i + 1] = img.data[i + 2] = lit ? 255 : 74;
-        img.data[i + 3] = Math.max(0, Math.min(255, shade * (lit ? 60 : 96) * Math.abs(dy) * 1.7));
-      }
-    }
-    ctx.putImageData(img, 0, 0);
-    const tex = new THREE.CanvasTexture(c);
-    tex.colorSpace = THREE.SRGBColorSpace;
-    this.dimpleTexture = tex;
-    return tex;
-  }
-
-  private addDimples(cake: Cake) {
-    const mat = new THREE.MeshBasicMaterial({
-      map: this.makeDimpleTexture(),
-      transparent: true,
-      depthWrite: false,
-      opacity: 0.95,
-    });
-    const group = new THREE.Group();
-    group.name = 'dimples';
-    for (const slot of SLOTS) {
-      const g = new THREE.PlaneGeometry(4.4, 4.4);
-      g.rotateX(-Math.PI / 2);
-      const m = new THREE.Mesh(g, mat);
-      m.position.set(Math.cos(slot.angle) * slot.radius, CAKE.filling.y0 + CAKE.skim + 0.03, Math.sin(slot.angle) * slot.radius);
-      m.renderOrder = 1;
-      group.add(m);
-    }
-    cake.body.add(group);
   }
 
   private makeTray() {
+    this.trayHomeX = this.kitchen.tray.position.x;
     const rng = new Rng(517);
     const cols = 5;
     for (let i = 0; i < 9; i++) {
@@ -244,7 +192,6 @@ export class Game {
 
   private setPhase(p: Phase) {
     this.phase = p;
-    this.phaseTime = 0;
     document.body.dataset.phase = p;
     this.hud.hideCue();
     const cutting = p === 'cut1' || p === 'cut2' || p === 'cutNew' || p === 'turnNew' || p === 'aim';
@@ -306,7 +253,7 @@ export class Game {
         break;
       case 'cutNew':
         this.buildStation.scoreKind = 'a';
-        this.rig.goto('cutNew', 1.2);
+        this.rig.apply(this.cutNewPose(), false, 1.2);
         this.hud.setHint('すーっと きろう');
         this.buildStation.knife.visible = true;
         this.cutProgress = 0;
@@ -322,20 +269,38 @@ export class Game {
 
   /* ---------------------------------------------------------------- input */
 
+  /**
+   * The new cake can be cut in any of 24 directions, so the shot swings round
+   * to sit across the blade: the swipe always reads left-to-right.
+   */
+  private cutNewPose(): CameraPose {
+    let side = this.aimAngle + Math.PI / 2;
+    if (Math.sin(side) < 0.12) side = this.aimAngle - Math.PI / 2;
+    return {
+      target: new THREE.Vector3(STATION.build.x, 8.9, STATION.build.z),
+      dir: new THREE.Vector3(Math.cos(side) * 0.92, 0.42, Math.max(0.34, Math.sin(side)) * 1.05),
+      fit: 10.8,
+    };
+  }
+
   private activeStation(): Station {
     return this.phase === 'cut1' || this.phase === 'turn' || this.phase === 'cut2' || this.phase === 'serve' || this.phase === 'study'
       ? this.cutStation
       : this.buildStation;
   }
 
-  /** Screen direction the cut swipe should follow, from rim towards centre. */
+  /**
+   * Screen vector the cut swipe should follow, from rim towards centre. The
+   * length matters: a cut aimed at the camera is foreshortened, so the swipe
+   * distance needed has to shrink with it.
+   */
   private cutScreenDir(st: Station, worldAngle: number): THREE.Vector2 {
     const a = new THREE.Vector3(Math.cos(worldAngle) * CAKE.radius, CAKE.topCoat.y1, Math.sin(worldAngle) * CAKE.radius)
       .add(st.origin).setY(st.cakeY + CAKE.topCoat.y1);
     const b = new THREE.Vector3(st.origin.x, st.cakeY + CAKE.topCoat.y1, st.origin.z);
     const pa = a.clone().project(this.rig.camera);
     const pb = b.clone().project(this.rig.camera);
-    return new THREE.Vector2(pb.x - pa.x, pb.y - pa.y).normalize();
+    return new THREE.Vector2(pb.x - pa.x, pb.y - pa.y);
   }
 
   private cutWorldAngle(st: Station): number {
@@ -356,6 +321,9 @@ export class Game {
     if (this.phase === 'place') {
       this.pickBerry(d);
     }
+    if (this.phase === 'aim') {
+      this.aimDrag(d);
+    }
     if (this.phase === 'fill') {
       this.piping.group.visible = true;
       this.sfx.pipeStart();
@@ -371,9 +339,10 @@ export class Game {
       case 'cut2':
       case 'cutNew': {
         const st = this.activeStation();
-        const dir = this.cutScreenDir(st, this.cutWorldAngle(st));
-        const along = d.dx * dir.x + d.dy * dir.y;
-        const p = clamp(along / 0.42, 0, 1);
+        const v = this.cutScreenDir(st, this.cutWorldAngle(st));
+        const len = Math.max(0.26, v.length());
+        const along = (d.dx * v.x + d.dy * v.y) / len;
+        const p = clamp(along / (len * 0.72), 0, 1);
         if (p > this.cutProgress) {
           if (this.cutProgress < 0.04 && p >= 0.04) this.sfx.cut();
           if (Math.floor(p * 7) > Math.floor(this.cutProgress * 7)) this.spawnCrumbs(st);
@@ -444,7 +413,7 @@ export class Game {
         if (this.buildStation.cake.fill >= 0.995) this.advanceToLid();
         break;
       case 'aim':
-        this.armCut(d);
+        this.armCut();
         break;
       case 'lid':
         this.dropLid(d);
@@ -667,6 +636,7 @@ export class Game {
       if (st.cake.placedCount === 1) this.hud.setHint('とんとん すると むきが かわる');
       if (st.cake.placedCount >= SLOTS.length) {
         this.hud.setHint('');
+        this.slideTray(true);
         this.timeline.wait(0.7, () => this.setPhase('fill'));
       }
     } else {
@@ -695,9 +665,8 @@ export class Game {
     if (!hit) return;
     const local = hit.clone().sub(st.origin);
     const r = Math.hypot(local.x, local.z);
-    if (r > CAKE.coreRadius) {
-      local.multiplyScalar(CAKE.coreRadius / r);
-    }
+    const limit = CAKE.coreRadius - 0.95;
+    if (r > limit) local.multiplyScalar(limit / r);
     this.piping.group.position.set(st.origin.x + local.x, y + 1.75, st.origin.z + local.z);
     this.piping.group.rotation.set(0.22, 0, -0.16);
     if (!this.pointer.down) return;
@@ -713,6 +682,17 @@ export class Game {
     }
   }
 
+  /** The tray is pushed aside once every slice is out of it. */
+  private slideTray(away: boolean) {
+    const tray = this.kitchen.tray;
+    const from = tray.position.x;
+    const to = away ? this.trayHomeX + 24 : this.trayHomeX;
+    if (Math.abs(from - to) < 0.01) return;
+    this.timeline.add(0.8, (k) => {
+      tray.position.x = from + (to - from) * easeInOut(k);
+    });
+  }
+
   private reseat(st: Station) {
     const f = st.cake.fill;
     st.cake.setBerrySink(() => (1 - Math.min(1, f * 1.15)) * 0.16);
@@ -724,7 +704,7 @@ export class Game {
     this.setPhase('lid');
     const st = this.buildStation;
     const lid = st.cake.addTopSponge();
-    lid.position.set(-13, CAKE.sponge2.y0 + 5.5, 6);
+    lid.position.set(-7.5, CAKE.sponge2.y0 + 4.6, 8.5);
     lid.rotation.z = 0.16;
   }
 
@@ -736,7 +716,7 @@ export class Game {
     const overCake = !!local && Math.hypot(local.x, local.z) < CAKE.radius + 3;
     if (!overCake) {
       // Left short of the cake: send it back to wait beside the turntable.
-      lid.position.set(-13, CAKE.sponge2.y0 + 5.5, 6);
+      lid.position.set(-7.5, CAKE.sponge2.y0 + 4.6, 8.5);
       lid.rotation.z = 0.16;
       return;
     }
@@ -768,8 +748,6 @@ export class Game {
     const st = this.buildStation;
     this.setPhase('coat');
     this.busy = true;
-    const dimples = st.cake.body.getObjectByName('dimples');
-    if (dimples) dimples.visible = false;
     this.paletteKnife.visible = true;
     const spin0 = st.plateAngle;
     this.sfx.spread();
@@ -796,15 +774,16 @@ export class Game {
     });
   }
 
+  /** Palette knife held flat against the wall, blade hanging from the handle. */
   private placePalette(st: Station, height: number, k: number) {
-    const ang = -0.55 + Math.sin(k * Math.PI) * 0.2;
-    const r = CAKE.radius + 1.5;
+    const ang = 0.52 + Math.sin(k * Math.PI) * 0.22;
+    const r = CAKE.radius + 0.55;
     this.paletteKnife.position.set(
       st.origin.x + Math.cos(ang) * r,
-      st.cakeY + CAKE.topCoat.y1 * height,
+      st.cakeY + CAKE.topCoat.y1 + 2.3 + height * 0.5,
       st.origin.z + Math.sin(ang) * r
     );
-    this.paletteKnife.rotation.set(0, -ang + Math.PI / 2, Math.PI / 2 - 0.25);
+    this.paletteKnife.rotation.set(0, -(Math.PI / 2 + ang), -Math.PI / 2 + 0.18);
   }
 
   private aimDrag(d: DragState) {
@@ -820,8 +799,7 @@ export class Game {
     this.aimAngle = snapped;
   }
 
-  private armCut(d: DragState) {
-    if (Math.hypot(d.dx, d.dy) < 0.02) return;
+  private armCut() {
     this.busy = true;
     this.timeline.wait(0.55, () => {
       this.busy = false;
@@ -846,7 +824,6 @@ export class Game {
     cake.buildCoat();
     cake.setCoat(0, 0);
     cake.setFill(0);
-    this.addDimples(cake);
     for (const t of this.trayBerries) {
       t.group.traverse((o) => {
         const m = o as THREE.Mesh;
@@ -855,6 +832,7 @@ export class Game {
       this.scene.remove(t.group);
     }
     this.trayBerries = [];
+    this.kitchen.tray.position.x = this.trayHomeX;
     this.makeTray();
     this.setPhase('place');
   }
@@ -884,7 +862,6 @@ export class Game {
   /* ---------------------------------------------------------------- frame */
 
   update(dt: number, w: number, h: number) {
-    this.phaseTime += dt;
     this.clock += dt;
     this.timeline.update(dt);
 
@@ -940,7 +917,7 @@ export class Game {
       // through the rest of the cake, then forward to the viewer.
       const t = Math.min(1, p / 0.72);
       const out = 0.05 + 8.6 * t * t * (3 - 2 * t);
-      const forward = 5.2 * easeOut(Math.max(0, (p - 0.5) / 0.5));
+      const forward = 6.5 * easeOut(Math.max(0, (p - 0.45) / 0.55));
       const lift = 1.15 * Math.sin(Math.PI * Math.min(1, p * 1.3)) + 0.5 * e;
       const towardViewer = Math.PI / 2 + st.plateAngle;
       st.cake.wedge.position.set(
@@ -1013,7 +990,7 @@ export class Game {
           st.cakeY + CAKE.topCoat.y1 + 1.6,
           st.origin.z + Math.sin(ang) * (CAKE.radius + 1.4)
         );
-        const dir = this.cutScreenDir(st, ang);
+        const dir = this.cutScreenDir(st, ang).normalize();
         this.hud.setCue('swipe', anchor, Math.atan2(-dir.y, dir.x));
         break;
       }
@@ -1044,11 +1021,11 @@ export class Game {
         break;
       }
       case 'fill':
-        this.hud.setCue(this.pointer.down ? 'none' : 'circle', new THREE.Vector3(STATION.build.x, this.buildStation.cakeY + CAKE.filling.y0 + 1.5, 0));
+        this.hud.setCue(this.pointer.down ? 'none' : 'circle', new THREE.Vector3(STATION.build.x, this.buildStation.cakeY + CAKE.filling.y0 + CAKE.skim + 0.5, 0));
         break;
       case 'lid':
         if (!this.pointer.down) {
-          this.hud.setCue('drag', new THREE.Vector3(STATION.build.x - 13, this.buildStation.cakeY + CAKE.sponge2.y0 + 7.5, 6), 0.15);
+          this.hud.setCue('drag', new THREE.Vector3(STATION.build.x - 7.5, this.buildStation.cakeY + CAKE.sponge2.y0 + 6.4, 8.5), 0.15);
         } else this.hud.hideCue();
         break;
       case 'aim':
@@ -1061,7 +1038,7 @@ export class Game {
   }
 
   /** Drag of the top sponge is handled here so it can share the pointer. */
-  handleLidDrag(d: DragState) {
+  private handleLidDrag(d: DragState) {
     if (this.phase !== 'lid' || this.busy) return;
     const st = this.buildStation;
     const lid = st.cake.topSponge;
@@ -1075,10 +1052,6 @@ export class Game {
       lid.position.set(local.x, CAKE.sponge2.y0 + 4.5, local.z);
     }
     lid.rotation.z = damp(lid.rotation.z, 0, 8, 0.016);
-  }
-
-  get currentPhase() {
-    return this.phase;
   }
 
   /** Read-only snapshot used by the automated play-through harness. */

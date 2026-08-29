@@ -14,7 +14,7 @@ export const CAKE = {
   sponge2: { y0: 3.75, y1: 5.3 },
   topCoat: { y0: 5.3, y1: 5.7 },
   /** Thin cream skim the berries are set into. */
-  skim: 0.26,
+  skim: 0.4,
   boardRadius: 8.7,
   boardThickness: 0.5,
 } as const;
@@ -142,11 +142,13 @@ export function makePlacement(slot: number, pose: Pose, rng: Rng, sizeBias = 1):
 /** The pâtissier's own arrangement, used for the cake the player first cuts. */
 export function chefDesign(seed = 20260829): Design {
   const rng = new Rng(seed);
-  const poses: Pose[] = ['flatTipOut', 'faceOut', 'flatTipOut', 'tilt', 'flatTipOut', 'faceOut', 'flatTipOut', 'tilt'];
+  // Laid so that a cut along a slot line meets a slice broadside: the first
+  // reveal has to show unmistakable red, not a thin edge.
+  const poses: Pose[] = ['flatTipOut', 'flatTipOut', 'tilt', 'faceOut', 'flatTipOut', 'flatTipOut', 'tilt', 'faceOut'];
   const placements: Placement[] = [];
   for (let i = 0; i < 8; i++) {
     placements.push(makePlacement(i, poses[i], rng, i % 2 === 0 ? 1.06 : 0.92));
   }
-  placements.push(makePlacement(8, 'faceOut', rng, 1.0));
+  placements.push(makePlacement(8, 'flatTipOut', rng, 1.0));
   return { placements, fill: 1 };
 }

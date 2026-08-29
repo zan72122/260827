@@ -69,7 +69,7 @@ function bladeGeometry(len: number, height: number, spine: number): THREE.Buffer
 
 function handle(mats: MaterialSet, len: number, r: number): THREE.Group {
   const g = new THREE.Group();
-  const body = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.86, r, len, 16, 1), mats.metalHandle);
+  const body = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.86, r, len, 16, 1, true), mats.metalHandle);
   body.rotation.z = Math.PI / 2;
   body.position.x = -len / 2;
   body.castShadow = true;
@@ -102,14 +102,14 @@ export function buildKnife(mats: MaterialSet): THREE.Group {
 
 export function buildPaletteKnife(mats: MaterialSet): THREE.Group {
   const g = new THREE.Group();
-  const blade = new THREE.Mesh(bladeGeometry(18, 2.1, 0.12), mats.metal);
+  const blade = new THREE.Mesh(bladeGeometry(9, 2.2, 0.1), mats.metal);
   blade.castShadow = true;
   g.add(blade);
-  const tip = new THREE.Mesh(new THREE.SphereGeometry(1.02, 14, 8), mats.metal);
-  tip.scale.set(0.35, 1, 0.11);
-  tip.position.set(18, 1.05, 0);
+  const tip = new THREE.Mesh(new THREE.SphereGeometry(1.1, 14, 8), mats.metal);
+  tip.scale.set(0.3, 1, 0.09);
+  tip.position.set(9, 1.1, 0);
   g.add(tip);
-  g.add(handle(mats, 9, 0.95));
+  g.add(handle(mats, 8, 0.9));
   return g;
 }
 
