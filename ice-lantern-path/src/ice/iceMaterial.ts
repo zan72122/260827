@@ -221,7 +221,7 @@ export function makeIceMaterials(u: IceUniforms, transmission: number) {
     ...common,
     side: THREE.FrontSide,
     depthWrite: true,
-    opacity: useTransmission ? 1 : 0.62,
+    opacity: useTransmission ? 1 : 0.78,
     transmission: useTransmission ? transmission : 0,
     thickness: 0.05,
     attenuationColor: new THREE.Color(0xb2d8e0),
@@ -233,7 +233,7 @@ export function makeIceMaterials(u: IceUniforms, transmission: number) {
     ...common,
     side: THREE.BackSide,
     depthWrite: false,
-    opacity: useTransmission ? 0.55 : 0.35,
+    opacity: useTransmission ? 0.55 : 0.4,
     transmission: 0,
     roughness: 0.2,
   });

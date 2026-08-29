@@ -170,9 +170,9 @@ export class Shed {
     const shelf = new THREE.Group();
     shelf.position.copy(SHELF_POS);
     const shelfMetal = new THREE.MeshStandardMaterial({
-      color: 0x77828a,
-      metalness: 0.7,
-      roughness: 0.5,
+      color: 0x9fabb2,
+      metalness: 0.45,
+      roughness: 0.55,
       roughnessMap: tex.coarse,
     });
     const board = new THREE.Mesh(new THREE.BoxGeometry(0.78, 0.035, 0.66), shelfMetal);
@@ -195,6 +195,9 @@ export class Shed {
     const lip = new THREE.Mesh(new THREE.BoxGeometry(0.78, 0.05, 0.02), shelfMetal);
     lip.position.set(0, SHELF_Y + 0.04, 0.31);
     shelf.add(lip);
+    const lipSnow = new THREE.Mesh(new THREE.BoxGeometry(0.79, 0.016, 0.04), snowMaterial(1.03));
+    lipSnow.position.set(0, SHELF_Y + 0.068, 0.31);
+    shelf.add(lipSnow);
     const snowLedge = new THREE.Mesh(new THREE.BoxGeometry(0.8, 0.02, 0.05), snowMaterial(1.03));
     snowLedge.position.set(0, SHELF_Y + 0.38, -0.31);
     shelf.add(snowLedge);
@@ -208,7 +211,7 @@ export class Shed {
     );
     flex.position.y = 0.18;
     const shade = new THREE.Mesh(
-      new THREE.ConeGeometry(0.16, 0.14, 20, 1, true),
+      new THREE.ConeGeometry(0.13, 0.12, 20, 1, true),
       new THREE.MeshStandardMaterial({ color: 0x39434b, roughness: 0.5, metalness: 0.5, side: THREE.DoubleSide })
     );
     shade.position.y = -0.05;
@@ -223,7 +226,7 @@ export class Shed {
     this.lamp = new THREE.PointLight(0xfff2e4, 0, 6.5, 2);
     this.lamp.position.y = -0.11;
     lampGroup.add(flex, shade, lampBulb, this.lamp);
-    lampGroup.position.set(0.52, 1.98, -0.16);
+    lampGroup.position.set(0.3, 2.16, 0.14);
     this.group.add(lampGroup);
 
     // ---- garden: trees, house, unlit christmas string ----------------
@@ -369,7 +372,7 @@ export class Shed {
 
   /** the work lamp comes on as the afternoon turns to dusk */
   setLamp(v: number) {
-    this.lamp.intensity = v * 4.2;
+    this.lamp.intensity = v * 5.2;
     this.lampGlass.emissiveIntensity = v * 3;
   }
 

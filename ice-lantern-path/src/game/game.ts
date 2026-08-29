@@ -117,6 +117,7 @@ export class Game {
   private snowGlow: THREE.Mesh;
   private busy = false;
   private waterHidden = false;
+  private freezeEnded = false;
 
   constructor(engine: Engine, hud: Hud) {
     this.engine = engine;
@@ -768,7 +769,9 @@ export class Game {
 
   private updateFill(dt: number) {
     const g = this.pitcher.group;
-    if (!g.userData.locked) return;
+    // the hand-off to the next beat runs as a tween while the phase is still
+    // 'fill'; nothing here may run again during it
+    if (this.busy || !g.userData.locked) return;
     if (this.pouring) {
       this.pourHold = Math.min(1, this.pourHold + dt * 2.6);
     } else {
@@ -841,7 +844,7 @@ export class Game {
   }
 
   private finishFill() {
-    if (this.phase !== 'fill') return;
+    if (this.phase !== 'fill' || this.busy) return;
     this.busy = true;
     this.water.setLevel(1);
     this.pouring = false;
@@ -906,6 +909,7 @@ export class Game {
   private beginFreeze() {
     this.setPhase('freeze');
     this.freezeT = 0;
+    this.freezeEnded = false;
     this.freezeDur = (this.round === 1 ? 11 : 7) / Tweener.speed;
     const q = this.engine.quality.settings;
     this.ice = new IceLantern(1000 + this.round * 37, q.transmission);
@@ -940,7 +944,12 @@ export class Game {
       audio.frost();
     }
     if (prev < 0.62 && t >= 0.62) audio.frost();
-    if (t >= 1) this.endFreeze();
+    // the phase only changes once the demould hand-off starts, so this must
+    // fire exactly once
+    if (t >= 1 && !this.freezeEnded) {
+      this.freezeEnded = true;
+      this.endFreeze();
+    }
   }
 
   private endFreeze() {

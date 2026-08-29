@@ -357,13 +357,14 @@ export class PathScene {
     for (let i = 0; i < this.lit.length; i++) {
       const spot = lanternSpot(i);
       const v = this.lit[i];
-      const s = 0.75 + v * 0.5 + (i < near ? 0.25 : 0);
+      // farther lanterns need a wider pool to stay legible down the path
+      const s = 0.75 + v * 0.5 + (i < near ? 0.25 : i * 0.075);
       this.dummy.position.set(spot.x, pathY() + 0.012, spot.z);
       this.dummy.rotation.set(0, 0, 0);
       this.dummy.scale.set(s, 1, s);
       this.dummy.updateMatrix();
       this.glow.setMatrixAt(i, this.dummy.matrix);
-      this.colorTmp.copy(WARM).multiplyScalar(v * 0.55);
+      this.colorTmp.copy(WARM).multiplyScalar(v * (0.55 + (i >= near ? i * 0.02 : 0)));
       this.glow.setColorAt(i, this.colorTmp);
     }
     this.glow.instanceMatrix.needsUpdate = true;
@@ -393,7 +394,7 @@ export class PathScene {
     for (let i = 0; i < ROW; i++) {
       const v = this.lit[i + near];
       // emissive only for everything past the foreground
-      this.colorTmp.copy(WARM).multiplyScalar(v * (1.6 + i * 0.09));
+      this.colorTmp.copy(WARM).multiplyScalar(v * (1.7 + i * 0.16));
       this.row.setColorAt(i, this.colorTmp);
     }
     if (this.row.instanceColor) this.row.instanceColor.needsUpdate = true;

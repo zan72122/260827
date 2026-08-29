@@ -32,7 +32,7 @@ function base(maxDpr: number): QualitySettings {
     shadows: true,
     shadowMapSize: 2048,
     transmission: 0.92,
-    envRes: 256,
+    envRes: 128,
     reflections: 1,
     snowCount: 900,
     bubbleCount: 54,
@@ -42,7 +42,7 @@ function base(maxDpr: number): QualitySettings {
 
 const LADDER: Array<(s: QualitySettings) => void> = [
   (s) => {
-    s.envRes = 128;
+    s.envRes = 96;
     s.reflections = 0.85;
     s.shadowMapSize = 1024;
     s.dpr = Math.min(s.dpr, 1.75);
@@ -57,7 +57,7 @@ const LADDER: Array<(s: QualitySettings) => void> = [
   },
   (s) => {
     s.transmission = 0;
-    s.envRes = 64;
+    s.envRes = 48;
     s.reflections = 0.7;
   },
   (s) => {

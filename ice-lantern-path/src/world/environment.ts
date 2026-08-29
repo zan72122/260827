@@ -60,9 +60,9 @@ const KEYS: TimeKey[] = [
     ground: 0x22334a,
     sun: 0xa9c6ea,
     sunI: 0.5,
-    hemiSky: 0x1d3350,
-    hemiGround: 0x18222f,
-    hemiI: 0.34,
+    hemiSky: 0x243d5c,
+    hemiGround: 0x1e2a38,
+    hemiI: 0.5,
     fog: 0x101d2e,
     fogD: 0.04,
     exposure: 1.06,
@@ -295,7 +295,7 @@ export class Environment {
     this.renderer.toneMappingExposure = k.exposure;
     // rebaking the environment every frame of the freeze lapse is wasteful;
     // the light only needs to step every few percent of the day
-    if (Math.abs(this.time - this.bakedTime) > 0.035) this.bakeDirty = true;
+    if (Math.abs(this.time - this.bakedTime) > 0.1) this.bakeDirty = true;
   }
 
   /** Follows the camera so the snow volume is always around the viewer. */
@@ -325,7 +325,7 @@ export class Environment {
       this.bakeEnv();
       this.bakeDirty = false;
       this.bakedTime = this.time;
-      this.bakeTimer = 0.4;
+      this.bakeTimer = 0.5;
     }
   }
 

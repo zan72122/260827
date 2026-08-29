@@ -68,13 +68,13 @@ export const SHOTS: Record<string, Shot> = {
     portrait: { target: v(-0.02, BENCH_Y + 0.08, 0.04), dir: v(0.18, 0.95, 0.6), halfW: 0.25, halfH: 0.34 },
   },
   shelve: {
-    target: v(0.62, BENCH_Y + 0.12, -0.05),
-    dir: v(0.16, 0.38, 0.92),
-    halfW: 0.66,
+    target: v(0.6, BENCH_Y + 0.12, -0.05),
+    dir: v(0.16, 0.42, 0.9),
+    halfW: 0.78,
     halfH: 0.4,
     fov: 44,
     fovPortrait: 54,
-    portrait: { target: v(0.58, BENCH_Y + 0.1, -0.02), dir: v(0.13, 0.4, 0.91), halfW: 0.5, halfH: 0.5 },
+    portrait: { target: v(0.56, BENCH_Y + 0.1, -0.04), dir: v(0.13, 0.5, 0.86), halfW: 0.74, halfH: 0.46 },
   },
   // fixed side view for the whole freeze so the change is comparable
   freeze: {

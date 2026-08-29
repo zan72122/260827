@@ -93,8 +93,14 @@ await withPage(dev, async (page, shot) => {
   console.log('step: shelve');
   const mold = await pt('outer');
   await page.mouse.click(mold.x, mold.y);
-  await page.waitForTimeout(2200);
-  await page.click('#hud-primary');
+  await page.waitForTimeout(3000);
+  await page.click('#hud-primary', { timeout: 15000 }).catch(async () => {
+    console.log('  tap did not take, trying a swipe');
+    const m2 = await pt('outer');
+    await drag(m2, { x: m2.x + 150, y: m2.y }, 8);
+    await page.waitForTimeout(3000);
+    await page.click('#hud-primary', { timeout: 25000 });
+  });
 
   console.log('step: freeze');
   let halfShot = false;

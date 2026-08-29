@@ -54,46 +54,45 @@ export class Hud {
     this.hint.classList.remove('show');
   }
 
-  button(label: string | null, onClick?: () => void) {
-    const gen = ++this.gen;
+  /**
+   * Buttons never rely on requestAnimationFrame: on a slow frame the pending
+   * hide timer would land after the show class and leave a live button that
+   * cannot be pressed.
+   */
+  private setButton(
+    el: HTMLButtonElement,
+    label: string | null,
+    onClick: (() => void) | undefined,
+    gen: number,
+    getGen: () => number
+  ) {
     if (!label) {
-      this.primary.classList.remove('show');
+      el.classList.remove('show');
       window.setTimeout(() => {
-        if (!this.primary.classList.contains('show')) this.primary.style.display = 'none';
+        if (getGen() === gen) el.style.display = 'none';
       }, 320);
       return;
     }
-    this.primary.textContent = label;
-    this.primary.style.display = '';
-    this.primary.onclick = (e) => {
+    el.textContent = label;
+    el.style.display = '';
+    el.onclick = (e) => {
       e.preventDefault();
       e.stopPropagation();
       onClick?.();
     };
-    requestAnimationFrame(() => {
-      if (gen === this.gen) this.primary.classList.add('show');
-    });
+    // force layout so the opacity transition still runs from 0
+    void el.offsetWidth;
+    el.classList.add('show');
+  }
+
+  button(label: string | null, onClick?: () => void) {
+    const gen = ++this.gen;
+    this.setButton(this.primary, label, onClick, gen, () => this.gen);
   }
 
   button2(label: string | null, onClick?: () => void) {
     const gen = ++this.gen2;
-    if (!label) {
-      this.secondary.classList.remove('show');
-      window.setTimeout(() => {
-        if (!this.secondary.classList.contains('show')) this.secondary.style.display = 'none';
-      }, 320);
-      return;
-    }
-    this.secondary.textContent = label;
-    this.secondary.style.display = '';
-    this.secondary.onclick = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      onClick?.();
-    };
-    requestAnimationFrame(() => {
-      if (gen === this.gen2) this.secondary.classList.add('show');
-    });
+    this.setButton(this.secondary, label, onClick, gen, () => this.gen2);
   }
 
   setNote(text: string) {
