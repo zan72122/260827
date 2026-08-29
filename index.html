@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no"
+    />
+    <meta name="theme-color" content="#efe9e2" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <title>しろい かべの ひみつ</title>
+    <link rel="icon" href="data:," />
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #4a3b34;
+      }
+      * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+      html, body {
+        margin: 0; padding: 0; height: 100%; overflow: hidden;
+        background: #ded5cb;
+        font-family: "Hiragino Maru Gothic ProN", "Hiragino Sans", "Yu Gothic",
+          system-ui, -apple-system, sans-serif;
+        touch-action: none; overscroll-behavior: none;
+        -webkit-user-select: none; user-select: none;
+      }
+      #app { position: fixed; inset: 0; }
+      canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+
+      #hud { position: fixed; inset: 0; pointer-events: none; z-index: 5; }
+
+      #hint {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        bottom: calc(env(safe-area-inset-bottom, 0px) + 3.2vmin);
+        padding: 1.5vmin 4vmin;
+        border-radius: 999px;
+        background: rgba(255, 253, 250, 0.82);
+        box-shadow: 0 0.6vmin 2.4vmin rgba(80, 60, 50, 0.18);
+        color: var(--ink);
+        font-size: clamp(15px, 3.6vmin, 30px);
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        white-space: nowrap;
+        opacity: 0;
+        transition: opacity 0.45s ease;
+      }
+      #hint.on { opacity: 1; }
+
+      #cue { position: absolute; left: 0; top: 0; width: 0; height: 0; opacity: 0;
+             transition: opacity 0.35s ease; }
+      #cue.on { opacity: 1; }
+      #cue svg { position: absolute; left: -9vmin; top: -9vmin; width: 18vmin; height: 18vmin; overflow: visible; }
+
+      #boot {
+        position: fixed; inset: 0; z-index: 20; display: flex;
+        align-items: center; justify-content: center; flex-direction: column; gap: 3vmin;
+        background: #e7ded4; color: var(--ink);
+        transition: opacity 0.6s ease;
+      }
+      #boot.gone { opacity: 0; pointer-events: none; }
+      #boot h1 { margin: 0; font-size: clamp(20px, 5.4vmin, 46px); font-weight: 800; letter-spacing: 0.1em; }
+      #bar { width: 44vmin; height: 1.2vmin; border-radius: 999px; background: rgba(120, 96, 84, 0.18); overflow: hidden; }
+      #bar > i { display: block; height: 100%; width: 0%; background: #c6544f; transition: width 0.3s ease; }
+      #boot p { margin: 0; font-size: clamp(13px, 3vmin, 22px); opacity: 0.75; }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <div id="hud" aria-hidden="true">
+      <div id="hint"></div>
+      <div id="cue"></div>
+    </div>
+    <div id="boot">
+      <h1>しろい かべの ひみつ</h1>
+      <div id="bar"><i></i></div>
+      <p>じゅんび ちゅう</p>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
