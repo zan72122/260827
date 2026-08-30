@@ -45,12 +45,12 @@ void main() {
   // the flame licks upward: noise scrolls along the cone
   float n = fbm(vec2(vUv.x * 5.0 + uSeed, up * 4.2 - uTime * 3.1 + uSeed));
   float body = smoothstep(0.02, 0.16, up) * smoothstep(1.25, 0.30, up);
-  float a = body * (0.10 + 0.95 * n * n) * uIntensity * 0.62;
+  float a = body * (0.14 + 1.05 * n * n) * uIntensity * 0.80;
   a *= 0.30 + 0.95 * (1.0 - vRim);            // soft and volumetric, not a hard cone
   vec3 col = mix(uCool, uHot, smoothstep(0.10, 0.80, up + n * 0.30));
   col += vec3(0.40, 0.52, 0.95) * smoothstep(0.20, 0.0, up) * 1.1;  // blue root
   if (a < 0.004) discard;
-  gl_FragColor = vec4(col * a * 1.45, a);
+  gl_FragColor = vec4(col * a * 2.2, a);
 }`;
 
 export class Flame {
@@ -84,6 +84,15 @@ export class Flame {
       this.layers.push(m);
       this.group.add(m);
     }
+
+    // a soft additive halo so the burner still reads as fire from across the room
+    this.glow = new THREE.Sprite(new THREE.SpriteMaterial({
+      map: sparkTex, color: 0xff8b3a, transparent: true, depthWrite: false,
+      blending: THREE.AdditiveBlending, opacity: 0,
+    }));
+    this.glow.scale.setScalar(0.12);
+    this.glow.position.y = 0.075;
+    this.group.add(this.glow);
 
     this.light = new THREE.PointLight(0xff7b2e, 0, 1.4, 2);
     this.light.position.set(0, 0.075, 0);
@@ -126,6 +135,8 @@ export class Flame {
       m.scale.set(1 + 0.05 * Math.sin(time * 11 + m.renderOrder), 1 + 0.10 * flick, 1 + 0.05 * Math.cos(time * 13 + m.renderOrder));
     }
     this.light.intensity = this.intensity * (0.55 + 0.25 * flick) * 1.7;
+    this.glow.material.opacity = this.intensity * (0.22 + 0.13 * flick);
+    this.glow.scale.setScalar(0.115 + 0.018 * flick);
 
     const p = this.embers.geometry.attributes.position.array;
     for (let i = 0; i < this.emberSeed.length; i++) {

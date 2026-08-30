@@ -234,10 +234,10 @@ export function buildWorkshop(scene, env, quality) {
   const armH = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, 0.52, 10), iron);
   armH.rotation.z = Math.PI / 2;
   armH.position.set(ANCHOR.hook.x + 0.14, ANCHOR.benchTop + 0.60, ANCHOR.hook.z);
-  const hookWire = new THREE.Mesh(new THREE.CylinderGeometry(0.0016, 0.0016, 0.055, 8), iron);
-  hookWire.position.copy(ANCHOR.hook).add(new THREE.Vector3(0, 0.072, 0));
-  const hookCurl = new THREE.Mesh(new THREE.TorusGeometry(0.016, 0.0026, 8, 22, Math.PI * 1.5), iron);
-  hookCurl.position.copy(ANCHOR.hook).add(new THREE.Vector3(0, 0.030, 0));
+  const hookWire = new THREE.Mesh(new THREE.CylinderGeometry(0.0016, 0.0016, 0.078, 8), iron);
+  hookWire.position.copy(ANCHOR.hook).add(new THREE.Vector3(0, 0.056, 0));
+  const hookCurl = new THREE.Mesh(new THREE.TorusGeometry(0.013, 0.0024, 8, 22, Math.PI * 1.5), iron);
+  hookCurl.position.copy(ANCHOR.hook).add(new THREE.Vector3(0, 0.004, 0));
   hookCurl.rotation.set(Math.PI / 2, 0, 0);
   const foot = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.055, 0.016, 18), iron);
   foot.position.set(ANCHOR.hook.x - 0.10, ANCHOR.benchTop + 0.008, ANCHOR.hook.z);
@@ -321,7 +321,7 @@ export function buildWorkshop(scene, env, quality) {
 
   // switched on only for the last beat, so the finished ornament reads as a
   // finished object and not as one more thing on a dark bench
-  const heroLight = new THREE.PointLight(0xffd6a8, 0.0, 1.6, 1.6);
+  const heroLight = new THREE.PointLight(0xffd6a8, 0.0, 1.8, 1.5);
   heroLight.position.set(ANCHOR.hook.x + 0.16, ANCHOR.hook.y + 0.16, ANCHOR.hook.z + 0.34);
   scene.add(heroLight);
 
@@ -374,18 +374,23 @@ export function ornamentGeometry() {
  */
 export function buildHands(env, quality) {
   const skin = new THREE.MeshStandardMaterial({
-    color: 0xc08361, roughness: 0.68, metalness: 0.0, envMap: env, envMapIntensity: 0.3,
+    color: 0xa9775a, roughness: 0.74, metalness: 0.0, envMap: env, envMapIntensity: 0.22,
   });
-  const wool = new THREE.MeshStandardMaterial({ color: 0x4a4640, roughness: 0.95 });
+  const wool = new THREE.MeshStandardMaterial({ color: 0x3c382f, roughness: 0.98 });
 
   /** dir: +1 the hand reaches in from +X, -1 from -X. */
   function hand(dir) {
     const g = new THREE.Group();
 
-    const sleeve = new THREE.Mesh(new THREE.CylinderGeometry(0.052, 0.041, 0.34, 16), wool);
+    // a long forearm: it leaves the frame past the bench edge instead of
+    // ending in mid air like a floating prop
+    const sleeve = new THREE.Mesh(new THREE.CylinderGeometry(0.042, 0.064, 1.10, 16), wool);
     sleeve.rotation.z = Math.PI / 2;
-    sleeve.position.x = dir * 0.28;
-    g.add(sleeve);
+    sleeve.position.x = dir * 0.64;
+    const cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.046, 0.044, 0.030, 16), wool);
+    cuff.rotation.z = Math.PI / 2;
+    cuff.position.x = dir * 0.100;
+    g.add(sleeve, cuff);
 
     const wrist = new THREE.Mesh(new THREE.CapsuleGeometry(0.030, 0.05, 6, 14), skin);
     wrist.rotation.z = Math.PI / 2;
@@ -440,7 +445,7 @@ export function buildHands(env, quality) {
   near.position.y = -0.305;
   const far = hand(1);       // steadies the far end
   far.position.y = -0.455;
-  far.rotation.y = 0.45;
+  far.rotation.y = 0.12;
   far.scale.setScalar(0.96);
   group.add(near, far);
 

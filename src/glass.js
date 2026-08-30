@@ -115,9 +115,9 @@ export class GlassPiece {
             diffuseColor.rgb = mix(diffuseColor.rgb, uTint, uTintMix * 0.55);`)
           .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
             float h = clamp(vHeat * uHeatGain, 0.0, 1.7);
-            vec3 hot = mix(vec3(0.45, 0.015, 0.0), vec3(0.98, 0.16, 0.012), smoothstep(0.08, 0.62, h));
-            hot = mix(hot, vec3(1.0, 0.46, 0.10), smoothstep(0.62, 1.3, h));
-            totalEmissiveRadiance += hot * pow(h, 1.7) * 1.45;`);
+            vec3 hot = mix(vec3(0.42, 0.010, 0.0), vec3(1.0, 0.115, 0.008), smoothstep(0.08, 0.62, h));
+            hot = mix(hot, vec3(1.0, 0.40, 0.06), smoothstep(0.62, 1.3, h));
+            totalEmissiveRadiance += hot * pow(h, 1.7) * 1.05;`);
     };
     this.glassMat.customProgramCacheKey = () => 'lauscha-glass';
 
@@ -154,10 +154,10 @@ export class GlassPiece {
           diffuseColor.rgb = mix(diffuseColor.rgb, uTint, uTintMix);`)
         .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
           // lamé: tiny animated specks locked to the surface
-          vec3 cell = floor(vLocal * 1400.0);
+          vec3 cell = floor(vLocal * 900.0);
           float g = hash31(cell);
-          float tw = step(0.972, g) * (0.55 + 0.45 * sin(uTime * 7.0 + g * 60.0));
-          totalEmissiveRadiance += vec3(1.0, 0.94, 0.82) * tw * uGlitter * 2.4;`);
+          float tw = step(0.955, g) * (0.45 + 0.55 * sin(uTime * 7.0 + g * 60.0));
+          totalEmissiveRadiance += vec3(1.0, 0.93, 0.78) * tw * uGlitter * 3.4;`);
     };
     this.mirrorMat.customProgramCacheKey = () => 'lauscha-mirror';
 
@@ -199,10 +199,10 @@ export class GlassPiece {
     lip.rotation.x = Math.PI / 2;
     lip.position.y = P.cutY + 0.0095;
 
-    const wire = new THREE.Mesh(new THREE.TorusGeometry(0.0052, 0.00055, 6, 22, Math.PI * 1.55), metal);
+    const wire = new THREE.Mesh(new THREE.TorusGeometry(0.0092, 0.0011, 6, 24), metal);
     wire.rotation.x = Math.PI / 2;
-    wire.rotation.z = 0.4;
-    wire.position.y = P.cutY - 0.004;
+    wire.rotation.z = 0.25;
+    wire.position.y = P.cutY - 0.010;
 
     this.fittings.add(cap, lip, wire);
     this.spinner.add(this.fittings);
@@ -420,7 +420,7 @@ export class GlassPiece {
     // gravity direction in the piece's own space (the piece is tilted)
     this.group.updateMatrixWorld();
     this.gravityLocal.set(0, -1, 0).applyQuaternion(this.group.getWorldQuaternion(_q).invert());
-    s.sag = (0.0045 + 0.010 * s.bulgeEase) * s.heat;
+    s.sag = (0.0082 + 0.011 * s.bulgeEase) * s.heat;
 
     this.spinner.rotation.y = s.spin;
 
@@ -436,7 +436,7 @@ export class GlassPiece {
       const R = lerp(P.tubeR * 1.02, P.bulbRMax, s.bulgeEase);
       const yc = lerp(P.bulbYc0, P.bulbYc1, s.bulgeEase);
       this.mirrorUniforms.uSilverEdge.value = lerp(yc - R - 0.004, yc + R + 0.006, s.silver);
-      this.mirrorUniforms.uTintMix.value = s.tint;
+      this.mirrorUniforms.uTintMix.value = s.tint * 0.86;
       this.mirrorUniforms.uGlitter.value = s.glitter;
       this.mirrorUniforms.uTime.value = time;
     }
@@ -477,5 +477,3 @@ export class GlassPiece {
     this.rebuild();
   }
 }
-
-export const GLASS_PROFILE = P;

@@ -65,10 +65,25 @@ export class Input {
     this.anyInputAt = performance.now() / 1000;
   }
 
-  /** Horizontal travel (px) since the previous frame; consumed on read. */
-  takeDX() { const v = this.dxFrame; this.dxFrame = 0; return v; }
-  /** Upward travel (px) since the previous frame; consumed on read. */
-  takeUp() { const v = this.upFrame; this.upFrame = 0; return v; }
+  // Gestures are measured as a fraction of the screen and then expressed in
+  // the pixels of a reference phone, so "half a screen wide" asks for the same
+  // work on a small handset and on a tablet.
+  static REF_W = 390;
+  static REF_H = 844;
+
+  /** Horizontal travel since the previous frame, in reference px. */
+  takeDX() {
+    const v = this.dxFrame * (Input.REF_W / Math.max(240, window.innerWidth));
+    this.dxFrame = 0;
+    return v;
+  }
+
+  /** Upward travel since the previous frame, in reference px. */
+  takeUp() {
+    const v = this.upFrame * (Input.REF_H / Math.max(360, window.innerHeight));
+    this.upFrame = 0;
+    return v;
+  }
   takeTap() { const v = this.tapped; this.tapped = false; return v; }
 
   holdTime() { return this.down ? performance.now() / 1000 - this.downTime : 0; }

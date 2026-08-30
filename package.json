@@ -1,4 +1,16 @@
 {
+  "name": "lauscha-glass-ornament-workshop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Mobile web prototype for four-year-olds: heat the glass, blow, and make a round sparkling ornament.",
+  "type": "module",
+  "scripts": {
+    "start": "python3 -m http.server 8000",
+    "shots": "node tools/shoot.mjs",
+    "play": "node tools/play.mjs",
+    "tune": "node tools/tune.mjs",
+    "perf": "node tools/perf.mjs"
+  },
   "devDependencies": {
     "playwright": "^1.49.1"
   }

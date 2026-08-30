@@ -18,11 +18,12 @@ const server = createServer(async (req, res) => {
 await new Promise(r => server.listen(8099, r));
 
 const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium', args: ['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--disable-lcd-text'] });
-const page = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 });
+const VW = +(process.env.VW || 390), VH = +(process.env.VH || 844);
+const page = await browser.newPage({ viewport: { width: VW, height: VH }, deviceScaleFactor: 1 });
 const errors = [];
 page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
 page.on('pageerror', e => errors.push('PAGEERROR ' + e.message));
-await page.goto('http://localhost:8099/index.html');
+await page.goto('http://localhost:8099/index.html' + (process.env.Q || ''));
 await page.waitForTimeout(3500);
 
 const plan = JSON.parse(process.argv[2] || '[]');
@@ -36,6 +37,11 @@ for (const step of plan) {
   }, step);
   await page.waitForTimeout(step.wait ?? 900);
   await page.screenshot({ path: `tools/shots/${step.name}.png` });
+  console.log(step.name, JSON.stringify(await page.evaluate(() => ({
+    phase: window.__game.director.phase, t: +window.__game.director.t.toFixed(2),
+    rigT: +window.__game.rig.t.toFixed(2),
+    cam: window.__game.camera.position.toArray().map(v => +v.toFixed(2)),
+  }))));
 }
 console.log('ERRORS:', JSON.stringify(errors.slice(0, 12), null, 1));
 await browser.close();

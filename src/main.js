@@ -45,14 +45,15 @@ scene.add(hands.group);
 const piece = new GlassPiece(env, quality);
 scene.add(piece.group);
 
-const sparkTex = sparkTexture(true);
-const flame = new Flame(quality, sparkTexture(false));
+const sparkTex = sparkTexture(true);     // star flare, for lamé
+const softTex = sparkTexture(false);     // plain round dot, for embers and snow
+const flame = new Flame(quality, softTex);
 scene.add(flame.group);
 
 const glitter = new Glitter(quality.glitter, sparkTex);
 scene.add(glitter.points);
 
-const snow = new Snow(quality.snow, sparkTexture(false), { x: -0.86, y: 1.02, z: -2.165, w: 0.92, h: 1.14, d: 0.03 });
+const snow = new Snow(quality.snow, softTex, { x: -0.86, y: 1.02, z: -2.165, w: 0.92, h: 1.14, d: 0.03 });
 scene.add(snow.points);
 
 const rig = new CameraRig(camera);

@@ -12,7 +12,15 @@ import { ANCHOR, ornamentGeometry } from './workshop.js';
  * flame while they turn it, the bubble pushes out while they blow.
  */
 
-const COLORS = [0xc0392b, 0xd8a52e, 0x1f8a5f, 0x2f6fa8, 0x9b2f6e];
+const LIFT_OFF_FLAME = new THREE.Vector3(-0.02, 0.035, 0.012);
+const HANG_EULER = new THREE.Euler(0.05, 0.25, Math.PI);
+const HANG_OFFSET = new THREE.Vector3(0, -0.030, 0);
+const Z_AXIS = new THREE.Vector3(0, 0, 1);
+const _q1 = new THREE.Quaternion();
+const _q2 = new THREE.Quaternion();
+const _v1 = new THREE.Vector3();
+
+const COLORS = [0xcc2b2f, 0xdda32c, 0x1f9160, 0x2f74ad, 0xa33174];
 const lerp = (a, b, t) => a + (b - a) * t;
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 const sstep = (e0, e1, x) => { const t = clamp((x - e0) / (e1 - e0), 0, 1); return t * t * (3 - 2 * t); };
@@ -64,7 +72,7 @@ export class Director {
     this.handsHome = anchor.position.clone();
 
     // aim the forearms down and toward the viewer, out of the glass
-    const want = new THREE.Vector3(0.55, -0.55, 0.63).normalize();
+    const want = new THREE.Vector3(0.40, -0.70, 0.59).normalize();
     want.applyQuaternion(this.pieceHome.quat.clone().invert());
     this.hands.group.rotation.y = Math.atan2(want.z, want.x);
 
@@ -83,10 +91,10 @@ export class Director {
     const heat = () => piece.group.localToWorld(this.tmp.set(0, -0.014, 0));
     const bulb = () => piece.bulbCenter(this.tmp);
     const tip = () => piece.group.localToWorld(this.tmp.set(0, -0.05, 0));
-    const hook = () => this.tmp.copy(ANCHOR.hook).add(new THREE.Vector3(0, -0.045, 0));
+    const hook = () => this.tmp.copy(ANCHOR.hook).add(_v1.set(0, -0.045, 0));
 
     this.shots = {
-      establish: { pos: new THREE.Vector3(0.42, 1.42, 1.55), look: new THREE.Vector3(0.02, 1.20, -0.35), frame: 1.60, bias: 0.10, vfit: 0.44, shake: 1.0 },
+      establish: { pos: new THREE.Vector3(0.44, 1.46, 1.60), look: new THREE.Vector3(-0.05, 1.19, -0.35), frame: 1.84, bias: 0.09, vfit: 0.44, shake: 1.0 },
       approach: { pos: new THREE.Vector3(0.20, 1.300, 0.72), look: tip, frame: 0.55, bias: 0.14, shake: 0.9 },
       spin: { pos: new THREE.Vector3(0.090, 1.190, 0.455), look: heat, frame: 0.250, bias: 0.24, shake: 0.7 },
       macro: { pos: new THREE.Vector3(0.055, 1.235, 0.175), look: heat, frame: 0.080, bias: 0.14, shake: 0.5 },
@@ -105,7 +113,6 @@ export class Director {
   setPhase(name) {
     this.phase = name;
     this.t = 0;
-    const s = this.piece.state;
 
     switch (name) {
       case 'establish':
@@ -184,7 +191,7 @@ export class Director {
     }
 
     // the burner keeps a small flame all the time; it flares while working
-    const want = this.phase === 'establish' ? sstep(0.2, 1.4, this.t) * 0.75 : 1.0;
+    const want = this.phase === 'establish' ? sstep(0.2, 1.3, this.t) : 1.0;
     this.flame.setIntensity(lerp(this.flame.intensity, want, dt * 3));
     this.sfx.heat(s.heat);
   }
@@ -241,7 +248,7 @@ export class Director {
 
     // lift the piece clear of the flame: breath, not fire, does this part
     this.lift = Math.min(1, this.lift + dt * 2.2);
-    this.piece.group.position.copy(this.pieceHome.pos).addScaledVector(new THREE.Vector3(-0.02, 0.035, 0.012), this.lift);
+    this.piece.group.position.copy(this.pieceHome.pos).addScaledVector(LIFT_OFF_FLAME, this.lift);
     this.handsAnchor.position.copy(this.piece.group.position);
 
     const push = (amount) => {
@@ -252,7 +259,7 @@ export class Director {
     };
 
     const up = this.input.takeUp();
-    let amount = up * BLOW_PER_SEC * 0.004;
+    let amount = up * BLOW_PER_PX;
     if (this.input.holdTime() > 0.22) amount += dt * BLOW_PER_SEC;
     push(amount);
     if (up > 1) this.hints.hide();
@@ -289,7 +296,7 @@ export class Director {
     const enter = sstep(0, 0.55, this.t);
     this.piece.neckPoint(this.tmp);
     this.ws.dropper.position.lerpVectors(
-      this.tmp2.copy(this.tmp).add(new THREE.Vector3(0.10, 0.10, 0.05)), this.tmp, enter);
+      this.tmp2.copy(this.tmp).add(_v1.set(0.10, 0.10, 0.05)), this.tmp, enter);
     this.ws.dropper.rotation.set(0.5, 0, -0.6);
     if (!this.touched && enter >= 1) { this.touched = true; this.sfx.tick(0.06); }
     if (this.t > 1.15) this.ws.dropper.visible = false;
@@ -344,7 +351,7 @@ export class Director {
       this.piece.neckPoint(this.tmp);
       const k = sstep(0, 0.45, t);
       this.ws.tweezers.position.lerpVectors(
-        this.tmp2.copy(this.tmp).add(new THREE.Vector3(0.13, -0.10, 0.08)), this.tmp, k);
+        this.tmp2.copy(this.tmp).add(_v1.set(0.13, -0.10, 0.08)), this.tmp, k);
       this.ws.tweezers.rotation.set(0.3, 0.4, 1.25);
     } else {
       this.ws.tweezers.visible = false;
@@ -362,14 +369,14 @@ export class Director {
 
       // lift, turn the neck upwards and carry it to the hook
       const k = sstep(0, 1.25, t - 0.55);
-      const target = this.tmp.copy(ANCHOR.hook).add(new THREE.Vector3(0, -0.030, 0));
-      const qHang = new THREE.Quaternion().setFromEuler(new THREE.Euler(0.05, 0.25, Math.PI));
+      const target = this.tmp.copy(ANCHOR.hook).add(HANG_OFFSET);
+      const qHang = _q1.setFromEuler(HANG_EULER);
       this.piece.group.position.lerpVectors(this.pieceHome.pos, target, k);
       this.piece.group.position.y += Math.sin(k * Math.PI) * 0.05;
       this.piece.group.quaternion.copy(this.pieceHome.quat).slerp(qHang, k);
 
       // the hands lower the tube out of frame
-      this.handsAnchor.position.copy(this.handsHome).addScaledVector(new THREE.Vector3(0.10, -0.30, 0.10), k);
+      this.handsAnchor.position.copy(this.handsHome).addScaledVector(_v1.set(0.10, -0.30, 0.10), k);
 
       if (k >= 1 && !this.hung) {
         this.hung = true;
@@ -381,16 +388,16 @@ export class Director {
 
     // the hero light comes up as the piece travels to the hook
     this.heroLit = Math.min(1, (this.heroLit || 0) + dt * (t > 0.6 ? 0.7 : 0));
-    this.ws.heroLight.intensity = this.heroLit * 2.6;
+    this.ws.heroLight.intensity = this.heroLit * 3.6;
 
     if (this.hung) {
       // it hangs with weight: a slow, damped pendulum about the hook
       this.swingT += dt;
       const a = 0.16 * Math.exp(-0.85 * this.swingT) * Math.cos(this.swingT * 4.4);
-      const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0.05, 0.25, Math.PI));
-      const sw = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), a);
+      const q = _q1.setFromEuler(HANG_EULER);
+      const sw = _q2.setFromAxisAngle(Z_AXIS, a);
       this.piece.group.quaternion.copy(sw).multiply(q);
-      const off = new THREE.Vector3(0, -0.030, 0).applyQuaternion(sw);
+      const off = _v1.copy(HANG_OFFSET).applyQuaternion(sw);
       this.piece.group.position.copy(ANCHOR.hook).add(off);
       if (this.swingT > 0.9 && this.swingT < 1.0) this.sfx.sparkle(3);
       if (this.swingT > 2.4 || (this.swingT > 1.0 && this.input.takeTap())) this.setPhase('again');
