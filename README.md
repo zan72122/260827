@@ -56,6 +56,14 @@ world fill the frame*, so the framing survives every phone aspect ratio.
 | `again` | back to the tube, straight into the signature move | loops |
 
 There is no screen change, no menu and no loading break anywhere in the chain.
+A child who reaches for the screen during `establish` or `approach` skips
+ahead: touching is already the answer to the invitation.
+
+**A first run:** about 5 drags to bring the tube up to heat, 4 puffs to blow it
+out, 4 drags to silver it and one touch for the colour — roughly 25 seconds
+from the first frame to the ornament swinging on its hook. Every ornament made
+stays hanging on the stand, so the second run starts with the first one in
+frame.
 
 ## Local causality (the part that has to be felt, not read)
 

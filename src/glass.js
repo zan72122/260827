@@ -150,14 +150,17 @@ export class GlassPiece {
         .replace('#include <color_fragment>', `#include <color_fragment>
           // the silver only exists below the liquid line: a wavy meniscus
           float wave = 0.0011 * sin(atan(vLocal.z, vLocal.x) * 3.0 + uTime * 2.2);
-          if (vLocal.y > uSilverEdge + wave) discard;
+          float dEdge = uSilverEdge + wave - vLocal.y;
+          if (dEdge < 0.0) discard;
           diffuseColor.rgb = mix(diffuseColor.rgb, uTint, uTintMix);`)
         .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+          // the wet line where the silver is still climbing
+          totalEmissiveRadiance += vec3(1.0, 0.97, 0.90) * smoothstep(0.0026, 0.0, dEdge) * 0.85;
           // lamé: tiny animated specks locked to the surface
           vec3 cell = floor(vLocal * 900.0);
           float g = hash31(cell);
-          float tw = step(0.955, g) * (0.45 + 0.55 * sin(uTime * 7.0 + g * 60.0));
-          totalEmissiveRadiance += vec3(1.0, 0.93, 0.78) * tw * uGlitter * 3.4;`);
+          float tw = step(0.952, g) * (0.35 + 0.65 * sin(uTime * 6.0 + g * 60.0));
+          totalEmissiveRadiance += vec3(1.0, 0.93, 0.78) * max(0.0, tw) * uGlitter * 4.5;`);
     };
     this.mirrorMat.customProgramCacheKey = () => 'lauscha-mirror';
 

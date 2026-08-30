@@ -60,11 +60,12 @@ export class Flame {
     this.time = 0;
     this.intensity = 0;
 
+    this.length = 0.170;                  // nominal reach of the outermost cone
     const L = quality.flameLayers;
     for (let i = 0; i < L; i++) {
       const t = i / (L - 1 || 1);
-      const geo = new THREE.ConeGeometry(0.026 - t * 0.013, 0.170 - t * 0.050, 20, 8, true);
-      geo.translate(0, (0.170 - t * 0.050) * 0.5, 0);
+      const geo = new THREE.ConeGeometry(0.026 - t * 0.013, this.length - t * 0.050, 20, 8, true);
+      geo.translate(0, (this.length - t * 0.050) * 0.5, 0);
       const mat = new THREE.ShaderMaterial({
         vertexShader: VERT, fragmentShader: FRAG,
         uniforms: {

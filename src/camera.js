@@ -97,10 +97,13 @@ export class CameraRig {
       this.cur.pos.z + bx * by * amp * 0.6 - kick * dist * 0.010
     );
 
-    // put the subject above the middle so the child's finger never covers it
+    // Put the subject above the middle so the child's finger never covers it.
+    // A short, wide screen has less room under the subject, so it gets pushed
+    // further up.
     const half = Math.tan(fov * Math.PI / 360) * dist;
+    const bias = this.cur.bias * (this.aspect > 1.25 ? 1.45 : 1);
     this._l.copy(this.cur.look);
-    this._l.y -= this.cur.bias * half;
+    this._l.y -= bias * half;
     this.cam.lookAt(this._l);
   }
 }

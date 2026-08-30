@@ -116,9 +116,13 @@ function frame() {
   if (!downgraded && acc > 3) {
     if (frames / acc < 34) {
       downgraded = true;
-      renderer.setPixelRatio(Math.max(1, renderer.getPixelRatio() * 0.72));
+      renderer.setPixelRatio(Math.max(0.6, renderer.getPixelRatio() * 0.72));
       if ('transmissionResolutionScale' in renderer) renderer.transmissionResolutionScale = 0.35;
-      renderer.shadowMap.enabled = false;
+      if (renderer.shadowMap.enabled) {
+        renderer.shadowMap.enabled = false;
+        scene.traverse((o) => { if (o.material) o.material.needsUpdate = true; });
+      }
+      resize();
     }
     acc = 0; frames = 0;
   }

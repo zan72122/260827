@@ -49,6 +49,7 @@ export class Director {
 
     this._placePiece();
     this._buildShots();
+    this.piece.setTint(COLORS[0]);
     this.setPhase('establish');
   }
 
@@ -83,7 +84,7 @@ export class Director {
 
     this.flame.aim(ANCHOR.nozzle, ANCHOR.heatSpot);
     const need = ANCHOR.nozzle.distanceTo(ANCHOR.heatSpot) + 0.045;
-    this.flame.group.scale.setScalar(need / 0.155);
+    this.flame.group.scale.setScalar(need / this.flame.length);
   }
 
   _buildShots() {
@@ -131,6 +132,7 @@ export class Director {
       case 'macro':
         this.rig.move(this.shots.macro, 0.9);
         this.hints.hide();
+        this.input.takeUp();          // start the breath from a clean slate
         break;
 
       case 'blow':
@@ -193,18 +195,25 @@ export class Director {
     // the burner keeps a small flame all the time; it flares while working
     const want = this.phase === 'establish' ? sstep(0.2, 1.3, this.t) : 1.0;
     this.flame.setIntensity(lerp(this.flame.intensity, want, dt * 3));
+    if (this.phase !== 'finish') this.ws.heroLight.intensity *= Math.exp(-2.5 * dt);
+    // the burner bed starts as soon as there is an audio context to put it in
+    // (which is the child's first touch, whenever that happens)
+    if (!this.burnerOn && this.sfx.ready && this.flame.intensity > 0.15) {
+      this.sfx.burner(true);
+      this.burnerOn = true;
+    }
     this.sfx.heat(s.heat);
   }
 
   // ---- 1. establish: read the room ---------------------------------------
   _establish(dt) {
-    if (this.t > 0.35) this.sfx.burner(true);
-    if (this.t > 3.3) this.setPhase('approach');
+    // a child who reaches for the screen has already understood the invitation
+    if (this.t > 3.3 || (this.t > 1.2 && this.input.down)) this.setPhase('approach');
   }
 
   // ---- 2. approach: the tube tip and the flame ---------------------------
   _approach(dt) {
-    if (this.t > 1.55) this.setPhase('spin');
+    if (this.t > 1.55 || (this.t > 0.8 && this.input.down)) this.setPhase('spin');
   }
 
   // ---- 3. SPIN: turn the glass in the flame, it goes red ------------------
@@ -237,7 +246,8 @@ export class Director {
     const s = this.piece.state;
     this._rollFromDrag(dt);
     this.piece.soakHeat(Math.min(1, s.heat + dt * 0.9));
-    if (this.t > 1.25) this.setPhase('blow');
+    // if they are already blowing, do not make them wait for the macro to end
+    if (this.t > 1.25 || (this.t > 0.4 && this.input.upFrame > 24)) this.setPhase('blow');
   }
 
   // ---- 5. BLOW: the bubble pushes out — the peak of the middle ------------
@@ -406,8 +416,8 @@ export class Director {
 
   // ---- 9. again: a fresh tube, straight back to the signature move --------
   _again(dt) {
-    if (!this.reset) {
-      this.reset = true;
+    if (!this.didReset) {
+      this.didReset = true;
       this._parkFinished();
       this.piece.reset();
       this.run++;
@@ -423,7 +433,7 @@ export class Director {
       this.rig.move(this.shots.again, 1.2);
     }
     if (this.t > 1.25) {
-      this.reset = false;
+      this.didReset = false;
       this.setPhase('spin');
     }
   }
