@@ -1,0 +1,74 @@
+/* Lauscha glass ornament workshop — mobile-first, one-finger, no on-screen text. */
+:root{
+  --ink:#0b0d11;
+  --ember:#ff7a2f;
+}
+*{box-sizing:border-box;}
+html,body{
+  margin:0;padding:0;height:100%;width:100%;
+  background:var(--ink);
+  overflow:hidden;
+  overscroll-behavior:none;
+  touch-action:none;
+  -webkit-user-select:none;user-select:none;
+  -webkit-tap-highlight-color:transparent;
+  -webkit-touch-callout:none;
+}
+#stage{position:fixed;inset:0;overflow:hidden;}
+canvas#view{display:block;width:100%;height:100%;touch-action:none;}
+
+/* ---- non-verbal hint layer -------------------------------------------- */
+/* Hints live in the lower third so the child's finger never covers the glass. */
+.hint{
+  position:absolute;left:50%;bottom:calc(9% + env(safe-area-inset-bottom,0px));
+  width:min(62vw,320px);height:min(34vh,220px);
+  transform:translateX(-50%);
+  pointer-events:none;
+  opacity:0;transition:opacity .45s ease;
+  display:grid;place-items:center;
+}
+.hint.show{opacity:1;}
+.hint svg{width:100%;height:100%;overflow:visible;filter:drop-shadow(0 2px 10px rgba(0,0,0,.55));}
+
+.hand{transform-box:fill-box;transform-origin:50% 50%;}
+.hint[data-gesture="spin"] .hand{animation:swipeX 1.8s cubic-bezier(.5,0,.5,1) infinite;}
+.hint[data-gesture="blow"] .hand{animation:swipeY 1.7s cubic-bezier(.45,0,.3,1) infinite;}
+.hint[data-gesture="tap"]  .hand{animation:tapPress 1.4s ease-in-out infinite;}
+.arrow{animation:arrowPulse 1.8s ease-in-out infinite;}
+.trail{animation:trailFade 1.7s ease-out infinite;}
+.ring{animation:ringOut 1.4s ease-out infinite;transform-box:fill-box;transform-origin:50% 50%;}
+
+@keyframes swipeX{
+  0%,100%{transform:translateX(-26%) rotate(-7deg);}
+  50%{transform:translateX(26%) rotate(7deg);}
+}
+@keyframes swipeY{
+  0%{transform:translateY(16%) scale(1);opacity:.55;}
+  25%{opacity:1;}
+  70%{transform:translateY(-34%) scale(.94);opacity:1;}
+  100%{transform:translateY(16%) scale(1);opacity:.55;}
+}
+@keyframes tapPress{
+  0%,100%{transform:scale(1);}
+  45%{transform:scale(.88) translateY(4%);}
+}
+@keyframes arrowPulse{0%,100%{opacity:.25;}50%{opacity:.95;}}
+@keyframes trailFade{0%{opacity:0;}30%{opacity:.85;}100%{opacity:0;}}
+@keyframes ringOut{0%{transform:scale(.5);opacity:.9;}100%{transform:scale(1.9);opacity:0;}}
+
+/* ---- boot ember (shown until the first frame is rendered) --------------- */
+#boot{
+  position:absolute;inset:0;display:grid;place-items:center;
+  background:radial-gradient(60% 60% at 50% 55%,#14171e 0%,#07080b 100%);
+  transition:opacity .7s ease;
+}
+#boot.gone{opacity:0;pointer-events:none;}
+.ember{
+  width:14px;height:14px;border-radius:50%;
+  background:radial-gradient(circle at 40% 35%,#fff2c8,var(--ember) 45%,#7c1d05 100%);
+  box-shadow:0 0 26px 6px rgba(255,122,47,.55);
+  animation:breathe 1.6s ease-in-out infinite;
+}
+@keyframes breathe{0%,100%{transform:scale(.75);opacity:.65;}50%{transform:scale(1.25);opacity:1;}}
+
+body.failed #boot .ember{animation-play-state:paused;}

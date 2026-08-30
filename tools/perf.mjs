@@ -1,0 +1,25 @@
+import { chromium } from 'playwright';
+import { createServer } from 'http';
+import { readFile } from 'fs/promises';
+import { extname, join, normalize } from 'path';
+const MIME={'.html':'text/html','.js':'text/javascript','.css':'text/css'};
+const root=process.cwd();
+const server=createServer(async(req,res)=>{try{let p=decodeURIComponent(req.url.split('?')[0]);if(p==='/')p='/index.html';const f=join(root,normalize(p));const b=await readFile(f);res.writeHead(200,{'Content-Type':MIME[extname(f)]||'application/octet-stream'});res.end(b);}catch{res.writeHead(404);res.end();}});
+await new Promise(r=>server.listen(8099,r));
+const browser=await chromium.launch({executablePath:'/opt/pw-browsers/chromium',args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+const page=await browser.newPage({viewport:{width:390,height:844},deviceScaleFactor:1});
+await page.goto('http://localhost:8099/index.html?tier=low');
+await page.waitForTimeout(3000);
+const measure = async (label, js) => {
+  await page.evaluate((j)=>{ if(j) eval(j); let n=0; window.__n=0; const c=()=>{window.__n++;requestAnimationFrame(c);}; requestAnimationFrame(c); }, js);
+  await page.waitForTimeout(4000);
+  const n = await page.evaluate(()=>window.__n);
+  console.log(label.padEnd(28), (n/4).toFixed(1), 'fps');
+};
+await measure('baseline low', null);
+await measure('no transmission', "window.__game.piece.glassMat.transmission=0;window.__game.piece.glassMat.needsUpdate=true;");
+await measure('+ no flame', "window.__game.flame.group.visible=false;");
+await measure('+ no snow/glitter', "window.__game.scene.traverse(o=>{if(o.isPoints)o.visible=false});");
+await measure('+ half res', "window.__game.renderer.setPixelRatio(0.5);");
+console.log(await page.evaluate(()=>JSON.stringify(window.__game.renderer.info.render)));
+await browser.close(); server.close();
