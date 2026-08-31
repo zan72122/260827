@@ -314,6 +314,7 @@ export interface Materials {
   red: MeshPhysicalMaterial;
   redHead: MeshPhysicalMaterial;
   redPlain: MeshPhysicalMaterial;
+  handled: MeshStandardMaterial;
   lining: MeshStandardMaterial;
   edge: MeshStandardMaterial;
   wood: MeshStandardMaterial;
@@ -370,6 +371,14 @@ export function buildMaterials(): Materials {
     lining: new MeshStandardMaterial({ map: lining, roughness: 0.97, metalness: 0 }),
     edge: new MeshStandardMaterial({ map: edge, roughness: 0.9, metalness: 0 }),
     wood: new MeshStandardMaterial({ map: wood, roughness: 0.72, metalness: 0 }),
+    // The parts a hand closes on: darker and smoother from being held. The
+    // doll itself is new and clean; the wear belongs to the tools.
+    handled: new MeshStandardMaterial({
+      map: wood,
+      color: new Color('#a58358'),
+      roughness: 0.44,
+      metalness: 0,
+    }),
     woodDark: new MeshStandardMaterial({ map: woodD, roughness: 0.78, metalness: 0 }),
     bench: new MeshStandardMaterial({ map: bench, roughness: 0.8, metalness: 0 }),
     cloth: new MeshStandardMaterial({ color: '#6e1a18', roughness: 0.99, metalness: 0 }),

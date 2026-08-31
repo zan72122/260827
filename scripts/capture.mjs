@@ -89,12 +89,15 @@ async function play(page, tag, opts = {}) {
   await settle(page, 1400);
   await shot('2-balanced');
 
-  // 2. carry the head into the opening, along the route
-  for (let i = 0; i < 16; i++) {
+  // 2. carry the head into the opening, along the route.
+  // The route is longer in screen pixels on a wide screen than on a narrow
+  // one, so the pull is generous and the loop simply repeats until the head is
+  // seated rather than assuming a fixed number of strokes.
+  for (let i = 0; i < 24; i++) {
     const st = await state(page);
     if (st.stage !== 'insert') break;
     const s = await spot(page, 'head');
-    await drag(page, { x: s.x, y: s.y }, { x: s.x + s.ax * 60, y: s.y + s.ay * 60 }, 10, 16);
+    await drag(page, { x: s.x, y: s.y }, { x: s.x + s.ax * 140, y: s.y + s.ay * 140 }, 14, 14);
     await page.waitForTimeout(200);
   }
   await settle(page, 900);
@@ -177,6 +180,35 @@ for (const vp of VIEWPORTS) {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true });
   await page.goto('http://localhost:5177/', { waitUntil: 'networkidle' });
   await page.waitForTimeout(1500);
+  // a second finger arriving mid-drag must be ignored, not fought over
+  {
+    const g = await spot(page, 'grip');
+    const before = (await state(page)).weightT;
+    await page.mouse.move(g.x, g.y);
+    await page.mouse.down();
+    await page.mouse.move(g.x + g.ax * 14, g.y + g.ay * 14);
+    const mid = (await state(page)).weightT;
+    await page.evaluate(() => {
+      const c = document.querySelector('#app canvas');
+      const at = { bubbles: true, pointerId: 77, pointerType: 'touch', clientX: 20, clientY: 20 };
+      c.dispatchEvent(new PointerEvent('pointerdown', at));
+      c.dispatchEvent(new PointerEvent('pointermove', { ...at, clientX: 300, clientY: 700 }));
+      c.dispatchEvent(new PointerEvent('pointerup', { ...at, clientX: 300, clientY: 700 }));
+    });
+    const afterSecond = (await state(page)).weightT;
+    await page.mouse.move(g.x + g.ax * 28, g.y + g.ay * 28);
+    await page.mouse.up();
+    const afterFirst = (await state(page)).weightT;
+    log.push({
+      tag: 'resilience',
+      label: 'second-finger',
+      ...(await state(page)),
+      movedByFirst: Math.abs(mid - before) > 0.01,
+      movedBySecond: Math.abs(afterSecond - mid) > 0.001,
+      firstStillInControl: Math.abs(afterFirst - afterSecond) > 0.01,
+    });
+  }
+
   // start a drag, then cancel it outright
   const s = await spot(page, 'grip');
   await page.mouse.move(s.x, s.y);
@@ -208,11 +240,11 @@ for (const vp of VIEWPORTS) {
     await page.waitForTimeout(240);
   }
   await settle(page, 1400);
-  for (let i = 0; i < 16; i++) {
+  for (let i = 0; i < 24; i++) {
     const st = await state(page);
     if (st.stage !== 'insert') break;
     const s = await spot(page, 'head');
-    await drag(page, { x: s.x, y: s.y }, { x: s.x + s.ax * 60, y: s.y + s.ay * 60 }, 10, 16);
+    await drag(page, { x: s.x, y: s.y }, { x: s.x + s.ax * 140, y: s.y + s.ay * 140 }, 14, 14);
     await page.waitForTimeout(200);
   }
   await settle(page, 700);
@@ -220,14 +252,14 @@ for (const vp of VIEWPORTS) {
   await page.waitForTimeout(900);
   log.push({ tag: 'resilience', label: 'rotated-mid-thread', ...(await state(page)) });
   await page.screenshot({ path: `${OUT}/rotate-midflow.png` });
-  for (let i = 0; i < 12; i++) {
+  for (let i = 0; i < 24; i++) {
     const st = await state(page);
     if (st.stage !== 'thread' || st.lift > 4.4) break;
     const s = await spot(page, 'toggle');
-    await drag(page, { x: s.x, y: s.y }, { x: s.x + s.ax * 40, y: s.y + s.ay * 40 }, 8, 18);
-    await page.waitForTimeout(200);
+    await drag(page, { x: s.x, y: s.y }, { x: s.x + s.ax * 120, y: s.y + s.ay * 120 }, 14, 16);
+    await page.waitForTimeout(240);
   }
-  for (let i = 0; i < 8; i++) {
+  for (let i = 0; i < 14; i++) {
     const st = await state(page);
     if (st.stage !== 'thread') break;
     const s = await spot(page, 'tie');
@@ -256,14 +288,19 @@ const bad = log.filter(
   (r) =>
     (r.label === '7-finished' && r.stage !== 'play') ||
     (r.label === 'finished-after-rotations' && r.stage !== 'play') ||
-    (r.label === 'nod-peaks' && !(r.bigPeak > r.smallPeak * 1.6)),
+    (r.label === 'nod-peaks' && !(r.bigPeak > r.smallPeak * 1.6)) ||
+    (r.label === 'second-finger' &&
+      !(r.movedByFirst && !r.movedBySecond && r.firstStillInControl)),
 );
 for (const r of log) {
   console.log(
     `${r.tag.padEnd(10)} ${r.label.padEnd(18)} ${r.stage.padEnd(9)} wT=${r.weightT.toFixed(2)} ` +
       `rest=${r.restPitchDeg.toFixed(1)} pitch=${r.pitchDeg.toFixed(1)} gap=${r.rimGap.toFixed(1)} ` +
       `lift=${r.lift.toFixed(1)} s=${r.insertS.toFixed(2)} tri=${r.triangles} dc=${r.drawCalls}` +
-      (r.smallPeak === undefined ? '' : ` smallNod=${r.smallPeak.toFixed(1)} firmNod=${r.bigPeak.toFixed(1)}`),
+      (r.smallPeak === undefined ? '' : ` smallNod=${r.smallPeak.toFixed(1)} firmNod=${r.bigPeak.toFixed(1)}`) +
+      (r.movedByFirst === undefined
+        ? ''
+        : ` first=${r.movedByFirst} second=${r.movedBySecond} stillFirst=${r.firstStillInControl}`),
   );
 }
 if (bad.length) {

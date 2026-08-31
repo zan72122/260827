@@ -150,14 +150,14 @@ export class Workshop {
     weightMesh.castShadow = true;
     this.weightPivot.add(weightMesh);
     this.headGroup.add(this.weightPivot);
-    this.gripMesh = new Mesh(buildGrip(), this.mats.wood);
+    this.gripMesh = new Mesh(buildGrip(), this.mats.handled);
     this.gripMesh.castShadow = true;
     this.weightPivot.add(this.gripMesh);
 
     // --- jigs the child works against --------------------------------------
     this.chinRest = this.addMesh(buildChinRest(), this.mats.wood, true, true);
     this.jigMesh = this.addMesh(buildJig(), this.mats.woodDark, true, true);
-    this.toggleMesh = this.addMesh(buildToggle(), this.mats.wood, true, false);
+    this.toggleMesh = this.addMesh(buildToggle(), this.mats.handled, true, false);
     this.knotMesh = this.addMesh(buildKnot(), this.mats.thread, false, false);
     this.knotMesh.visible = false;
 

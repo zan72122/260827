@@ -19,7 +19,7 @@ npm run dev            # http://localhost:5173 （--host 有効、LAN の実機�
 
 ```bash
 npm run typecheck      # tsc --noEmit
-npm run test           # vitest（32 件）
+npm run test           # vitest（39 件）
 npm run build          # 型検査 + 本番ビルド → dist/
 npm run preview        # ビルド結果を :4173 で配信
 npm run capture        # Playwright で 4 画面サイズを実操作し docs/evidence/ を更新
@@ -64,7 +64,8 @@ iPhone / iPad で開く場合は `npm run dev` が表示する `Network:` の UR
 | 小さい操作と大きい操作の応答が違い、どちらも減衰して止まり、内部を貫通しない | 軽い一触りと 96 px のドラッグで振幅が明確に異なる（下の表）。接触限界は殻の内壁から角度で解いてクランプ | `*-9-firm-push.png`、`tests/rig.test.ts` の貫通テスト |
 | 断面表示と外観表示で同じ頭・支持点・重りを保つ | 断面は同じ胴の内外面を平面で切って生成し、切断面は壁厚をもつ帯。頭・腕・おもりは同一メッシュで、切り替えは平面の移動だけ | `*-4-lifted.png`、`tests/geometry.test.ts` |
 | 390×844 / 844×390 / 820×1180 / 1180×820 で最後まで遊べる | 4 画面すべてで `play` に到達 | `capture-log.json` |
-| 途中の画面回転や pointercancel でも復帰できる | balance 中に pointercancel → おもり位置 0.07 のまま保持、390×844→844×390 に回転 → 保持、thread 中に 820×1180 へもう一度回転しても最後まで到達（`play`） | `rotate-midflow.png`、`resilience-finished.png` |
+| 途中の画面回転や pointercancel でも復帰できる | balance 中に pointercancel → おもり位置は掴んだところで保持、390×844→844×390 に回転 → 保持、thread 中に 820×1180 へもう一度回転しても最後まで到達（`play`） | `rotate-midflow.png`、`resilience-finished.png` |
+| 二本目の指、途中の持ち替え、範囲外への移動 | ドラッグ中に来た二本目の指は無視され（`movedBySecond: false`）、一本目がそのまま操作を続ける（`firstStillInControl: true`）。範囲外へ出たドラッグも追従 | `capture-log.json` の `second-finger`、`tests/input.test.ts`（7 件） |
 
 ### 首振りの大小
 
@@ -72,8 +73,8 @@ iPhone / iPad で開く場合は `npm run dev` が表示する `Network:` の UR
 
 | | 390×844 | 844×390 | 820×1180 | 1180×820 |
 | --- | --- | --- | --- | --- |
-| 軽く一触り | 7.1° | 7.2° | 7.0° | 7.2° |
-| 96 px の押し込み | 15.3° | 14.7° | 19.5° | 19.5° |
+| 軽く一触り | 7.2° | 7.2° | 6.9° | 7.1° |
+| 96 px の押し込み | 15.2° | 15.0° | 16.7° | 14.3° |
 
 同じ剛体の同じ解放です。初速が違うだけで、どちらも同じ減衰で数秒かけて止まります。
 
@@ -164,6 +165,10 @@ iPhone / iPad で開く場合は `npm run dev` が表示する `Network:` の UR
   実機での確認は済んでいません。
 - **実際の 4 歳児では試していません。** したがって理解度、最初の 20〜30 秒で
   おもりの効果に気づけるか、もう一度触りたくなるかは、いずれも**未検証**です。
+- **フレームレートは実機で測っていません。** 上の計測はソフトウェアラスタライザ
+  （SwiftShader）上のもので、実際の iPhone / iPad の GPU での fps ではありません。
+  三角形数・draw call・影の系統数は目安内に収めてありますが、「30fps を安定した下限」
+  は実機で確認するまで未検証です。
 - 音は Chromium のヘッドレス環境では鳴らしていません。合成の実装のみ確認しています。
 - 再プレイ（🐮 ボタン）はジオメトリもテクスチャも作り直さず、釣り合いの状態だけを
   入れ替えます（`Game.resetDoll`）。GPU 資源が増えないことはコード上そうしてあるだけで、
