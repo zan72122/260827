@@ -1,0 +1,28 @@
+{
+  "name": "kigumi-uta-no-ki",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "木を組んで、くるくる回る歌うツリーをつくる — a wooden interlocking Christmas tree music-box game for 4-year-olds",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --port 4173 --strictPort",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "shots": "node scripts/shots.mjs",
+    "inspect": "node scripts/inspect.mjs"
+  },
+  "dependencies": {
+    "three": "^0.185.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1",
+    "@types/node": "^26.4.0",
+    "@types/three": "^0.185.4",
+    "typescript": "^7.0.2",
+    "vite": "^8.2.2",
+    "vitest": "^4.1.11"
+  }
+}

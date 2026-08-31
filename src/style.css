@@ -1,0 +1,145 @@
+:root {
+  color-scheme: dark;
+  --brass: #c8a05a;
+  --ink: #efe4d2;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  background: #2b2118;
+  overscroll-behavior: none;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  font-family: system-ui, -apple-system, "Hiragino Sans", sans-serif;
+}
+
+#stage {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+#view {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+#hud-root {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.hud .sound {
+  position: absolute;
+  top: calc(env(safe-area-inset-top, 0px) + 12px);
+  right: calc(env(safe-area-inset-right, 0px) + 12px);
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  border: 1px solid rgba(200, 160, 90, 0.35);
+  background: rgba(30, 23, 17, 0.55);
+  color: var(--brass);
+  pointer-events: auto;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  transition: background 0.18s ease, color 0.18s ease;
+}
+
+.hud .sound:active {
+  background: rgba(60, 46, 32, 0.75);
+}
+
+.hud .sound.muted {
+  color: #8d8071;
+}
+
+.hud .sound.muted .waves {
+  opacity: 0;
+}
+
+.hud .sound.muted .cross {
+  opacity: 1;
+}
+
+.hud .gauge {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
+  width: 148px;
+  height: 40px;
+  opacity: 1;
+  transition: opacity 0.5s ease;
+}
+
+.hud .gauge.idle {
+  opacity: 0.28;
+}
+
+.hud .gauge svg {
+  width: 100%;
+  height: 36px;
+  display: block;
+}
+
+.hud .gauge .track {
+  stroke: rgba(239, 228, 210, 0.16);
+}
+
+.hud .gauge .fill {
+  stroke: var(--brass);
+  transition: stroke-dashoffset 0.08s linear;
+}
+
+.hud .note {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 12px;
+  height: 12px;
+  margin-left: -6px;
+  border-radius: 50%;
+  background: #f3e4c2;
+  opacity: 0;
+  pointer-events: none;
+}
+
+#fallback {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  color: var(--ink);
+  text-align: center;
+  line-height: 1.7;
+  font-size: 15px;
+}
+
+@media (orientation: landscape) {
+  .hud .gauge {
+    left: auto;
+    right: calc(env(safe-area-inset-right, 0px) + 24px);
+    transform: none;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+    width: 128px;
+  }
+}
