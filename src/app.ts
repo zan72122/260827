@@ -306,6 +306,7 @@ export class Game {
         });
       },
       resetView: () => applyFraming(this.camera, this.framing),
+      framing: () => ({ ...this.framing }),
       hideHint: () => this.hint.kill(),
       showCovers: (b: boolean) => this.tree.setCoversVisible(b),
       /**

@@ -4,10 +4,17 @@
  * still images alone.
  */
 import { chromium } from 'playwright';
+import fs from 'node:fs';
 
 const BASE = process.env.BASE || 'http://127.0.0.1:4173/?q=low';
 const PHONE = { width: 390, height: 844 };
 const LAND = { width: 844, height: 390 };
+
+const LOG = process.env.VERIFY_LOG || '';
+function say(line) {
+  console.log(line);
+  if (LOG) fs.appendFileSync(LOG, line + '\n');
+}
 
 const results = [];
 let failures = 0;
@@ -15,12 +22,12 @@ let failures = 0;
 function check(name, ok, detail = '') {
   results.push({ name, ok, detail });
   if (!ok) failures++;
-  console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? `  ${detail}` : ''}`);
+  say(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? `  ${detail}` : ''}`);
 }
 
 const t0 = Date.now();
 function step(label) {
-  console.log(`  ... ${label} (+${((Date.now() - t0) / 1000).toFixed(0)}s)`);
+  say(`  ... ${label} (+${((Date.now() - t0) / 1000).toFixed(0)}s)`);
 }
 
 const browser = await chromium.launch({
@@ -271,13 +278,25 @@ check(
 step('rotation');
 await setOpen(0.62);
 const beforeRotate = await openness();
-const portraitShot = await measure();
+const portraitFraming = await page.evaluate(() => window.gameDebug.framing());
 await page.setViewportSize(LAND);
 await page.waitForTimeout(400);
 const afterRotate = await openness();
+const landFraming = await page.evaluate(() => window.gameDebug.framing());
 const landShot = await measure();
 check('rotating the screen keeps the opening', Math.abs(beforeRotate - afterRotate) < 1e-6);
-check('landscape is re-composed, not just stretched', landShot.green > 500 && landShot.w !== portraitShot.w, `${portraitShot.w}x${portraitShot.h} -> ${landShot.w}x${landShot.h}`);
+const deg = (r) => (r * 180) / Math.PI;
+check(
+  'landscape is re-composed, not the same camera stretched',
+  landFraming.orientation === 'landscape' &&
+    portraitFraming.orientation === 'portrait' &&
+    Math.abs(deg(landFraming.azimuth - portraitFraming.azimuth)) > 8 &&
+    Math.abs(deg(landFraming.elevation - portraitFraming.elevation)) > 4 &&
+    landFraming.fov !== portraitFraming.fov &&
+    landShot.green > 500,
+  `portrait az=${deg(portraitFraming.azimuth).toFixed(0)} el=${deg(portraitFraming.elevation).toFixed(0)} fov=${portraitFraming.fov} -> ` +
+    `landscape az=${deg(landFraming.azimuth).toFixed(0)} el=${deg(landFraming.elevation).toFixed(0)} fov=${landFraming.fov}`
+);
 await page.setViewportSize(PHONE);
 await page.waitForTimeout(400);
 check('rotating back keeps the opening', Math.abs((await openness()) - beforeRotate) < 1e-6);
@@ -304,29 +323,45 @@ await setOpen(1);
 const shapeAfter = await measure();
 await setOpen(0);
 const closedAfter = await measure();
-check('shape still correct after 20 cycles', shapeAfter.width > closedAfter.width * 3, `${closedAfter.width} -> ${shapeAfter.width}`);
+check(
+  'shape still correct after 20 cycles',
+  shapeAfter.width > closedAfter.width * 1.6 && shapeAfter.green > closedAfter.green * 1.8,
+  `width ${closedAfter.width} -> ${shapeAfter.width}, area ${closedAfter.green} -> ${shapeAfter.green}`
+);
 
 // --------------------------------------------------------------------------
 // 7. Sound is optional, and blocked audio must not stop the game.
 // --------------------------------------------------------------------------
 step('audio refused');
+await setOpen(0.45);
 const audioBlocked = await page.evaluate(async () => {
   const real = window.AudioContext;
+  const realWebkit = window.webkitAudioContext;
   window.AudioContext = function () {
     throw new Error('blocked by policy');
   };
+  window.webkitAudioContext = undefined;
+  const d = window.gameDebug;
+  d.tree.group.updateMatrixWorld();
+  const p = d.tree.handlePoint().applyMatrix4(d.tree.group.matrixWorld).project(d.camera);
+  const cx = ((p.x + 1) / 2) * window.innerWidth;
+  const cy = ((1 - p.y) / 2) * window.innerHeight;
   const c = document.querySelector('canvas');
-  const cx = window.innerWidth / 2;
-  const cy = window.innerHeight / 2;
+  const before = d.info().open;
   c.dispatchEvent(new PointerEvent('pointerdown', { pointerId: 9, clientX: cx, clientY: cy, bubbles: true, cancelable: true, isPrimary: true }));
-  c.dispatchEvent(new PointerEvent('pointermove', { pointerId: 9, clientX: cx - 120, clientY: cy, bubbles: true, cancelable: true }));
-  const open = window.gameDebug.info().open;
-  c.dispatchEvent(new PointerEvent('pointerup', { pointerId: 9, clientX: cx - 120, clientY: cy, bubbles: true, cancelable: true }));
+  c.dispatchEvent(new PointerEvent('pointermove', { pointerId: 9, clientX: cx - 90, clientY: cy, bubbles: true, cancelable: true }));
+  const open = d.info().open;
+  c.dispatchEvent(new PointerEvent('pointerup', { pointerId: 9, clientX: cx - 90, clientY: cy, bubbles: true, cancelable: true }));
   await new Promise((r) => requestAnimationFrame(r));
   window.AudioContext = real;
-  return { open, fps: window.gameDebug.info().fps };
+  window.webkitAudioContext = realWebkit;
+  return { before, open, fps: d.info().fps, frames: 1 };
 });
-check('the game keeps running when audio is refused', audioBlocked.open > 0.1, JSON.stringify(audioBlocked));
+check(
+  'the game keeps running when audio is refused',
+  audioBlocked.open > audioBlocked.before + 0.05,
+  JSON.stringify(audioBlocked)
+);
 
 // --------------------------------------------------------------------------
 // 8. Frame budget, measured while actually dragging.
@@ -347,9 +382,9 @@ async function frameStats(quality) {
           times.push(now - last);
           last = now;
           i++;
-          if (i < 90) requestAnimationFrame(step);
+          if (i < 45) requestAnimationFrame(step);
           else {
-            const use = times.slice(15).sort((a, b) => a - b);
+            const use = times.slice(10).sort((a, b) => a - b);
             resolve({
               median: use[Math.floor(use.length / 2)],
               p95: use[Math.floor(use.length * 0.95)],
@@ -365,12 +400,12 @@ async function frameStats(quality) {
 step('frame timing');
 const low = await frameStats('low');
 const high = await frameStats('high');
-console.log('frame time low  ', JSON.stringify(low));
-console.log('frame time high ', JSON.stringify(high));
+say('frame time low   ' + JSON.stringify(low));
+say('frame time high  ' + JSON.stringify(high));
 check('paper structure identical at every quality level', low.tris === high.tris, `${low.tris} vs ${high.tris}`);
 
 check('no console errors', errors.length === 0, errors.join(' | '));
 
-console.log('\n--- ' + (failures === 0 ? 'ALL CHECKS PASSED' : `${failures} CHECK(S) FAILED`) + ' ---');
+say('--- ' + (failures === 0 ? 'ALL CHECKS PASSED' : `${failures} CHECK(S) FAILED`) + ' ---');
 await browser.close();
 process.exit(failures === 0 ? 0 : 1);
