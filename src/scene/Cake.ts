@@ -79,7 +79,7 @@ export class Cake {
       const th = Math.atan2(z, x);
       const r = Math.hypot(x, z);
       const streak =
-        Math.sin(th * 46) * 0.00028 + fbm2(th * 7, (y + 0.03) * 120, 3) * 0.00035;
+        Math.sin(th * 42) * 0.00055 + fbm2(th * 7, (y + 0.03) * 120, 3) * 0.0006;
       const nr = r + streak;
       sp.setXYZ(i, Math.cos(th) * nr, y, Math.sin(th) * nr);
     }

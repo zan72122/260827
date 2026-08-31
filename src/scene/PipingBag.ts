@@ -60,10 +60,10 @@ export class PipingBag {
       color: new THREE.Color(0.93, 0.93, 0.925),
       roughness: 0.30,
       metalness: 0,
-      clearcoat: 0.42,
+      clearcoat: 0.34,
       clearcoatRoughness: 0.3,
       transparent: true,
-      opacity: 0.62,
+      opacity: 0.80,
       side: THREE.DoubleSide,
       depthWrite: false,
     });
