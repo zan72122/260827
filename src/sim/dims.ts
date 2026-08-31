@@ -26,7 +26,7 @@ export const BODY_SPINE: ReadonlyArray<{
   /** paper shell thickness at this station */
   wall: number;
 }> = [
-  { x: -72.5, y: 43.6, hz: 0.5, hy: 0.6, wall: 1.4 },
+  { x: -73.0, y: 43.6, hz: 0.0, hy: 0.0, wall: 1.4 },
   { x: -70.5, y: 43.9, hz: 4.6, hy: 5.4, wall: 1.4 },
   { x: -66, y: 44.6, hz: 9.8, hy: 11.2, wall: 1.4 },
   { x: -60, y: 45, hz: 14.4, hy: 16.4, wall: 1.35 },
@@ -90,7 +90,7 @@ export const HEAD = {
   /** the stem passing through the collar opening */
   stemR: 6.2,
   /** far end of the inner arm, head-local (down inside the belly) */
-  armTip: { x: -17, y: -21 },
+  armTip: { x: -16, y: -22 },
 };
 
 /** Rail the counterweight slides along, inside the belly (head-local mm). */
@@ -135,22 +135,27 @@ export const THREAD_R = 0.42;
 /** Top surface of the wooden chin rest the head sits on before it is hung. */
 export const CHIN_REST = { y: 59.4, x: 66, hz: 11, cradle: 0.08 };
 
-/** The temporary hanging jig used while the counterweight is set. */
+/**
+ * The temporary hanging jig the head sits on while the counterweight is set.
+ * It stands in front of and to the left of the body, clear of the doll.
+ */
 export const JIG = {
-  hookX: -78,
+  hookX: -58,
   hookY: 96,
-  standX: -104,
-  baseY: 0,
+  hookZ: 64,
+  postR: 5.0,
 };
 
-/** Screen-scale handle that drives the weight; large travel, small effect. */
-export const HANDLE = {
-  x0: -46,
-  x1: 40,
-  y: 112,
-  z: 30,
-  r: 9.0,
-};
+/**
+ * The grip clamped to the counterweight while it is being set: a stout wooden
+ * knob standing off to the side so a small hand can find it. It travels with
+ * the weight one-to-one; the reduction from a big drag to a small slide lives
+ * in the pointer mapping, not in a pretended mechanism (see STATUS.md).
+ */
+export const GRIP = { z: 27, r: 8.4, stemR: 2.6 };
+
+/** The wooden toggle on the free end of the thread. */
+export const TOGGLE = { r: 6.6, restX: 84, restY: 7, restZ: 30, travel: 62 };
 
 /* ------------------------------------------------------------- dynamics --- */
 

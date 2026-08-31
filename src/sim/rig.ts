@@ -87,7 +87,12 @@ function refine(freeA: number, blockedA: number, free: (a: number) => boolean): 
 
 export class HeadRig {
   /** Counterweight position along its rail, 0 = forward, 1 = back. */
-  weightT = 0.2;
+  weightT = 0.15;
+  /**
+   * Per-doll variation in how heavy the paper head came out. Each one balances
+   * at a slightly different place on the rail, which is all "the next one" means.
+   */
+  shellMassScale = 1;
   /** Free thread length between the pegs, mm. */
   threadLen = THREAD_LEN.start;
 
@@ -129,9 +134,13 @@ export class HeadRig {
     };
   }
 
+  private partMass(p: { name: string; m: number }): number {
+    return p.name === 'shell' ? p.m * this.shellMassScale : p.m;
+  }
+
   totalMassG(): number {
     let m = WEIGHT_MASS;
-    for (const p of HEAD_PARTS) m += p.m;
+    for (const p of HEAD_PARTS) m += this.partMass(p);
     return m;
   }
 
@@ -141,9 +150,10 @@ export class HeadRig {
     let my = 0;
     let m = 0;
     for (const p of HEAD_PARTS) {
-      mx += p.m * p.x;
-      my += p.m * p.y;
-      m += p.m;
+      const pm = this.partMass(p);
+      mx += pm * p.x;
+      my += pm * p.y;
+      m += pm;
     }
     const w = this.weightPos();
     mx += WEIGHT_MASS * w.x;
@@ -155,7 +165,7 @@ export class HeadRig {
   /** Moment of inertia about the support notch, kg*m^2. */
   inertia(): number {
     let sum = 0; // g*mm^2
-    for (const p of HEAD_PARTS) sum += p.m * (p.x * p.x + p.y * p.y + p.k * p.k);
+    for (const p of HEAD_PARTS) sum += this.partMass(p) * (p.x * p.x + p.y * p.y + p.k * p.k);
     const w = this.weightPos();
     const kw = WEIGHT_RAIL.r * 0.63;
     sum += WEIGHT_MASS * (w.x * w.x + w.y * w.y + kw * kw);

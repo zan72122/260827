@@ -197,3 +197,26 @@ export function cavityRatio(x: number, y: number, z: number): number {
 export function insideCavity(x: number, y: number, z: number): boolean {
   return cavityRatio(x, y, z) < 1;
 }
+
+/** Same ratio measured against the outer surface. */
+export function outerRatio(x: number, y: number, z: number): number {
+  const u = nearestU(x, y);
+  const s = sectionAt(u);
+  const dx = x - s.cx;
+  const dy = y - s.cy;
+  const up = dx * s.ux + dy * s.uy;
+  const along = dx * s.tx + dy * s.ty;
+  const e = BODY_SECTION_EXP;
+  const r = Math.pow(Math.abs(z / Math.max(0.01, s.hz)), e) + Math.pow(Math.abs(up / Math.max(0.01, s.hy)), e);
+  if (u > 0.999 && along > 0) return 1e3;
+  return Math.pow(r, 1 / e);
+}
+
+/**
+ * True when a point is inside the paper itself: past the inner wall but still
+ * within the outer one. This is what a part must never be, at any moment of
+ * the insertion or of the nod.
+ */
+export function inPaper(x: number, y: number, z: number): boolean {
+  return cavityRatio(x, y, z) >= 1 && outerRatio(x, y, z) <= 1;
+}
