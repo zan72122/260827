@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#2a2119" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <title>木の輪から ひつじ</title>
+    <style>
+      :root { color-scheme: dark; }
+      html, body {
+        margin: 0; padding: 0; height: 100%; overflow: hidden;
+        background: #1d1712; color: #f2e8dc;
+        font-family: "Hiragino Maru Gothic ProN", "Hiragino Sans", system-ui, sans-serif;
+        -webkit-user-select: none; user-select: none;
+        -webkit-tap-highlight-color: transparent;
+        overscroll-behavior: none; touch-action: none;
+      }
+      #app { position: fixed; inset: 0; }
+      canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+      #title {
+        position: fixed; inset: 0; display: flex; flex-direction: column;
+        align-items: center; justify-content: center; gap: 1.4rem;
+        background: radial-gradient(120% 90% at 50% 40%, #3b2f24 0%, #191410 100%);
+        text-align: center; padding: 2rem; z-index: 10;
+      }
+      #title h1 { font-size: clamp(1.3rem, 5.2vw, 2.1rem); font-weight: 600; margin: 0; line-height: 1.5; }
+      #title p { margin: 0; opacity: .62; font-size: clamp(.8rem, 3.2vw, .95rem); }
+      button.big {
+        border: 0; border-radius: 999px; padding: 1rem 2.6rem;
+        font: inherit; font-size: clamp(1rem, 4.4vw, 1.3rem); font-weight: 600;
+        background: #d8a04c; color: #241a10; cursor: pointer;
+        box-shadow: 0 .5rem 1.4rem rgba(0,0,0,.45);
+      }
+      button.big:active { transform: translateY(2px); }
+      #replay {
+        position: fixed; z-index: 6; right: max(1rem, env(safe-area-inset-right));
+        bottom: max(1rem, env(safe-area-inset-bottom));
+        width: 3.6rem; height: 3.6rem; border-radius: 50%; border: 0;
+        background: rgba(238,225,205,.9); color: #2a2119; cursor: pointer;
+        display: none; align-items: center; justify-content: center;
+        box-shadow: 0 .3rem 1rem rgba(0,0,0,.4);
+      }
+      #replay svg { width: 55%; height: 55%; }
+      #mute {
+        position: fixed; z-index: 6; left: max(.7rem, env(safe-area-inset-left));
+        bottom: max(.7rem, env(safe-area-inset-bottom));
+        width: 2.5rem; height: 2.5rem; border-radius: 50%; border: 0;
+        background: rgba(255,255,255,.13); color: #f2e8dc; cursor: pointer;
+        display: flex; align-items: center; justify-content: center; font-size: 1rem;
+      }
+      #diag {
+        position: fixed; z-index: 8; top: 0; left: 0; padding: .5rem .7rem;
+        font: 11px/1.45 ui-monospace, monospace; white-space: pre;
+        background: rgba(0,0,0,.62); color: #9ff0b0; display: none;
+        pointer-events: none; max-width: 100%; overflow: hidden;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <button id="mute" aria-label="おと">🔊</button>
+    <button id="replay" aria-label="もういちど">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"
+           stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 12a9 9 0 1 0 3-6.7" /><path d="M3 4v5h5" />
+      </svg>
+    </button>
+    <div id="diag"></div>
+    <div id="title">
+      <h1>木の輪から、<br />ひつじの形の木を取り出す</h1>
+      <p>ゆびで のこぎりを おして、きりはなそう</p>
+      <button class="big" id="start">はじめる</button>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

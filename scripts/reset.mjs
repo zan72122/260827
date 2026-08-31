@@ -1,0 +1,26 @@
+/** Checks the replay: nothing must be seen sliding back into the ring. */
+import { launch, openGame, settle } from './shots.mjs'
+const b = await launch()
+const p = await openGame(b, { viewport: { width: 430, height: 932 }, query: '?auto=1' })
+await settle(p, 25)
+const C = await p.evaluate(() => window.__reifen.constants)
+const call = (fn, v) => p.evaluate(([fn, v]) => window.__reifen[fn](v), [fn, v])
+await call('setCarriage', C.SAW_CARRIAGE_END)
+await settle(p, 6)
+await call('setSlide', C.SLIDE_TURN_UNLOCK)
+await settle(p, 25)
+const yt = await p.evaluate(() => window.__reifen.state.yawTarget)
+await call('setYaw', yt)
+await settle(p, 50)
+await p.evaluate(() => window.__reifen.replay())
+for (let i = 0; i < 7; i++) {
+  await settle(p, 9)
+  const st = await p.evaluate(() => ({ t: window.__reifen.state.resetT, ph: window.__reifen.phase() }))
+  await p.screenshot({ path: `shots/r-${i}-t${st.t.toFixed(2)}.png` })
+  console.log(i, st)
+}
+await settle(p, 40)
+console.log('after', await p.evaluate(() => ({ ph: window.__reifen.phase(), cut: window.__reifen.state.cut, plays: window.__reifen.state.plays })))
+await p.screenshot({ path: 'shots/r-final.png' })
+console.log('errors', p.__errors.filter((e) => !e.includes('404')))
+await b.close()
