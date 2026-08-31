@@ -18,7 +18,9 @@ const launchOptions = {
 
 export default defineConfig({
   testDir: './tests/e2e',
-  timeout: 120_000,
+  // generous: the reference run is on a software rasteriser, where a tablet-sized
+  // canvas renders an order of magnitude slower than on a real device
+  timeout: 300_000,
   expect: { timeout: 15_000 },
   fullyParallel: false,
   workers: 1,

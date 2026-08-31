@@ -516,6 +516,17 @@ export class Game {
     };
   }
 
+  /** Screen position of the piece currently in hand, in CSS pixels. */
+  heldPiecePos(): { x: number; y: number } | null {
+    const task = this.assembly.currentTask;
+    if (!task || this.assembly.mode === 'idle') return null;
+    const obj = task.id === 'tree' ? this.tree.group : this.tree.pieces.get(task.id)?.object;
+    if (!obj) return null;
+    obj.updateWorldMatrix(true, false);
+    const q = obj.getWorldPosition(new THREE.Vector3()).project(this.camera);
+    return { x: ((q.x + 1) / 2) * this.vp.width, y: ((1 - q.y) / 2) * this.vp.height };
+  }
+
   /** Where the piece being offered can be picked up, in CSS pixels. */
   pickTarget(): { x: number; y: number } | null {
     const c = this.assembly.hitCapsule();

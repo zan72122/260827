@@ -14,7 +14,7 @@ export const CARRY_LIFT_PX = 42;
 
 export type TaskId = string;
 
-interface Task {
+export interface Task {
   id: TaskId;
   /** metres of travel from entry to seated */
   travelM: number;
