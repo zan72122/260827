@@ -463,7 +463,7 @@ export class Game {
         this.workRow.cuts[live] = this.cut;
         this.childChips.set(live, this.chipParams(this.workRow, live), this.cut, this.root);
         this.childChips.commit([live, live]);
-        this.blank.updateWorkBand();
+        this.blank.updateWorkBand(branchPhi(this.workRow, live));
       } else if (this.cut <= 1e-5 && this.workRow.cuts[live] <= 1e-5 && this.hiddenBranch !== live) {
         this.hiddenBranch = live;
         this.childChips.hide(live);
@@ -625,7 +625,7 @@ export class Game {
     const t1 = performance.now();
     for (let i = 0; i < iters; i++) {
       row.cuts[0] = row.length * (0.15 + 0.8 * (i / iters));
-      this.blank.updateWorkBand();
+      this.blank.updateWorkBand(branchPhi(row, 0));
     }
     const t2 = performance.now();
     row.cuts[0] = keep;
@@ -637,6 +637,17 @@ export class Game {
       blankMs: (t2 - t1) / iters,
       totalMs: (t2 - t0) / iters,
     };
+  }
+
+  /** Depth of wood removed at the middle of every branch's stroke. */
+  trenchDepths(): number[] {
+    const row = this.workRow;
+    const out: number[] = [];
+    for (let i = 0; i < row.count; i++) {
+      const y = row.yStart + row.cuts[i] * 0.5;
+      out.push(row.cuts[i] > 0.01 ? blankRadius(y) - this.blank.radiusProbe(y, branchPhi(row, i)) : 0);
+    }
+    return out;
   }
 
   /** Debug-only visibility control for the verification harness. */

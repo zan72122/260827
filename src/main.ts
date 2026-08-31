@@ -126,5 +126,6 @@ window.__spanbaum = {
   hold: (on: boolean) => game.hold(on),
   probe: () => game.probe(),
   cutCost: (n?: number) => game.measureCutCost(n),
+  trenchDepths: () => game.trenchDepths(),
   reset: () => game.reset(),
 };

@@ -2,6 +2,9 @@ import * as THREE from 'three';
 import { BLANK, GRAIN_PERIOD, blankRadius } from '../config';
 import { entryRamp } from './chip';
 
+const TWO_PI = Math.PI * 2;
+const INV_TWO_PI = 1 / TWO_PI;
+
 /**
  * The conical linden blank, held between centres.
  *
@@ -58,7 +61,7 @@ function rowDepth(row: RowSpec, y: number, theta: number): number {
     const outFade = s <= cut ? 1 : 1 - (s - cut) / RUNOUT;
     const v = row.variants[i];
     let d = theta - branchPhi(row, i);
-    d = Math.atan2(Math.sin(d), Math.cos(d));
+    d -= TWO_PI * Math.round(d * INV_TWO_PI);
     const ramp = entryRamp(Math.min(s, cut), row.length);
     const hw = row.width * v.widthMul * 0.5 * (0.62 + 0.38 * ramp);
     const q = Math.abs(d * r) / hw;
@@ -132,6 +135,7 @@ export class Blank {
       add(hi);
     });
     this.ys = Float64Array.from([...set].sort((a, b) => a - b));
+    this.cacheTrig();
 
     const nRing = this.ys.length;
     const nVert = nRing * this.cols;
@@ -175,7 +179,22 @@ export class Blank {
     }
   }
 
-  private theta(j: number) { return this.seamTheta + (j * Math.PI * 2) / this.nt; }
+  private cosT = new Float64Array(0);
+  private sinT = new Float64Array(0);
+  private thT = new Float64Array(0);
+  private cacheTrig() {
+    if (this.cosT.length !== this.cols) {
+      this.cosT = new Float64Array(this.cols);
+      this.sinT = new Float64Array(this.cols);
+      this.thT = new Float64Array(this.cols);
+    }
+    for (let j = 0; j < this.cols; j++) {
+      const th = this.seamTheta + (j * TWO_PI) / this.nt;
+      this.thT[j] = th; this.cosT[j] = Math.cos(th); this.sinT[j] = Math.sin(th);
+    }
+  }
+
+  private theta(j: number) { return this.thT[j]; }
 
   private ringIndex(y: number) {
     let lo = 0, hi = this.ys.length - 1;
@@ -209,6 +228,20 @@ export class Blank {
     return base - rowDepth(r, this.ys[i], this.theta(j));
   }
 
+  private bandR = new Float64Array(0);
+  private bandLo = -1;
+  private colLo = 0;
+  private colHi = 0;
+
+  private radiusCached(i: number, j: number): number {
+    if (this.bandLo >= 0) {
+      const r = i - this.bandLo;
+      if (r >= 0 && r < this.bandRows) return this.bandR[r * this.cols + j];
+    }
+    return this.radiusAt(i, j);
+  }
+  private bandRows = 0;
+
   /** analytic-ish surface normal from the radius field */
   private writeRing(i: number) {
     const pos = this.geometry.attributes.position.array as Float32Array;
@@ -219,15 +252,16 @@ export class Blank {
     const im = Math.max(0, i - 1), ip = Math.min(nRing - 1, i + 1);
     const dy = this.ys[ip] - this.ys[im] || 1;
     const dth = (Math.PI * 2) / this.nt;
-    for (let j = 0; j < this.cols; j++) {
-      const th = this.theta(j);
-      const R = this.radiusAt(i, j);
+    for (let k = this.colLo; k <= this.colHi; k++) {
+      const j = this.bandLo < 0 ? k : ((k % this.nt) + this.nt) % this.nt;
+      if (j >= this.cols) continue;
+      const R = this.radiusCached(i, j);
       const jm = (j - 1 + this.nt) % this.nt, jp = (j + 1) % this.nt;
-      const Rth = (this.radiusAt(i, jp) - this.radiusAt(i, jm)) / (2 * dth);
-      const Ry = (this.radiusAt(ip, j) - this.radiusAt(im, j)) / dy;
-      const ct = Math.cos(th), st = Math.sin(th);
-      const k = i * this.cols + j;
-      pos[k * 3] = R * ct; pos[k * 3 + 1] = y; pos[k * 3 + 2] = R * st;
+      const Rth = (this.radiusCached(i, jp) - this.radiusCached(i, jm)) / (2 * dth);
+      const Ry = (this.radiusCached(ip, j) - this.radiusCached(im, j)) / dy;
+      const ct = this.cosT[j], st = this.sinT[j];
+      const o = i * this.cols + j;
+      pos[o * 3] = R * ct; pos[o * 3 + 1] = y; pos[o * 3 + 2] = R * st;
       // outward normal = dP/dy  x  dP/dtheta
       const tx = Rth * ct - R * st, tz = Rth * st + R * ct;   // dP/dtheta
       const yx = Ry * ct, yz = Ry * st;                       // dP/dy = (yx, 1, yz)
@@ -235,25 +269,71 @@ export class Blank {
       const cy = yz * tx - yx * tz;
       const cz = -tx;
       const inv = 1 / (Math.hypot(cx, cy, cz) || 1);
-      nor[k * 3] = cx * inv; nor[k * 3 + 1] = cy * inv; nor[k * 3 + 2] = cz * inv;
+      nor[o * 3] = cx * inv; nor[o * 3 + 1] = cy * inv; nor[o * 3 + 2] = cz * inv;
+      if (this.bandLo >= 0 && j === 0) {
+        // the seam column is a duplicate of column 0: same point, other UV
+        const d = i * this.cols + this.nt;
+        pos[d * 3] = pos[o * 3]; pos[d * 3 + 1] = pos[o * 3 + 1]; pos[d * 3 + 2] = pos[o * 3 + 2];
+        nor[d * 3] = nor[o * 3]; nor[d * 3 + 1] = nor[o * 3 + 1]; nor[d * 3 + 2] = nor[o * 3 + 2];
+      }
       // material coordinates: axial position, and true arc position around it
-      uvA[k * 2] = y / GRAIN_PERIOD;
-      uvA[k * 2 + 1] = ((j * Math.PI * 2) / this.nt) * blankRadius(Math.max(0, y)) / GRAIN_PERIOD;
+      uvA[o * 2] = y / GRAIN_PERIOD;
+      uvA[o * 2 + 1] = ((j * TWO_PI) / this.nt) * blankRadius(Math.max(0, y)) / GRAIN_PERIOD;
     }
   }
 
   private writeAll() {
+    this.colLo = 0; this.colHi = this.cols - 1;
     for (let i = 0; i < this.ys.length; i++) this.writeRing(i);
     this.geometry.attributes.position.needsUpdate = true;
     this.geometry.attributes.normal.needsUpdate = true;
     this.geometry.attributes.uv.needsUpdate = true;
   }
 
-  /** Refresh only the band the child is working in. */
-  updateWorkBand() {
+  /**
+   * Refresh the band the child is working in. Only the ONE face being cut can
+   * have changed, so only its columns are re-evaluated: the rest of the band
+   * already holds the right numbers from when those faces were cut. Every
+   * radius is evaluated once into a scratch field and the normals read their
+   * neighbours out of it, rather than re-deriving each one five times.
+   *
+   * @param phi  blank-local angle of the face being cut; omit to redo the lot
+   */
+  updateWorkBand(phi?: number) {
     const lo = Math.max(0, this.workRingLo - 1);
     const hi = Math.min(this.ys.length - 1, this.workRingHi + 1);
+    const rlo = Math.max(0, lo - 1), rhi = Math.min(this.ys.length - 1, hi + 1);
+    const rows = rhi - rlo + 1;
+    if (this.bandR.length < rows * this.cols) this.bandR = new Float64Array(rows * this.cols);
+
+    // columns to touch, as unwrapped indices around the face being cut
+    let k0 = 0, k1 = this.nt;
+    if (phi !== undefined && this.workRow) {
+      const r = Math.max(0.02, blankRadius(this.workRow.yStart));
+      const half = (this.workRow.width * 0.6) / r + 0.18;   // blade + margin
+      const per = TWO_PI / this.nt;
+      const mid = (phi - this.seamTheta) / per;
+      const span = half / per + 2;
+      k0 = Math.floor(mid - span); k1 = Math.ceil(mid + span);
+      if (k1 - k0 >= this.nt) { k0 = 0; k1 = this.nt; }
+    }
+
+    this.bandLo = -1;
+    this.colLo = k0; this.colHi = k1;
+    for (let i = rlo; i <= rhi; i++) {
+      const base = (i - rlo) * this.cols;
+      for (let k = k0 - 1; k <= k1 + 1; k++) {
+        const j = ((k % this.nt) + this.nt) % this.nt;
+        const v = this.radiusAt(i, j);
+        this.bandR[base + j] = v;
+        if (j === 0) this.bandR[base + this.nt] = v;
+      }
+    }
+    this.bandLo = rlo; this.bandRows = rows;
     for (let i = lo; i <= hi; i++) this.writeRing(i);
+    this.bandLo = -1;
+    this.colLo = 0; this.colHi = this.nt;
+
     const p = this.geometry.attributes.position as THREE.BufferAttribute;
     const n = this.geometry.attributes.normal as THREE.BufferAttribute;
     p.addUpdateRange(lo * this.cols * 3, (hi - lo + 1) * this.cols * 3);
@@ -266,6 +346,7 @@ export class Blank {
     const want = cameraAzimuth - blankRotation + Math.PI;
     if (Math.abs(Math.atan2(Math.sin(want - this.seamTheta), Math.cos(want - this.seamTheta))) < 0.35) return;
     this.seamTheta = want;
+    this.cacheTrig();
     this.bakeBase();
     this.writeAll();
   }

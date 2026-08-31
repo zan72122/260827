@@ -114,6 +114,16 @@ for (let i = 0; i < 6; i++) {
 const six = await stats(page);
 check('six strokes -> six branches', six.done === 6, `done=${six.done}`);
 check('phase after the sixth is not "work"', six.phase !== 'work', six.phase);
+{
+  const d = await ev(() => window.__spanbaum.trenchDepths());
+  const want = 0.0065;
+  check('all six faces really carry a cut of the right depth',
+    d.length === 6 && d.every((x) => Math.abs(x - want) < want * 0.25),
+    `[${d.map((x) => x.toFixed(5)).join(', ')}]`);
+  const cuts = await ev(() => Array.from(window.__spanbaum.game.workRowCuts));
+  check('all six shavings are the same length',
+    cuts.every((c) => Math.abs(c - cuts[0]) < 1e-9), `[${cuts.map((c) => c.toFixed(3)).join(', ')}]`);
+}
 await shot(page, 'B-row-complete');
 
 console.log('\n=== 6b. an indexed-to face is blank until the child cuts it ===');

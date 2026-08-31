@@ -75,13 +75,13 @@ export const ROW_GAP = 0.055;
 export const FRAMING = {
   portraitHeight: 2.10,
   /** landscape: closer and more oblique, so the curl and the contact read big */
-  landscapeHeight: 1.10,
+  landscapeHeight: 1.16,
   /** world point the fixed working camera orbits */
   targetY: 0.94,
-  landscapeTargetY: 1.02,
+  landscapeTargetY: 0.98,
   portraitTilt: 0.20,
-  landscapeTilt: 0.15,
-  landscapeAzimuth: 0.40,
+  landscapeTilt: 0.24,
+  landscapeAzimuth: 0.34,
   /** how far the framing leans from the blank's axis towards the cut */
   portraitLookBias: 0.34,
   landscapeLookBias: 0.46,

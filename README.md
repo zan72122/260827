@@ -143,8 +143,8 @@ how fast the child moves is the cutting **speed and sound**, nothing else.
   release cleanly without disturbing the cut.
 * Feed is **1:1 with the finger in screen space**: the finger's travel is
   projected onto the cutting direction and divided by the measured pixels-per-
-  unit, so a full stroke is one comfortable swipe (~132 CSS px portrait,
-  ~118 landscape at the reference sizes).
+  unit, so a full stroke is one comfortable swipe (132 CSS px portrait,
+  113 landscape at the reference sizes, measured).
 * `feed` follows the finger and may go back. `cut` is the high-water mark and
   **never falls** — reversing retracts the tool and regrows nothing.
 * Assists are the tool and its guide, never the material: the **flat back of the
@@ -165,8 +165,8 @@ contact, the curl and its root stay together whatever the screen shape.
   the direction of the cut; the bench, the jig and the whole tree are in frame.
 * **Landscape** comes closer and further round, so the curvature of the shaving
   and the blade contact read large.
-* The blade and the start of the curl sit **55 CSS px** from the finger in both
-  (checked at run time, target 40–60). The chisel's hit area is a 95 px band
+* The blade and the start of the curl sit **55–57 CSS px** from the finger in
+  both (solved for at layout time, target 40–60, measured in the checks). The chisel's hit area is a 95 px band
   along the whole tool plus everything on the tool's side of the contact, so a
   small hand cannot miss it; the handle body runs down to the bottom of the
   screen and the finger never covers the edge.
@@ -222,7 +222,9 @@ See `VERIFICATION.md` for the recorded results.
 * **No real-device test and no play test with a child were carried out.** All
   results were produced by headless Chromium with a software rasteriser in a
   container. Frame times measured there are *not* phone frame times and are
-  reported as such.
+  reported as such, so **60 fps is a target, not a verified result**. What is
+  measured and portable is this game's own CPU share of a frame: 0.85 ms
+  (0.67 ms at `?q=low`).
 * Dimensions, wood species detail beyond "pale straight-grained linden", and
   the exact form of the jig are design values, not measurements.
 * The blank carries one UV seam on its far side; a fine grain mismatch on that
