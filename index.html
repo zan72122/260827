@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#2b241d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Spanbaum</title>
+<style>
+  :root { color-scheme: dark; }
+  html, body {
+    margin: 0; padding: 0; height: 100%; overflow: hidden; background: #2b241d;
+    overscroll-behavior: none; touch-action: none;
+    -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent;
+  }
+  #app { position: fixed; inset: 0; }
+  canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+
+  /* nonverbal guide: a soft ring where the tool is held, drifting the way to push */
+  #hint { position: fixed; left: 0; top: 0; width: 0; height: 0; pointer-events: none;
+          opacity: 0; transition: opacity .45s ease; }
+  #hint.on { opacity: 1; }
+  #hint .ring { position: absolute; width: 62px; height: 62px; margin: -31px 0 0 -31px;
+      border-radius: 50%; border: 3px solid rgba(255,244,226,.85);
+      box-shadow: 0 0 18px rgba(0,0,0,.45), inset 0 0 14px rgba(255,240,214,.25);
+      animation: press 2.4s ease-in-out infinite; }
+  #hint .chev { position: absolute; width: 20px; height: 20px; margin: -10px 0 0 -10px;
+      border-left: 4px solid rgba(255,244,226,.85); border-top: 4px solid rgba(255,244,226,.85);
+      border-radius: 3px; animation: rise 2.4s ease-in-out infinite; }
+  #hint .chev.b { animation-delay: .28s; opacity: .55 }
+  @keyframes press { 0%,100% { transform: scale(1); opacity:.95 } 45% { transform: scale(.86); opacity:.65 } }
+  @keyframes rise  { 0% { transform: translateY(2px) rotate(45deg) scale(.9); opacity: 0 }
+                     35% { opacity: .95 } 100% { transform: translateY(-46px) rotate(45deg) scale(1); opacity: 0 } }
+
+  /* six pegs: one per shaving the child has raised. No numbers, no words. */
+  #pegs { position: fixed; left: 50%; transform: translateX(-50%);
+          bottom: max(14px, env(safe-area-inset-bottom)); display: flex; gap: 11px;
+          pointer-events: none; }
+  #pegs i { display: block; width: 13px; height: 13px; border-radius: 50%;
+            background: rgba(30,22,15,.5); border: 2px solid rgba(233,214,182,.5);
+            transition: background .35s ease, transform .35s ease, border-color .35s ease; }
+  #pegs i.on { background: #e9d6b6; border-color: #fff3dd; transform: scale(1.22); }
+
+  #again { position: fixed; left: 50%; transform: translateX(-50%) scale(.82);
+      bottom: max(46px, calc(env(safe-area-inset-bottom) + 40px));
+      width: 96px; height: 96px; border-radius: 50%; border: none; padding: 0;
+      background: radial-gradient(circle at 38% 32%, #d8b98d, #a37a4e 62%, #7d5a37);
+      box-shadow: 0 8px 22px rgba(0,0,0,.5), inset 0 2px 6px rgba(255,236,205,.4);
+      opacity: 0; pointer-events: none; transition: opacity .4s ease, transform .4s ease; }
+  #again.on { opacity: 1; pointer-events: auto; transform: translateX(-50%) scale(1); }
+  #again:active { transform: translateX(-50%) scale(.94); }
+  #again svg { width: 100%; height: 100%; display: block; }
+  #fps { position: fixed; right: 6px; top: 4px; font: 11px/1.3 ui-monospace, monospace;
+         color: rgba(210,190,160,.65); display: none; }
+  #fps.on { display: block; }
+</style>
+</head>
+<body>
+<div id="app"><canvas id="c"></canvas></div>
+<div id="hint"><div class="ring"></div><div class="chev"></div><div class="chev b"></div></div>
+<div id="pegs"></div>
+<button id="again" aria-label="new blank">
+  <svg viewBox="0 0 96 96" aria-hidden="true">
+    <!-- a fresh, unshaven blank, and the gesture of putting a new one in -->
+    <path d="M48 24 L60 66 L36 66 Z" fill="rgba(255,246,228,.92)" stroke="#4a3722" stroke-width="4"
+          stroke-linejoin="round"/>
+    <rect x="43" y="66" width="10" height="8" rx="2" fill="#4a3722" opacity=".8"/>
+    <path d="M74 40 A28 28 0 1 1 60 19" fill="none" stroke="#4a3722" stroke-width="7"
+          stroke-linecap="round" opacity=".8"/>
+    <path d="M77 24 L76 43 L59 37 Z" fill="#4a3722" opacity=".8"/>
+  </svg>
+</button>
+<div id="fps"></div>
+<script type="module" src="/src/main.ts"></script>
+</body>
+</html>
