@@ -13,8 +13,10 @@ import { StepClock, MAX_FRAME_DT, FIXED_DT } from '../src/core/clock';
 
 const DEG = 180 / Math.PI;
 
-function hung(): HeadRig {
+/** The head as it is once it has been balanced and hung: how it is in play. */
+function hung(weightT = 0.45): HeadRig {
   const r = new HeadRig();
+  r.weightT = weightT;
   r.supportKind = 'thread';
   r.restPresent = false;
   r.threadLen = THREAD_LEN.min;
@@ -130,8 +132,7 @@ describe('nodding', () => {
   });
 
   it('never pushes any part of the head through the paper shell', () => {
-    const r = hung();
-    r.weightT = 0.5;
+    const r = hung(0.5);
     r.pitchVel = 9; // far harder than a child can push
     const probes = [
       { x: HEAD.armTip.x, y: HEAD.armTip.y },

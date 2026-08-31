@@ -8,7 +8,7 @@
  * -- the same point the physics rotates about.
  */
 import { BufferGeometry } from 'three';
-import { MeshBuilder, addGrid, addBand, addTube, addEllipsoid } from './mesh';
+import { MeshBuilder, addGrid, addTube, addEllipsoid } from './mesh';
 import { HEAD, WEIGHT_RAIL } from '../sim/dims';
 import { Rng } from '../core/rng';
 
@@ -130,36 +130,24 @@ export function buildHead(): HeadMeshes {
   const liningB = new MeshBuilder();
   addGrid(liningB, 30, 24, true, (u, v) => headPoint(u, v * Math.PI * 2, true));
 
-  // The neck flange: a paper collar under the head that clears the body rim.
-  const fo: number[] = [];
-  const fi: number[] = [];
-  for (let j = 0; j <= 24; j++) {
-    const a = (j / 24) * Math.PI * 2;
-    fo.push(liningB.vertex({ x: Math.cos(a) * HEAD.flangeR, y: HEAD.flangeY + 1.2, z: Math.sin(a) * HEAD.flangeR }, j / 24, 1));
-    fi.push(liningB.vertex({ x: Math.cos(a) * HEAD.flangeR, y: HEAD.flangeY - 1.2, z: Math.sin(a) * HEAD.flangeR }, j / 24, 0));
-  }
-  addBand(liningB, fo, fi);
-  addTube(
-    liningB,
-    [
-      { x: 0, y: HEAD.flangeY + 1.2, r: HEAD.flangeR },
-      { x: 0, y: HEAD.flangeY - 1.2, r: HEAD.flangeR },
-    ],
-    24,
-  );
-
   // Stem through the opening, the notch the thread sits in, and the inner arm.
   const stemB = new MeshBuilder();
+  // The stem flares where it meets the head and pinches at the notch: the
+  // thread has to be able to sit in something.
   addTube(
     stemB,
     [
-      { x: 6.0, y: 12.0, r: 5.2 },
-      { x: 3.4, y: 7.0, r: HEAD.stemR },
-      { x: 1.6, y: 3.0, r: HEAD.stemR },
-      { x: 0.4, y: 1.4, r: HEAD.stemR * 0.98 },
-      { x: 0, y: 0, r: HEAD.stemR * 0.62 }, // the notch: a groove for the thread
-      { x: -0.4, y: -1.4, r: HEAD.stemR * 0.98 },
-      { x: -1.6, y: -3.2, r: HEAD.stemR },
+      { x: 6.4, y: 13.0, r: 8.4 },
+      { x: 4.4, y: 9.0, r: 7.4 },
+      { x: 2.6, y: 5.4, r: HEAD.stemR },
+      { x: 1.4, y: 2.9, r: HEAD.stemR * 0.99 },
+      // The notch: a groove deep and tall enough that the thread leaves it
+      // sideways without cutting back through the stem.
+      { x: 0.9, y: 2.5, r: HEAD.stemR * 0.58 },
+      { x: 0, y: 0, r: HEAD.stemR * 0.56 },
+      { x: -0.9, y: -2.5, r: HEAD.stemR * 0.58 },
+      { x: -1.4, y: -2.9, r: HEAD.stemR * 0.99 },
+      { x: -1.9, y: -3.6, r: HEAD.stemR },
       { x: -4.0, y: -5.2, r: 4.4 },
       { x: -7.0, y: -9.0, r: 3.5 },
       { x: -10.0, y: -13.5, r: 3.1 },

@@ -254,6 +254,38 @@ function woodTex(seed: number, base: string): Texture {
   });
 }
 
+/** The paper the shell is made of, seen from the inside. */
+function liningTex(): Texture {
+  return canvas(512, 512, (c) => {
+    const r = new Rng(0x3311);
+    c.fillStyle = '#cdbfa2';
+    c.fillRect(0, 0, 512, 512);
+    // torn edges of the pasted strips, and the fibre in them
+    for (let i = 0; i < 26; i++) {
+      c.save();
+      c.globalAlpha = r.range(0.06, 0.16);
+      c.fillStyle = r.next() > 0.5 ? '#efe4cc' : '#a8916d';
+      c.translate(r.range(0, 512), r.range(0, 512));
+      c.rotate(r.range(-0.5, 0.5));
+      c.fillRect(-r.range(40, 150), -r.range(14, 46), r.range(80, 300), r.range(28, 92));
+      c.restore();
+    }
+    c.globalAlpha = 0.14;
+    for (let i = 0; i < 400; i++) {
+      c.strokeStyle = r.next() > 0.5 ? '#8d8068' : '#f2e8d2';
+      c.lineWidth = r.range(0.4, 1.2);
+      const x = r.range(0, 512);
+      const y = r.range(0, 512);
+      const a = r.range(0, Math.PI);
+      c.beginPath();
+      c.moveTo(x, y);
+      c.lineTo(x + Math.cos(a) * r.range(6, 30), y + Math.sin(a) * r.range(6, 30));
+      c.stroke();
+    }
+    c.globalAlpha = 1;
+  });
+}
+
 /** Cut faces and the rim: white ground and paper layers under a red skin. */
 function edgeTex(): Texture {
   return canvas(64, 128, (c) => {
@@ -305,6 +337,7 @@ export function buildMaterials(): Materials {
   bench.wrapS = bench.wrapT = RepeatWrapping;
   bench.repeat.set(3, 3);
   const edge = edgeTex();
+  const lining = liningTex();
 
   const paint = (map: Texture): MeshPhysicalMaterial =>
     new MeshPhysicalMaterial({
@@ -334,13 +367,15 @@ export function buildMaterials(): Materials {
     red: paint(bodyTex),
     redHead: paint(headTex),
     redPlain: plain,
-    lining: new MeshStandardMaterial({ color: '#e3d8c2', roughness: 0.95, metalness: 0 }),
+    lining: new MeshStandardMaterial({ map: lining, roughness: 0.97, metalness: 0 }),
     edge: new MeshStandardMaterial({ map: edge, roughness: 0.9, metalness: 0 }),
     wood: new MeshStandardMaterial({ map: wood, roughness: 0.72, metalness: 0 }),
     woodDark: new MeshStandardMaterial({ map: woodD, roughness: 0.78, metalness: 0 }),
     bench: new MeshStandardMaterial({ map: bench, roughness: 0.8, metalness: 0 }),
     cloth: new MeshStandardMaterial({ color: '#6e1a18', roughness: 0.99, metalness: 0 }),
-    thread: new MeshStandardMaterial({ color: '#e4d9c2', roughness: 0.85, metalness: 0 }),
+    // Darker than the paper it runs against, so the support reads as a thread
+    // holding something up rather than a highlight on the shell.
+    thread: new MeshStandardMaterial({ color: '#9c8659', roughness: 0.88, metalness: 0 }),
     lead: new MeshStandardMaterial({ color: '#6b655f', roughness: 0.52, metalness: 0.3 }),
     paper: new MeshStandardMaterial({ color: '#a2957c', roughness: 0.96, metalness: 0 }),
     wall: new MeshStandardMaterial({ color: '#7d6a56', roughness: 0.95, metalness: 0 }),
@@ -352,7 +387,7 @@ export function buildMaterials(): Materials {
       emissiveIntensity: 1.35,
     }),
     dispose() {
-      for (const t of [bodyTex, headTex, wood, woodD, bench, edge]) t.dispose();
+      for (const t of [bodyTex, headTex, wood, woodD, bench, edge, lining]) t.dispose();
     },
   };
   return mats;

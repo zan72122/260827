@@ -64,7 +64,12 @@ export const LEGS: ReadonlyArray<{ x: number; z: number; rTop: number; rBot: num
   { x: 14, z: 13.0, rTop: 7.0, rBot: 5.2 },
   { x: 14, z: -13.0, rTop: 7.0, rBot: 5.2 },
 ];
-export const LEG_TOP_Y = 34;
+/**
+ * Where the legs meet the underside of the body. Just below the outer wall, so
+ * a leg is joined to the shell rather than pushed up through it into the
+ * cavity, which the section would otherwise show.
+ */
+export const LEG_TOP_Y = 24;
 
 /* ---------------------------------------------------------------- head --- */
 
@@ -84,9 +89,12 @@ export const HEAD = {
   muzzle: { x: 41, y: 8 },
   /** underside of the jaw: the point that lands on the chin rest */
   chin: { x: 20, y: 5 },
-  /** neck flange: the lip that clears the body rim when the head lifts */
-  flangeY: 2,
-  flangeR: 9.6,
+  /**
+   * Underside of the head, on the stem's axis. This is the edge that sits
+   * inside the opening before the thread takes the weight and stands clear of
+   * the rim afterwards -- the gap the child is meant to see.
+   */
+  flangeY: 7.2,
   /** the stem passing through the collar opening */
   stemR: 6.2,
   /** far end of the inner arm, head-local (down inside the belly) */
@@ -121,16 +129,25 @@ export const WEIGHT_MASS = 30;
 /* -------------------------------------------------------- thread & jigs --- */
 
 /** The two pegs on the collar rim the support thread is tied between. */
+/**
+ * The two pegs the support thread is tied between, standing on the outside of
+ * the collar. They are set wide enough that the thread runs clear of the neck
+ * stem on its way down to the notch, rather than through it.
+ */
 export const THREAD_PEGS = {
-  y: 70,
+  y: 68,
   x: 44.0,
-  hz: 10.0,
-  pegR: 1.6,
+  hz: 15.0,
+  pegR: 2.1,
 };
 /** Free thread length between the two pegs. Shorter = head rides higher. */
-export const THREAD_LEN = { min: 21.5, max: 40.0, start: 40.0 };
-/** Radius of the drawn thread. */
-export const THREAD_R = 0.42;
+export const THREAD_LEN = { min: 31.5, max: 48.0, start: 48.0 };
+/**
+ * Radius of the drawn thread. Real linen thread for this would be thinner;
+ * it is drawn at a little over half a millimetre so that it still reads as a
+ * thread, and as the thing holding the head up, on a phone screen.
+ */
+export const THREAD_R = 0.68;
 
 /** Top surface of the wooden chin rest the head sits on before it is hung. */
 export const CHIN_REST = { y: 59.4, x: 66, hz: 11, cradle: 0.08 };

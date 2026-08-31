@@ -10,7 +10,7 @@
 import { BufferGeometry } from 'three';
 import { MeshBuilder, addGrid, addBand, addTube } from './mesh';
 import { sectionAt, outline, stationAt } from './profile';
-import { LEGS, LEG_TOP_Y, BODY_SPINE, BODY_SECTION_EXP } from '../sim/dims';
+import { LEGS, LEG_TOP_Y, BODY_SPINE, BODY_SECTION_EXP, COLLAR } from '../sim/dims';
 import { Rng } from '../core/rng';
 
 /** Low, seeded, hand-formed unevenness, in millimetres. */
@@ -169,9 +169,9 @@ export function buildLegs(): BufferGeometry {
     addTube(
       mb,
       [
-        { x: leg.x, y: LEG_TOP_Y + 4, z: leg.z, r: leg.rTop * 0.86 },
-        { x: leg.x, y: LEG_TOP_Y - 6, z: leg.z, r: leg.rTop },
-        { x: leg.x + splay * 0.4, y: 14, z: leg.z + splay, r: (leg.rTop + leg.rBot) / 2 },
+        { x: leg.x, y: LEG_TOP_Y + 1.5, z: leg.z, r: leg.rTop * 0.84 },
+        { x: leg.x, y: LEG_TOP_Y - 4, z: leg.z, r: leg.rTop },
+        { x: leg.x + splay * 0.4, y: 11, z: leg.z + splay, r: (leg.rTop + leg.rBot) / 2 },
         { x: leg.x + splay * 0.7, y: 3.0, z: leg.z + splay * 1.6, r: leg.rBot },
         { x: leg.x + splay * 0.75, y: 0.6, z: leg.z + splay * 1.7, r: leg.rBot * 0.86 },
       ],
@@ -181,16 +181,24 @@ export function buildLegs(): BufferGeometry {
   return mb.build();
 }
 
-/** The two small pegs on the rim the support thread is tied between. */
+/**
+ * The two pins the support thread is tied to.
+ *
+ * They are driven into the wall of the collar and lean outwards, so the tie
+ * points end up wide of the neck stem and the thread runs down to the notch
+ * without cutting back through it.
+ */
 export function buildPegs(pegs: { x: number; y: number; hz: number; pegR: number }): BufferGeometry {
   const mb = new MeshBuilder();
-  for (const z of [-pegs.hz, pegs.hz]) {
+  const root = COLLAR.hz - COLLAR.wall * 0.5;
+  for (const side of [-1, 1]) {
     addTube(
       mb,
       [
-        { x: pegs.x - 1.5, y: pegs.y - 7.5, z, r: pegs.pegR * 1.15 },
-        { x: pegs.x - 0.6, y: pegs.y - 2.5, z, r: pegs.pegR },
-        { x: pegs.x, y: pegs.y, z, r: pegs.pegR * 1.35 },
+        { x: pegs.x - 3.0, y: COLLAR.y - 3.0, z: side * root * 0.72, r: pegs.pegR * 0.9 },
+        { x: pegs.x - 1.4, y: COLLAR.y + 0.5, z: side * root, r: pegs.pegR },
+        { x: pegs.x - 0.4, y: pegs.y - 2.2, z: side * (pegs.hz - 0.8), r: pegs.pegR * 0.92 },
+        { x: pegs.x, y: pegs.y, z: side * pegs.hz, r: pegs.pegR * 1.3 },
       ],
       8,
     );

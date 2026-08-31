@@ -43,60 +43,79 @@ export function buildTray(): { wood: BufferGeometry; cloth: BufferGeometry } {
   return { wood: wood.build(), cloth: cloth.build() };
 }
 
-/** The hanging jig: a post, a forward arm, and the hook the head rides on. */
+/**
+ * The hanging jig: a post, an arm reaching in from behind, and a cradle the
+ * neck sits in while the counterweight is being set.
+ *
+ * The cradle sits below the notch and clear of the head, so nothing of the jig
+ * passes through the doll -- the head is visibly carried by it, and the child
+ * can see the whole face and the whole inner arm at the same time.
+ */
 export function buildJig(): BufferGeometry {
   const mb = new MeshBuilder();
-  const bx = JIG.hookX - 34;
-  const bz = JIG.hookZ + 16;
+  const bx = JIG.hookX - 72;
+  const bz = JIG.hookZ - 78;
+  const cradleY = JIG.hookY - 5.0;
   addRoundedBox(mb, { x: bx, y: 4, z: bz }, { x: 26, y: 4, z: 24 }, 2, 2);
   addTube(
     mb,
     [
       { x: bx, y: 6, z: bz, r: JIG.postR * 1.35 },
       { x: bx, y: 40, z: bz, r: JIG.postR },
-      { x: bx, y: JIG.hookY + 12, z: bz, r: JIG.postR * 0.92 },
+      { x: bx, y: JIG.hookY + 2, z: bz, r: JIG.postR * 0.92 },
     ],
     10,
   );
+  // the arm, coming in behind the head and dropping to the cradle
   addTube(
     mb,
     [
-      { x: bx, y: JIG.hookY + 12, z: bz, r: 4.0 },
-      { x: JIG.hookX, y: JIG.hookY + 12, z: JIG.hookZ, r: 3.4 },
+      { x: bx, y: JIG.hookY + 2, z: bz, r: 4.0 },
+      { x: (bx + JIG.hookX) / 2 - 4, y: JIG.hookY + 1, z: (bz + JIG.hookZ) / 2, r: 3.4 },
+      { x: JIG.hookX - 12, y: cradleY + 5, z: JIG.hookZ - 6, r: 3.0 },
     ],
     9,
   );
-  // the hook itself, bending down to the notch
+  // the cradle itself: a shallow U under the notch
   addTube(
     mb,
     [
-      { x: JIG.hookX, y: JIG.hookY + 11, z: JIG.hookZ, r: 1.7 },
-      { x: JIG.hookX, y: JIG.hookY + 5.0, z: JIG.hookZ, r: 1.5 },
-      { x: JIG.hookX - 2.6, y: JIG.hookY + 1.4, z: JIG.hookZ, r: 1.4 },
-      { x: JIG.hookX - 0.6, y: JIG.hookY - 0.4, z: JIG.hookZ, r: 1.4 },
-      { x: JIG.hookX + 2.4, y: JIG.hookY + 0.9, z: JIG.hookZ, r: 1.3 },
+      { x: JIG.hookX - 12, y: cradleY + 5, z: JIG.hookZ - 6, r: 2.4 },
+      { x: JIG.hookX - 9, y: cradleY + 2.4, z: JIG.hookZ - 1, r: 1.8 },
+      { x: JIG.hookX - 5, y: cradleY - 0.4, z: JIG.hookZ, r: 1.7 },
+      { x: JIG.hookX, y: cradleY - 1.2, z: JIG.hookZ, r: 1.7 },
+      { x: JIG.hookX + 5, y: cradleY - 0.4, z: JIG.hookZ, r: 1.7 },
+      { x: JIG.hookX + 8.5, y: cradleY + 2.6, z: JIG.hookZ, r: 1.6 },
+      { x: JIG.hookX + 10, y: cradleY + 6.5, z: JIG.hookZ, r: 1.5 },
     ],
     8,
   );
   return mb.build();
 }
 
-/** The wooden prop the head's jaw sits on until the thread takes its weight. */
+/**
+ * The wooden prop the head's jaw sits on until the thread takes its weight.
+ * A slim turned post rather than a block: it has to hold the jaw without
+ * standing in front of the thing the child is trying to look at.
+ */
 export function buildChinRest(): BufferGeometry {
   const mb = new MeshBuilder();
-  addRoundedBox(mb, { x: CHIN_REST.x, y: 4, z: 0 }, { x: 16, y: 4, z: 20 }, 2, 2);
-  addRoundedBox(
+  addRoundedBox(mb, { x: CHIN_REST.x, y: 2.6, z: 0 }, { x: 13, y: 2.6, z: 16 }, 1.6, 2);
+  addTube(
     mb,
-    { x: CHIN_REST.x, y: (CHIN_REST.y - 8) / 2 + 6, z: 0 },
-    { x: 8.5, y: (CHIN_REST.y - 8) / 2, z: 11 },
-    2,
-    2,
+    [
+      { x: CHIN_REST.x, y: 4.4, z: 0, r: 6.0 },
+      { x: CHIN_REST.x, y: 12, z: 0, r: 4.2 },
+      { x: CHIN_REST.x, y: CHIN_REST.y - 14, z: 0, r: 3.6 },
+      { x: CHIN_REST.x, y: CHIN_REST.y - 5, z: 0, r: 4.6 },
+    ],
+    10,
   );
   // a shallow cradle so the jaw sits still instead of rolling off
-  addGrid(mb, 10, 12, false, (u, v) => {
+  addGrid(mb, 8, 12, false, (u, v) => {
     const z = -CHIN_REST.hz + v * CHIN_REST.hz * 2;
-    const x = CHIN_REST.x - 8.5 + u * 17;
-    const dip = 2.2 * Math.pow(Math.abs(z) / CHIN_REST.hz - 1, 2);
+    const x = CHIN_REST.x - 7 + u * 14;
+    const dip = 2.4 * Math.pow(Math.abs(z) / CHIN_REST.hz - 1, 2);
     return { x, y: CHIN_REST.y - dip, z };
   });
   return mb.build();
@@ -108,7 +127,7 @@ export function buildGrip(): BufferGeometry {
   addTube(
     mb,
     [
-      { x: 0, y: 0, z: WEIGHT_RAIL.r * 0.6, r: GRIP.stemR },
+      { x: 0, y: 0, z: WEIGHT_RAIL.r * 0.5, r: GRIP.stemR },
       { x: 0, y: 0, z: GRIP.z - GRIP.r * 0.7, r: GRIP.stemR },
     ],
     9,
@@ -120,14 +139,17 @@ export function buildGrip(): BufferGeometry {
     12,
     16,
   );
-  // a thin paper band: the provisional fixing that holds the weight in place
+  // The collar the grip is clamped to, riding on the arm: the provisional
+  // fixing that keeps the weight where the child put it.
+  const ax = -0.55;
+  const ay = -0.83;
   addTube(
     mb,
     [
-      { x: -WEIGHT_RAIL.r * 0.35, y: 0.4, z: 0, r: WEIGHT_RAIL.r * 1.03 },
-      { x: WEIGHT_RAIL.r * 0.35, y: 0.4, z: 0, r: WEIGHT_RAIL.r * 1.03 },
+      { x: -ax * 2.4, y: -ay * 2.4, z: 0, r: WEIGHT_RAIL.r * 1.06 },
+      { x: ax * 2.4, y: ay * 2.4, z: 0, r: WEIGHT_RAIL.r * 1.06 },
     ],
-    16,
+    14,
     false,
     false,
   );

@@ -133,7 +133,29 @@ async function play(page, tag, opts = {}) {
   const h2 = await spot(page, 'head');
   await tap(page, { x: h2.x, y: h2.y });
   await page.waitForTimeout(180);
+  const smallPeak = await peakOf(page, 1.6);
   await shot('8-touch-again');
+
+  // 7. and a firm push gives a bigger one, from the same mechanism
+  await settle(page, 2400);
+  const h3 = await spot(page, 'head');
+  await drag(page, { x: h3.x, y: h3.y }, { x: h3.x, y: h3.y + 96 }, 12, 14);
+  await page.waitForTimeout(160);
+  const bigPeak = await peakOf(page, 1.6);
+  await shot('9-firm-push');
+  log.push({ tag, label: 'nod-peaks', ...(await state(page)), smallPeak, bigPeak });
+}
+
+/** Largest departure from the resting posture over the next `secs`. */
+async function peakOf(page, secs) {
+  const end = Date.now() + secs * 1000;
+  let peak = 0;
+  while (Date.now() < end) {
+    const s = await state(page);
+    peak = Math.max(peak, Math.abs(s.pitchDeg - s.restPitchDeg));
+    await page.waitForTimeout(45);
+  }
+  return peak;
 }
 
 for (const vp of VIEWPORTS) {
@@ -172,21 +194,76 @@ for (const vp of VIEWPORTS) {
   await page.setViewportSize({ width: 844, height: 390 });
   await page.waitForTimeout(800);
   const afterRotate = await state(page);
-  await page.screenshot({ path: `${OUT}/rotate-midflow.png` });
   log.push({ tag: 'resilience', label: 'after-cancel', ...afterCancel });
   log.push({ tag: 'resilience', label: 'after-rotate', ...afterRotate });
+
+  // carry on from where the rotation left it, and rotate again mid-thread
+  for (let i = 0; i < 20; i++) {
+    const st = await state(page);
+    if (st.stage !== 'balance' || Math.abs(st.restPitchDeg) < 3.5) break;
+    const g = await spot(page, 'grip');
+    const push = Math.max(6, Math.min(26, Math.abs(st.restPitchDeg) * 1.1));
+    const dir = st.restPitchDeg > 0 ? 1 : -1;
+    await drag(page, { x: g.x, y: g.y }, { x: g.x + g.ax * push * dir, y: g.y + g.ay * push * dir }, 5, 16);
+    await page.waitForTimeout(240);
+  }
+  await settle(page, 1400);
+  for (let i = 0; i < 16; i++) {
+    const st = await state(page);
+    if (st.stage !== 'insert') break;
+    const s = await spot(page, 'head');
+    await drag(page, { x: s.x, y: s.y }, { x: s.x + s.ax * 60, y: s.y + s.ay * 60 }, 10, 16);
+    await page.waitForTimeout(200);
+  }
+  await settle(page, 700);
+  await page.setViewportSize({ width: 820, height: 1180 }); // rotate mid-thread
+  await page.waitForTimeout(900);
+  log.push({ tag: 'resilience', label: 'rotated-mid-thread', ...(await state(page)) });
+  await page.screenshot({ path: `${OUT}/rotate-midflow.png` });
+  for (let i = 0; i < 12; i++) {
+    const st = await state(page);
+    if (st.stage !== 'thread' || st.lift > 4.4) break;
+    const s = await spot(page, 'toggle');
+    await drag(page, { x: s.x, y: s.y }, { x: s.x + s.ax * 40, y: s.y + s.ay * 40 }, 8, 18);
+    await page.waitForTimeout(200);
+  }
+  for (let i = 0; i < 8; i++) {
+    const st = await state(page);
+    if (st.stage !== 'thread') break;
+    const s = await spot(page, 'tie');
+    await tap(page, { x: s.x, y: s.y });
+    await page.waitForTimeout(320);
+  }
+  await settle(page, 2600);
+  // A child taps until something happens; so does this.
+  for (let i = 0; i < 4; i++) {
+    const st = await state(page);
+    if (st.stage === 'play') break;
+    const h = await spot(page, 'head');
+    if (i === 0) console.log('resilience head target at', JSON.stringify(h));
+    await tap(page, { x: h.x, y: h.y });
+    await settle(page, 3200);
+  }
+  log.push({ tag: 'resilience', label: 'finished-after-rotations', ...(await state(page)) });
+  await page.screenshot({ path: `${OUT}/resilience-finished.png` });
   await page.close();
 }
 
 await browser.close();
 await server.close();
 writeFileSync(`${OUT}/capture-log.json`, JSON.stringify(log, null, 1));
-const bad = log.filter((r) => r.label === '7-finished' && r.stage !== 'play');
+const bad = log.filter(
+  (r) =>
+    (r.label === '7-finished' && r.stage !== 'play') ||
+    (r.label === 'finished-after-rotations' && r.stage !== 'play') ||
+    (r.label === 'nod-peaks' && !(r.bigPeak > r.smallPeak * 1.6)),
+);
 for (const r of log) {
   console.log(
     `${r.tag.padEnd(10)} ${r.label.padEnd(18)} ${r.stage.padEnd(9)} wT=${r.weightT.toFixed(2)} ` +
       `rest=${r.restPitchDeg.toFixed(1)} pitch=${r.pitchDeg.toFixed(1)} gap=${r.rimGap.toFixed(1)} ` +
-      `lift=${r.lift.toFixed(1)} s=${r.insertS.toFixed(2)} tri=${r.triangles} dc=${r.drawCalls}`,
+      `lift=${r.lift.toFixed(1)} s=${r.insertS.toFixed(2)} tri=${r.triangles} dc=${r.drawCalls}` +
+      (r.smallPeak === undefined ? '' : ` smallNod=${r.smallPeak.toFixed(1)} firmNod=${r.bigPeak.toFixed(1)}`),
   );
 }
 if (bad.length) {

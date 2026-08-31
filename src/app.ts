@@ -414,8 +414,8 @@ export class Game {
     // thread, tie and the first nod: one framing, held still
     headBox({ x: THREAD_PEGS.x, y: THREAD_PEGS.y - 4, z: 0 });
     add(THREAD_PEGS.x, THREAD_PEGS.y + 6, THREAD_PEGS.hz);
-    add(12, 28, 0); // the inside of the belly, where the arm and weight hang
-    add(12, 66, 0);
+    add(-8, 28, 0); // the inside of the belly, where the arm and weight hang
+    add(-8, 66, 0);
     add(CHIN_REST.x + 12, 24, 0);
     const tg = this.shop.togglePoint(0.5);
     P.push(tg);

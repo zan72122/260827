@@ -26,7 +26,6 @@ import {
   Vector2,
   Vector3,
   WebGLRenderer,
-  DoubleSide,
   ACESFilmicToneMapping,
   SRGBColorSpace,
   PCFSoftShadowMap,
@@ -38,7 +37,7 @@ import { buildRoom } from '../geom/room';
 import { Cord } from '../geom/cord';
 import { buildMaterials, type Materials } from './materials';
 import { CameraRig } from './camera';
-import { GRIP, HEAD, JIG, MM, THREAD_PEGS, TOGGLE } from '../sim/dims';
+import { GRIP, HEAD, JIG, MM, THREAD_PEGS, THREAD_R, TOGGLE } from '../sim/dims';
 import { HeadRig, threadSag } from '../sim/rig';
 import type { Stage } from '../sim/stages';
 import { pullFraction } from '../sim/stages';
@@ -72,8 +71,9 @@ export class Workshop {
   private jigMesh: Mesh;
   private toggleMesh: Mesh;
   private knotMesh: Mesh;
-  private supportCord = new Cord(10, 6, 0.00042);
-  private tailCord = new Cord(26, 6, 0.00042);
+  private supportCord = new Cord(10, 6, THREAD_R * MM);
+  private tailCord = new Cord(26, 6, THREAD_R * MM);
+  private tailMesh!: Mesh;
   private cutFace: Mesh;
   private cutZ = 999;
   private clip = new Plane(new Vector3(0, 0, -1), 999);
@@ -121,11 +121,9 @@ export class Workshop {
     this.add(body.outer, this.mats.red, true, true, true);
     this.add(body.inner, this.mats.lining, false, false, true);
     this.add(body.edge, this.mats.edge, true, false, true);
-    // The legs are solid forms, so when the section plane passes through one it
-    // has to show its far wall rather than a hole.
-    const legMat = this.mats.redPlain;
-    legMat.side = DoubleSide;
-    tris += this.add(buildLegs(), legMat, true, true, true);
+    // The legs are solid forms and stand below the window, so the section
+    // leaves them alone rather than slicing a hollow into one.
+    tris += this.add(buildLegs(), this.mats.redPlain, true, true);
     tris += this.add(buildPegs(THREAD_PEGS), this.mats.woodDark, true, false);
 
     // the cut face, generated from this body's own walls when the plane moves
@@ -164,12 +162,14 @@ export class Workshop {
     this.knotMesh.visible = false;
 
     // --- the thread ----------------------------------------------------------
-    for (const c of [this.supportCord, this.tailCord]) {
+    const cordMeshes = [this.supportCord, this.tailCord].map((c) => {
       const m = new Mesh(c.geometry, this.mats.thread);
       m.castShadow = false;
       m.frustumCulled = false;
       this.scene.add(m);
-    }
+      return m;
+    });
+    this.tailMesh = cordMeshes[1]!;
 
     // --- light: a broad window and a quiet work lamp -------------------------
     this.scene.add(new HemisphereLight('#cfe2f2', '#6a5440', 1.15));
@@ -294,36 +294,53 @@ export class Workshop {
     const pegL = v(THREAD_PEGS.x, THREAD_PEGS.y, -THREAD_PEGS.hz);
     const pegR = v(THREAD_PEGS.x, THREAD_PEGS.y, THREAD_PEGS.hz);
     const notch = new Vector3(s.x * MM, s.y * MM, s.z * MM);
-    // slack: the thread hangs in a V below the notch; taut: it is the support
-    const apex = new Vector3(THREAD_PEGS.x * MM, Math.min(apexY, s.y) * MM, 0);
-    const seat = rig.resting ? apex : notch;
-    this.supportCord.update([pegL, seat, pegR]);
+    // Until the head is hanging on it, the thread lies slack in its own V
+    // between the pegs; once it takes the weight, the V goes to the notch and
+    // the two are the same point.
+    const hanging = rig.supportKind === 'thread' && !rig.resting;
+    const apex = new Vector3(THREAD_PEGS.x * MM, apexY * MM, 0);
+    this.supportCord.update([pegL, hanging ? notch : apex, pegR]);
 
     // the free end, run through the peg and down to the toggle on the bench
     const pull = Math.max(0, Math.min(1, pullFraction(rig)));
     const tp = this.togglePoint(pull);
+    // Once the length is knotted the free end is trimmed off, as it would be.
+    const loose = stage === 'insert' || stage === 'thread';
+    this.toggleMesh.visible = loose;
+    this.tailMesh.visible = loose;
     this.toggleMesh.position.copy(tp);
-    this.toggleMesh.visible = stage === 'thread' || stage === 'insert' || stage === 'tie';
-    this.tailCord.update([
-      pegR,
-      v(THREAD_PEGS.x + 8, THREAD_PEGS.y - 4, THREAD_PEGS.hz + 5),
-      new Vector3().lerpVectors(pegR, tp, 0.55).setY(Math.max(tp.y, pegR.y * 0.42)),
-      tp,
-    ]);
+    if (loose) {
+      this.tailCord.update([
+        pegR,
+        v(THREAD_PEGS.x + 8, THREAD_PEGS.y - 4, THREAD_PEGS.hz + 5),
+        new Vector3().lerpVectors(pegR, tp, 0.55).setY(Math.max(tp.y, pegR.y * 0.42)),
+        tp,
+      ]);
+    }
     this.knotMesh.position.copy(pegR).add(v(1.5, 1.0, 1.6));
     this.knotMesh.visible = stage === 'tie' || stage === 'firstNod' || stage === 'play';
 
     // --- the explanatory section --------------------------------------------
-    const z = 44 - 44 * Math.max(0, Math.min(1, opts.cut));
+    // The plane stops short of halfway: enough of the near wall comes away to
+    // follow the arm and the weight, while the doll still reads as a doll.
+    // Only the outer part of the near flank is taken away, leaving a window in
+    // the side of the body rather than half a doll: the shell still reads as a
+    // shell, and the arm and the weight are visible through it.
+    const z = 44 - 34 * Math.max(0, Math.min(1, opts.cut));
     if (Math.abs(z - this.cutZ) > 0.35) {
       this.cutZ = z;
-      this.clip.constant = -z * MM;
+      // The plane keeps everything behind it, so the near wall comes away and
+      // the far one -- the inside of the shell -- is what is left to look at.
+      this.clip.constant = z * MM;
       const g = buildCutFace(z);
       this.cutFace.geometry.dispose();
       this.cutFace.geometry = g;
+      // A hair in front of the clip plane, so the two do not fight for the
+      // same pixels along the edge of the window.
+      this.cutFace.position.z = 0.00006;
     }
     const cutting = opts.cut > 0.001;
-    this.cutFace.visible = cutting && z < 22;
+    this.cutFace.visible = cutting && z < 21.5;
     for (const m of this.clipped) m.clippingPlanes = cutting ? [this.clip] : null;
 
     // --- keep the one shadow tight on the doll ------------------------------
