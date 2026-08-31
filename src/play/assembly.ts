@@ -63,6 +63,9 @@ export class Assembly implements PointerSink {
   private grabOffset = new THREE.Vector3();
   private grabBlend = 0;
   private planePoint = new THREE.Vector3();
+  /** where the piece was when the groove took it */
+  private captureFrom = new THREE.Vector3();
+  private captureBlend = 1;
   private trayPose = new Map<TaskId, { pos: THREE.Vector3; quat: THREE.Quaternion }>();
   private enabled = true;
 
@@ -284,6 +287,7 @@ export class Assembly implements PointerSink {
     }
 
     if (this.mode === 'seating') {
+      this.captureBlend = Math.min(1, this.captureBlend + dt / 0.15);
       this.seatTimer += dt;
       const k = smoothstep(this.seatTimer / 0.14);
       this.tSmooth = this.seatFrom + (1 - this.seatFrom) * k;
@@ -326,7 +330,13 @@ export class Assembly implements PointerSink {
     const outside = this.freePos.clone().sub(joint.seated).dot(joint.axis) < 0.004;
     const near = heldPx.distanceTo(entryPx) < CAPTURE_PX && outside;
 
-    if (this.mode === 'carrying' && near) this.mode = 'guided';
+    if (this.mode === 'carrying' && near) {
+      // the groove takes it: glide the last few millimetres onto the axis
+      // rather than snapping, but over 0.15 s, not as a drawn-out animation
+      this.mode = 'guided';
+      obj.getWorldPosition(this.captureFrom);
+      this.captureBlend = 0;
+    }
 
     if (this.mode === 'guided') {
       const ax = seatedPx.x - entryPx.x;
@@ -340,6 +350,7 @@ export class Assembly implements PointerSink {
         this.mode = 'carrying';
       } else {
         this.tSmooth = damp(this.tSmooth, Math.max(0, this.t), 22, dt);
+        this.captureBlend = Math.min(1, this.captureBlend + dt / 0.15);
         this.applyGuided(id, joint, task, this.tSmooth);
         if (this.tSmooth > 0.9) this.beginSeat();
         return;
@@ -367,15 +378,17 @@ export class Assembly implements PointerSink {
     t: number,
   ) {
     const obj = this.objectOf(id);
-    const p = joint.entry.clone().addScaledVector(joint.axis, task.travelM * clamp(t, 0, 1));
-    obj.position.copy(p);
+    const k = 1 - smoothstep(this.captureBlend);
+    const onAxis = joint.entry.clone().addScaledVector(joint.axis, task.travelM * clamp(t, 0, 1));
+    obj.position.copy(k > 0.001 ? onAxis.lerp(this.captureFrom, k) : onAxis);
     if (id === 'tree') {
       obj.quaternion.identity();
       obj.rotation.y = this.tree.group.rotation.y;
     } else {
       const pose = this.tree.poseFor(id, 0);
       const worldQuat = this.tree.group.getWorldQuaternion(new THREE.Quaternion()).multiply(pose.quaternion);
-      obj.quaternion.copy(worldQuat);
+      if (k > 0.001) obj.quaternion.slerp(worldQuat, 1 - k);
+      else obj.quaternion.copy(worldQuat);
     }
   }
 

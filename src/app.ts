@@ -296,14 +296,24 @@ export class Game {
       const raw = (now - this.last) / 1000;
       this.last = now;
       if (!this.running) return;
-      const dt = clamp(raw, 0, MAX_DT);
-      this.frame(dt, raw);
+      this.frame(raw, raw);
     };
     requestAnimationFrame(loop);
   }
 
-  /** One step. Exposed so the tests can drive it deterministically. */
-  frame(dt: number, raw = dt, render = true) {
+  /**
+   * One step.  The step is clamped here rather than in the loop, so no caller —
+   * a tab coming back after an hour included — can make the movement work
+   * through a long stretch of time in one go.
+   */
+  frame(step: number, raw = step, render = true) {
+    const dt = clamp(step, 0, MAX_DT);
+    // Some browsers report a rotation late, or not at all when only the visual
+    // viewport changes, so the canvas is measured every frame rather than
+    // trusting the resize event alone.
+    if (this.canvas.clientWidth !== this.vp.width || this.canvas.clientHeight !== this.vp.height) {
+      this.resize();
+    }
     if (this.startDelay > 0) {
       this.startDelay -= dt;
       if (this.startDelay <= 0) this.director.go('assembly');
