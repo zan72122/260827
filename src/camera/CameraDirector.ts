@@ -132,7 +132,7 @@ export class CameraDirector {
       radius: 0.050,
       // low enough to read the belly and the tail, high enough that the cake
       // top is still a surface you can draw a circle on
-      elevation: 0.27,
+      elevation: 0.345,
       azimuth: null,
       fov: 30,
       tau: 0.6,

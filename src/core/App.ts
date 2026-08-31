@@ -412,10 +412,10 @@ export class App {
     if (this.flow.beat === 'free' || this.flow.beat === 'finale') {
       if (d.kind === 'rosette') {
         this.director.set('topDown');
-        this.holdShotUntil = this.elapsed + 1.4;
+        this.holdShotUntil = this.elapsed + 1.05;
       } else if (d.kind === 'shell') {
         this.director.set('lowSide');
-        this.holdShotUntil = this.elapsed + 1.4;
+        this.holdShotUntil = this.elapsed + 1.05;
       }
     }
     this.latestMeshRef =
@@ -574,6 +574,12 @@ export class App {
       hz = 0;
       height = 0.015;
     }
+    if (this.flow.beat === 'finale') {
+      // lift the tool clear so the showcase is the child's own work
+      hx = 0.035;
+      hz = -0.02;
+      height = 0.085;
+    }
     this.controller.hover(hx, hz, height, dt);
   }
 
@@ -645,9 +651,9 @@ export class App {
    * a thumb still reaches them.
    */
   private readonly rowNdcPortrait: [number, number][] = [
-    [-0.58, -0.72],
-    [-0.17, -0.80],
-    [0.24, -0.87],
+    [-0.58, -0.66],
+    [-0.17, -0.74],
+    [0.24, -0.80],
   ];
   private readonly rowNdcLandscape: [number, number][] = [
     [0.80, -0.72],
@@ -668,13 +674,13 @@ export class App {
     // walk the anchor down the screen until the tip clears the turntable; that
     // keeps it both reachable and visible whatever the screen shape is
     for (let step = 0; step <= 12; step++) {
-      const ny = Math.max(-0.97, row[i][1] - step * 0.06);
+      const ny = Math.max(-0.90, row[i][1] - step * 0.05);
       this.benchNdc.set(row[i][0], ny);
       this.raycaster.setFromCamera(this.benchNdc, this.camera);
       if (!this.raycaster.ray.intersectPlane(this.benchPlane, this.benchHit)) return false;
       const r = Math.hypot(this.benchHit.x, this.benchHit.z);
       if (r > 0.40) continue;
-      if (r >= 0.118 || ny <= -0.965) {
+      if (r >= 0.112 || ny <= -0.895) {
         out.copy(this.benchHit);
         out.y = BENCH_Y;
         return true;

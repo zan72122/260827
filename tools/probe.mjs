@@ -64,7 +64,7 @@ async function stroke(x, y, holdSec, path, name) {
   if (name) await shot(`${name}-live`);
   await page.mouse.up();
   await waitFor((d) => !d.piping);
-  await simWait(0.9);
+  await simWait(1.7);
   if (name) await shot(name);
 }
 
