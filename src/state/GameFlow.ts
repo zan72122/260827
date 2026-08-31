@@ -51,6 +51,11 @@ export class GameFlow {
     this.t = 0;
   }
 
+  /** any touch counts as life: it must not fall straight back into the finale */
+  poke(): void {
+    this.idle = 0;
+  }
+
   notifyBegin(): void {
     this.idle = 0;
     if (this.beat === 'awaitFirst') this.go('firstFlow');

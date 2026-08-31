@@ -67,6 +67,33 @@ export function classifyGesture(path: PathPoint[], oscillations: number): Gestur
   }
   const circularity = radius > 1e-5 ? Math.sqrt(variance / n) / radius : 1;
 
+  // How many times the stroke crossed its own long axis. Read straight off the
+  // recorded path rather than off frame-to-frame velocity, so the answer does
+  // not change with the frame rate: a zigzag crosses many times, a single bow
+  // twice, a straight line never.
+  let sxx = 0;
+  let sxz = 0;
+  let szz = 0;
+  for (const p of path) {
+    const ax = p.x - cx;
+    const az = p.z - cz;
+    sxx += ax * ax;
+    sxz += ax * az;
+    szz += az * az;
+  }
+  const major = 0.5 * Math.atan2(2 * sxz, sxx - szz);
+  const perpX = -Math.sin(major);
+  const perpZ = Math.cos(major);
+  let latSign = 0;
+  let pathCrossings = 0;
+  for (const p of path) {
+    const lat = (p.x - cx) * perpX + (p.z - cz) * perpZ;
+    if (Math.abs(lat) < 0.0026) continue;
+    const sg = lat > 0 ? 1 : -1;
+    if (latSign !== 0 && sg !== latSign) pathCrossings++;
+    latSign = sg;
+  }
+
   let prevAng = 0;
   let havePrev = false;
   for (let i = 1; i < n; i++) {
@@ -91,14 +118,14 @@ export function classifyGesture(path: PathPoint[], oscillations: number): Gestur
   let kind: GestureKind;
   if (length < 0.0075) {
     kind = 'star';
-  } else if (oscillations >= 3 && length > 0.016 && Math.abs(turns) < 0.85) {
+  } else if (pathCrossings >= 3 && length > 0.016 && Math.abs(turns) < 0.85) {
     // keeps reversing its turn direction and never closes on itself
     kind = 'ribbon';
   } else if (
     Math.abs(turns) > 0.60 &&
     straightness < 0.52 &&
     radius > 0.0042 &&
-    circularity < 0.55
+    circularity < 0.60
   ) {
     kind = 'rosette';
   } else if (length < 0.042 && straightness > 0.58 && duration < 1.8) {
@@ -118,6 +145,6 @@ export function classifyGesture(path: PathPoint[], oscillations: number): Gestur
     cz,
     radius: clamp(radius, 0.004, 0.045),
     turns,
-    oscillations,
+    oscillations: Math.max(oscillations, pathCrossings),
   };
 }

@@ -269,6 +269,7 @@ export class App {
     if (this.activePointer !== -1) return;
     const rect = this.setNdc(e);
     this.hints.notifyActivity();
+    this.flow.poke();
 
     if (this.flow.beat === 'finale') {
       this.flow.go('free');
@@ -305,6 +306,7 @@ export class App {
   private onMove(e: PointerEvent): void {
     if (e.pointerId !== this.activePointer) return;
     e.preventDefault();
+    this.flow.poke();
     const rect = this.setNdc(e);
     if (this.dragSlot) {
       this.updateDrag();
@@ -663,15 +665,22 @@ export class App {
    */
   private resolveRowTarget(i: number, out: THREE.Vector3): boolean {
     const row = this.height >= this.width ? this.rowNdcPortrait : this.rowNdcLandscape;
-    this.benchNdc.set(row[i][0], row[i][1]);
-    this.raycaster.setFromCamera(this.benchNdc, this.camera);
-    if (!this.raycaster.ray.intersectPlane(this.benchPlane, this.benchHit)) return false;
-    const r = Math.hypot(this.benchHit.x, this.benchHit.z);
-    if (r < 0.118) this.benchHit.multiplyScalar(0.118 / Math.max(r, 1e-4)).setY(BENCH_Y);
-    if (r > 0.40) this.benchHit.multiplyScalar(0.40 / r).setY(BENCH_Y);
-    out.copy(this.benchHit);
-    out.y = BENCH_Y;
-    return true;
+    // walk the anchor down the screen until the tip clears the turntable; that
+    // keeps it both reachable and visible whatever the screen shape is
+    for (let step = 0; step <= 12; step++) {
+      const ny = Math.max(-0.97, row[i][1] - step * 0.06);
+      this.benchNdc.set(row[i][0], ny);
+      this.raycaster.setFromCamera(this.benchNdc, this.camera);
+      if (!this.raycaster.ray.intersectPlane(this.benchPlane, this.benchHit)) return false;
+      const r = Math.hypot(this.benchHit.x, this.benchHit.z);
+      if (r > 0.40) continue;
+      if (r >= 0.118 || ny <= -0.965) {
+        out.copy(this.benchHit);
+        out.y = BENCH_Y;
+        return true;
+      }
+    }
+    return false;
   }
 
   private updateSlots(dt: number): void {
