@@ -127,7 +127,7 @@ export function frameFor(width: number, height: number): Framing {
     return solve(
       {
         azimuth: THREE.MathUtils.degToRad(-44),
-        elevation: THREE.MathUtils.degToRad(19),
+        elevation: THREE.MathUtils.degToRad(29),
         fov: 40,
         marginX: 0.06,
         marginTop: 0.07,
@@ -140,7 +140,7 @@ export function frameFor(width: number, height: number): Framing {
   return solve(
     {
       azimuth: THREE.MathUtils.degToRad(-19),
-      elevation: THREE.MathUtils.degToRad(17),
+      elevation: THREE.MathUtils.degToRad(14),
       fov: 46,
       marginX: 0.065,
       marginTop: 0.14,
