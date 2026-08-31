@@ -194,7 +194,7 @@ export class LabScene {
   stationShot(id: StationId): CameraShot {
     const st = STATIONS.find((s) => s.id === id)!;
     if (id === 'mount') {
-      return { look: new THREE.Vector3(st.benchX, 6, -4), dist: 235, pitch: 52, widthMm: 74, heightMm: 108 };
+      return { look: new THREE.Vector3(st.benchX, 8, -2), dist: 300, pitch: 46, widthMm: 70, heightMm: 150 };
     }
     return { look: new THREE.Vector3(st.benchX, 52, -30), dist: 600, pitch: 34, widthMm: 380, heightMm: 330 };
   }

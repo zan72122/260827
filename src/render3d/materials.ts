@@ -140,12 +140,13 @@ export function liquidMaterial(tint: [number, number, number] | null, absorb: nu
   const color = colored ? new THREE.Color(tint[0], tint[1], tint[2]).convertSRGBToLinear() : new THREE.Color(0xffffff);
   return new THREE.MeshPhysicalMaterial({
     color,
-    roughness: 0.03,
+    roughness: 0.06,
     metalness: 0,
     ior: 1.36,
+    // 発光させない。濃い液は光を吸収して暗く見える。
+    envMapIntensity: colored ? 0.35 : 1.0,
     transparent: true,
-    // 無色の試薬はほぼ透明。発光させない。
-    opacity: colored ? Math.min(0.94, 0.5 + absorb * 0.7) : 0.16,
+    opacity: colored ? Math.min(0.95, 0.6 + absorb * 0.6) : 0.16,
     depthWrite: false,
     side: THREE.DoubleSide,
   });

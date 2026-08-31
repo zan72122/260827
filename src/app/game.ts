@@ -90,7 +90,9 @@ export class Game {
     this.mode = opts.mode;
     this.magnify = opts.magnify;
     this.run = opts.resumeLog ? LiveRun.resume(opts.resumeLog) : new LiveRun(opts.seed);
-    this.quality = new QualityController();
+    // 画質は自動判定だが、?q=low|medium|high で固定できる（低速な環境や検証用）
+    const q = new URLSearchParams(location.search).get('q');
+    this.quality = new QualityController(q === 'low' || q === 'medium' || q === 'high' ? q : undefined);
 
     this.renderer = new THREE.WebGLRenderer({
       canvas,
@@ -416,8 +418,8 @@ export class Game {
 
   squeeze(dtSec: number): void {
     if (this.mountPhase !== 'dispense') return;
-    // 押し出す速さ [教材係数]: 1 秒あたり 14 µL
-    this.mount.volumeUl = Math.min(80, this.mount.volumeUl + dtSec * 14);
+    // 押し出す速さ [教材係数]: 1 秒あたり 16 µL
+    this.mount.volumeUl = Math.min(80, this.mount.volumeUl + dtSec * 16);
     this.lab.mountStage.setVolume(this.mount.volumeUl, this.mount.dropX, this.mount.dropY);
     this.cb.onHud();
   }

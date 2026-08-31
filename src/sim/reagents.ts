@@ -40,10 +40,10 @@ export const REAGENTS: Record<ReagentKind, ReagentProps> = {
   etoh70: P({ polarTarget: 0.75, waterTarget: 0.3, eosinLoss: 0.004, family: 'alcohol' }),
   water_tap: P({ polarTarget: 1.0, waterTarget: 1.0, eosinLoss: 0.02, family: 'aqueous' }),
   water_di: P({ polarTarget: 1.0, waterTarget: 1.0, eosinLoss: 0.02, family: 'aqueous' }),
-  hematoxylin: P({ polarTarget: 1.0, waterTarget: 1.0, eosinLoss: 0.02, tint: [0.20, 0.09, 0.16], absorb: 0.55, family: 'stain' }),
+  hematoxylin: P({ polarTarget: 1.0, waterTarget: 1.0, eosinLoss: 0.02, tint: [0.12, 0.05, 0.10], absorb: 0.62, family: 'stain' }),
   acid_alcohol: P({ polarTarget: 0.75, waterTarget: 0.3, eosinLoss: 0.006, family: 'alcohol' }),
   scott: P({ polarTarget: 1.0, waterTarget: 1.0, eosinLoss: 0.02, family: 'aqueous' }),
-  eosin: P({ polarTarget: 0.72, waterTarget: 0.25, eosinLoss: 0.0, tint: [0.72, 0.16, 0.24], absorb: 0.40, family: 'stain' }),
+  eosin: P({ polarTarget: 0.72, waterTarget: 0.25, eosinLoss: 0.0, tint: [0.46, 0.09, 0.14], absorb: 0.46, family: 'stain' }),
 };
 
 /** 液膜の組成を表す成分。 */

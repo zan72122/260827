@@ -17,7 +17,7 @@ let plate: BasePlate | null = null;
 let assetFallback: string | null = null;
 let game: Game | null = null;
 let mode: Mode = 'practice';
-let magnify: MagnifyMode = 'auto';
+let magnify: MagnifyMode = 'ondemand';
 
 // ---------------------------------------------------------------------------
 // タイトル画面
@@ -95,6 +95,9 @@ function startGame(opts: StartOpts): void {
  * 操作テストは必ず実際のポインタ経路を通す。
  */
 function exposeTestApi(g: Game): void {
+  // 通常の配信ビルドでは公開しない（実践モードで内部値が覗けないようにする）。
+  const allowed = import.meta.env.DEV || new URLSearchParams(location.search).has('test');
+  if (!allowed) return;
   (window as unknown as Record<string, unknown>).__he = {
     grab: () => g.grabHandleScreen(),
     level: () => g.level,
@@ -157,9 +160,10 @@ function updateHud(): void {
     parts.push(`浸漬 ${rt.usedSec.toFixed(0)}秒`);
     if (d.replaceable) parts.push(`水 ${rt.generation}回目`);
     $('hud-ref').textContent = parts.join(' ・ ');
-  } else if (game.phase === 'mount') {
+  } else if (game.phase === 'mount' || game.mountPhase === 'done') {
     $('hud-jar').textContent = '封入台';
     $('hud-ref').textContent = `封入剤 ${game.mount.volumeUl.toFixed(0)} µL ・ 接触辺 ${game.mount.slipY.toFixed(0)}mm ・ 角度 ${game.coverAngleDeg.toFixed(0)}°`;
+    if (mountLabel) mountLabel.textContent = `ドラッグ=位置 / 長押し=押し出す（${game.mount.volumeUl.toFixed(0)} µL）`;
   } else {
     $('hud-jar').textContent = '';
     $('hud-ref').textContent = '';
@@ -247,11 +251,16 @@ function showHint(text: string | null): void {
 // 封入操作のボタン
 // ---------------------------------------------------------------------------
 
+let mountLabel: HTMLElement | null = null;
+
 function updateMountTools(p: MountPhase): void {
   const host = $('mount-tools');
+  mountLabel = null;
   host.replaceChildren();
-  host.hidden = !game || game.phase !== 'mount';
-  if (!game || game.phase !== 'mount') return;
+  // 封入が終わった後も「顕微鏡で観察する」を残す（振り返りを閉じても戻れるように）
+  const showTools = !!game && (game.phase === 'mount' || game.mountPhase === 'done');
+  host.hidden = !showTools;
+  if (!showTools || !game) return;
   const add = (label: string, fn: () => void, primary = false): void => {
     const b = el('button', { class: `btn${primary ? ' primary' : ''}`, type: 'button' }, label);
     b.addEventListener('click', fn);
@@ -260,7 +269,8 @@ function updateMountTools(p: MountPhase): void {
   if (p === 'take') {
     add('ラックから同じスライドを取り出す', () => game!.takeSlideFromRack(), true);
   } else if (p === 'dispense') {
-    host.append(el('div', { class: 'nav-label' }, `ドラッグ=位置 / 長押し=押し出す（${game.mount.volumeUl.toFixed(0)} µL）`));
+    mountLabel = el('div', { class: 'nav-label' }, 'ドラッグ=位置 / 長押し=押し出す');
+    host.append(mountLabel);
     add('次へ（カバーガラス）', () => game!.finishDispense(), true);
   } else if (p === 'place') {
     host.append(el('div', { class: 'nav-label' }, '上下ドラッグで接触辺の位置を決める'));
@@ -373,7 +383,7 @@ function bindPointer(g: Game): void {
     if (!game) return;
     if (squeezing) {
       const now = performance.now();
-      game.squeeze(Math.min(0.05, (now - squeezeLast) / 1000));
+      game.squeeze(Math.min(0.15, (now - squeezeLast) / 1000));
       squeezeLast = now;
     }
     requestAnimationFrame(squeezeLoop);

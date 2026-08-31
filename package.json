@@ -9,7 +9,7 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --port 4173",
     "fetch-assets": "node scripts/fetch-assets.mjs",
-    "test": "vitest run",
+    "test": "vitest run test/unit",
     "test:unit": "vitest run test/unit",
     "e2e": "playwright test",
     "typecheck": "tsc --noEmit"

@@ -105,11 +105,18 @@ export class Debrief {
 
   private captionText(): string {
     const p = this.input.plate.provenance;
-    const base = '実写組織を基にした染色状態の教育用シミュレーションです。各条件で実際に染めた対照標本ではありません。表示条件（明るさ・色調・倍率）は比較のため固定しています。';
+    const fixed = '表示条件（明るさ・色調・倍率）は比較のため固定しています。';
     if (p.isRealPhoto) {
-      return `${base} 元画像: ${p.title} / ${p.credit} / ${p.license}（改変あり: ${p.modifications}）`;
+      return (
+        `実写組織を基にした染色状態の教育用シミュレーションです。各条件で実際に染めた対照標本ではありません。${fixed} ` +
+        `元画像: ${p.title} / ${p.credit} / ${p.license}（改変あり: ${p.modifications}）`
+      );
     }
-    return `【重要】この画像の基礎になっているのは実写の顕微鏡写真ではなく、構造の位置関係を示す模式図です。${base} ${p.note}`;
+    return (
+      '【重要】この画像の基礎は実写の顕微鏡写真ではなく、構造の位置関係を示す模式図です' +
+      '（基準にする実写画像をこの環境から取得できなかったため）。染色状態は教育用シミュレーションであり、' +
+      `各条件で実際に染めた対照標本ではありません。${fixed}`
+    );
   }
 
   // --- 2. 所見

@@ -19,11 +19,12 @@ import {
  * 内部状態への書き込みは一切行わない。すべて実際のポインタ経路とボタン操作で進める。
  */
 test('S1 の工程を最後まで通して封入・観察・振り返りまで到達できる', async ({ page }) => {
-  test.setTimeout(14 * 60 * 1000);
+  test.setTimeout(28 * 60 * 1000);
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(`${e.message}`));
 
-  await page.goto('/');
+  // ?q=low: ソフトウェア WebGL の実行環境でも描画が追いつくように画質を固定する
+  await page.goto('/?q=low');
   await page.click('[data-v="exam"]');
   await page.click('#start');
   await page.waitForTimeout(2500);
@@ -179,8 +180,9 @@ test('S1 の工程を最後まで通して封入・観察・振り返りまで�
   await page.getByRole('button', { name: '次に変える1条件へ' }).click();
   await page.waitForTimeout(400);
   await page.locator('.opt').first().click();
-  await page.waitForTimeout(4000);
-  await expect(page.locator('.compare canvas')).toHaveCount(2);
+  await expect(page.locator('.compare canvas')).toHaveCount(2, { timeout: 60000 });
+  await page.locator('.compare').scrollIntoViewIfNeeded();
+  await page.waitForTimeout(300);
   await page.screenshot({ path: 'evidence/shots/28-debrief-compare.png' });
 
   // --- 17. 再挑戦

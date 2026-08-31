@@ -94,12 +94,23 @@ export class JarObject {
       ctx.fillStyle = '#e9e9e4';
       ctx.fillRect(0, 0, 512, 8);
       ctx.fillStyle = '#16181a';
-      ctx.font = 'bold 54px system-ui, sans-serif';
       ctx.textBaseline = 'top';
-      wrapText(ctx, def.labelJa, 18, 26, 476, 58);
+      // 長い名前は字を小さくして 2 行に収める
+      let size = 54;
+      ctx.font = `bold ${size}px system-ui, sans-serif`;
+      while (size > 30 && ctx.measureText(def.labelJa).width > 476 * 2) {
+        size -= 4;
+        ctx.font = `bold ${size}px system-ui, sans-serif`;
+      }
+      wrapText(ctx, def.labelJa, 18, 24, 476, size + 6);
       ctx.fillStyle = '#5a6066';
-      ctx.font = '34px system-ui, sans-serif';
-      ctx.fillText(def.labelEn, 18, 150);
+      let esize = 34;
+      ctx.font = `${esize}px system-ui, sans-serif`;
+      while (esize > 20 && ctx.measureText(def.labelEn).width > 476) {
+        esize -= 2;
+        ctx.font = `${esize}px system-ui, sans-serif`;
+      }
+      ctx.fillText(def.labelEn, 18, 158);
       ctx.strokeStyle = '#c9ccc7';
       ctx.lineWidth = 3;
       ctx.strokeRect(1.5, 1.5, 509, 217);

@@ -26,12 +26,13 @@ export class MountStage {
   constructor(mats: MaterialSet) {
     const S = DIM.slide;
 
-    // 作業面（濡れた面と乾いた面が分かる、艶消しの作業マット）
+    // 作業面（艶消しの暗いマット。透明なガラスの縁と封入剤が読めるようにする）
     const mat = new THREE.Mesh(
-      new THREE.BoxGeometry(240, 6, 200),
-      new THREE.MeshStandardMaterial({ color: 0x39424a, roughness: 0.9, metalness: 0 }),
+      new THREE.BoxGeometry(150, 6, 132),
+      new THREE.MeshStandardMaterial({ color: 0x2f3438, roughness: 0.96, metalness: 0 }),
     );
-    mat.position.set(0, 3, 0);
+    // 天面を y=0 に合わせる（スライドはこの面の上に置かれる）
+    mat.position.set(0, -3, 0);
     mat.receiveShadow = true;
     this.group.add(mat);
 
@@ -39,7 +40,20 @@ export class MountStage {
     const slide = new THREE.Mesh(new THREE.BoxGeometry(S.wid, S.thick, S.len), mats.glassThin);
     slide.position.y = S.thick / 2;
     slide.renderOrder = 3;
+    slide.castShadow = true;
     this.slideGroup.add(slide);
+    // ガラスの縁: 薄い板であることが分かるよう、側面だけをわずかに強調する
+    const edgeMat = new THREE.MeshStandardMaterial({ color: 0xf4f8f6, roughness: 0.1, metalness: 0, transparent: true, opacity: 0.92 });
+    for (const [w2, d2, x2, z2] of [
+      [S.wid, 0.5, 0, -S.len / 2],
+      [S.wid, 0.5, 0, S.len / 2],
+      [0.5, S.len, -S.wid / 2, 0],
+      [0.5, S.len, S.wid / 2, 0],
+    ] as const) {
+      const e2 = new THREE.Mesh(new THREE.BoxGeometry(w2, S.thick, d2), edgeMat);
+      e2.position.set(x2, S.thick / 2, z2);
+      this.slideGroup.add(e2);
+    }
 
     const labelTex = canvasTexture(512, 180, (ctx) => {
       ctx.fillStyle = '#f7f7f2';
@@ -94,7 +108,7 @@ export class MountStage {
     // 封入剤の液滴
     this.drop = new THREE.Mesh(
       new THREE.SphereGeometry(1, 20, 14),
-      new THREE.MeshPhysicalMaterial({ color: 0xfdfaf2, transparent: true, opacity: 0.42, roughness: 0.03, metalness: 0, ior: 1.5 }),
+      new THREE.MeshPhysicalMaterial({ color: 0xfaf6e8, transparent: true, opacity: 0.6, roughness: 0.02, metalness: 0, ior: 1.5, envMapIntensity: 1.6 }),
     );
     this.drop.scale.set(0.001, 0.001, 0.001);
     this.drop.position.set(0, S.thick, 0);
@@ -104,31 +118,47 @@ export class MountStage {
     this.cover = new THREE.Mesh(new THREE.BoxGeometry(DIM.cover.wid, DIM.cover.thick, DIM.cover.len), mats.glassThin);
     this.cover.position.set(0, DIM.cover.thick / 2, DIM.cover.len / 2);
     this.cover.renderOrder = 6;
+    this.cover.castShadow = true;
+    const cEdge = new THREE.MeshStandardMaterial({ color: 0xf6fbf9, roughness: 0.08, metalness: 0, transparent: true, opacity: 0.95 });
+    for (const [w3, d3, x3, z3] of [
+      [DIM.cover.wid, 0.4, 0, -DIM.cover.len / 2],
+      [DIM.cover.wid, 0.4, 0, DIM.cover.len / 2],
+      [0.4, DIM.cover.len, -DIM.cover.wid / 2, 0],
+      [0.4, DIM.cover.len, DIM.cover.wid / 2, 0],
+    ] as const) {
+      const e3 = new THREE.Mesh(new THREE.BoxGeometry(w3, DIM.cover.thick, d3), cEdge);
+      e3.position.set(x3, 0, z3);
+      this.cover.add(e3);
+    }
     this.coverPivot.add(this.cover);
     this.coverPivot.position.set(0, S.thick, -S.len / 2 + this.slipY);
     this.group.add(this.coverPivot);
 
     // 封入剤の容器（ノズル付き）
+    // 容器はノズル先端をグループ原点に置き、本体を奥・右へ傾けて持つ（切片の上を塞がない）
+    const inner = new THREE.Group();
+    const tip = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 1.8, 6, 10), new THREE.MeshStandardMaterial({ color: 0xd6d4cd, roughness: 0.4 }));
+    tip.position.y = 3;
+    inner.add(tip);
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(2.4, 3.8, 12, 12), new THREE.MeshStandardMaterial({ color: 0xe8e6df, roughness: 0.45 }));
+    neck.position.y = 12;
+    inner.add(neck);
     const body = new THREE.Mesh(
-      new THREE.CylinderGeometry(13, 14, 46, 20),
+      new THREE.CylinderGeometry(7, 8, 28, 18),
       new THREE.MeshStandardMaterial({ color: 0xf6f4ee, roughness: 0.4, metalness: 0, transparent: true, opacity: 0.9 }),
     );
-    body.position.y = 23;
-    this.dispenser.add(body);
-    const neck = new THREE.Mesh(new THREE.CylinderGeometry(3.4, 5.5, 20, 12), new THREE.MeshStandardMaterial({ color: 0xe8e6df, roughness: 0.45 }));
-    neck.position.y = -6;
-    this.dispenser.add(neck);
-    const tip = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 2.4, 8, 10), new THREE.MeshStandardMaterial({ color: 0xd6d4cd, roughness: 0.4 }));
-    tip.position.y = -19;
-    this.dispenser.add(tip);
-    this.dispenser.position.set(0, 44, 0);
+    body.position.y = 32;
+    inner.add(body);
+    inner.rotation.set(-0.55, 0, 0.5);
+    this.dispenser.add(inner);
+    this.dispenser.position.set(0, 5, 0);
     this.dispenser.visible = false;
     this.group.add(this.dispenser);
   }
 
   setDispenser(visible: boolean, xMm: number, yMm: number): void {
     this.dispenser.visible = visible;
-    this.dispenser.position.set(xMm, 44, -DIM.slide.len / 2 + yMm);
+    this.dispenser.position.set(xMm, 5, -DIM.slide.len / 2 + yMm);
   }
 
   /** 押し出した量に応じて液滴を大きくする。 */

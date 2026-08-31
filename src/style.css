@@ -215,10 +215,11 @@ body { overflow: hidden; }
 .opt .txt { flex: 1; font-size: 13.5px; line-height: 1.5; }
 .opt .sub { display: block; color: var(--fg-dim); font-size: 12px; margin-top: 2px; }
 
-.verdict { border-left: 3px solid var(--line); padding-left: 10px; margin: 10px 0; }
-.verdict.ok { border-color: var(--ok); }
-.verdict.warn { border-color: var(--warn); }
-.verdict.info { border-color: var(--accent-2); }
+.verdict { border-top: 1px solid var(--line); padding-top: 8px; margin: 12px 0; }
+.verdict p { margin: 4px 0; }
+.verdict.ok p:first-child { color: var(--ok); }
+.verdict.warn p:first-child { color: var(--warn); }
+.verdict.info p:first-child { color: var(--accent-2); }
 
 /* ---------- microscope view ---------- */
 .micro-wrap {
@@ -279,7 +280,6 @@ body { overflow: hidden; }
 .notice {
   margin-top: 16px;
   border: 1px solid var(--line);
-  border-left: 3px solid var(--accent);
   padding: 10px 12px;
   font-size: 12px;
   line-height: 1.6;

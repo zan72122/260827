@@ -163,7 +163,7 @@ evidence/      取得した画面・画像
 
 **確認できたこと**
 
-- ビルド: `tsc --noEmit` と `vite build` が通ること（配信サイズ gzip 約 166 KB）
+- ビルド: `tsc --noEmit` と `vite build` が通ること（配信サイズ gzip 約 168 KB）
 - 因果モデル: `npm test` の 20 件（下記の受け入れ条件 2〜7 に対応）
 - 操作: Chromium 141（`/opt/pw-browsers/chromium-1194`、SwiftShader によるソフトウェア WebGL）を
   390×844 / 375×667 / 430×932 のモバイルエミュレーションで動かし、
@@ -183,3 +183,27 @@ evidence/      取得した画面・画像
 
 ソースコード・生成テクスチャ・合成音・構造模式図は MIT（[LICENSE](LICENSE)）。
 実写画像を追加した場合、その画像と派生画像には CC BY-SA 4.0 が適用されます（[SOURCE_MANIFEST.md](SOURCE_MANIFEST.md)）。
+
+---
+
+## 受け入れ条件と対応する確認
+
+| # | 条件 | 確認の場所 |
+|---|------|-----------|
+| 1 | 正規の工程をタッチ操作で進め、1枚・1切片のまま封入→顕微鏡画像→原因推定→再挑戦まで完遂できる | `test/e2e/playthrough.spec.ts`（実際のポインタ操作のみ）／`evidence/shots/2x-*.png` |
+| 2 | 分別の曝露だけを増やすと、同じ視野で核の染色が弱まる。形・位置やエオジンを一括変更しない | `test/unit/model.spec.ts`「受け入れ条件 2」／`evidence/case-overdiff.png` |
+| 3 | 一部だけ浸漬しなかった場合、液面との位置関係に対応する領域が変わる | `test/unit/model.spec.ts`「受け入れ条件 3」／`evidence/case-partial.png` |
+| 4 | エオジン後の水系処理や脱水を変えると、核染色とは分けて妥当な方向に変わる | `test/unit/model.spec.ts`「受け入れ条件 4」／`evidence/case-water-after-eosin.png`, `case-no-dehydrate.png` |
+| 5 | 封入剤の量やカバーガラスの接触経路で、濡れ広がり・未充填・気泡が変わる | `test/unit/model.spec.ts`「受け入れ条件 5」／`evidence/case-fast-coverslip.png`, `case-low-mountant.png` |
+| 6 | 過分別と核染色不足のように、似た所見を異なる履歴から生じさせ、振り返りで区別する | `test/unit/model.spec.ts`「受け入れ条件 6」／`evidence/shots/65-debrief-explain.png` |
+| 7 | 練習／実践で同一操作なら標本状態が一致し、実践では先に原因を開示しない | `test/unit/model.spec.ts`「受け入れ条件 7」（標本状態は RunLog だけから決まる） |
+| 8 | pointercancel・中断復帰・画面回転・連続再挑戦で壊れない | `test/e2e/robustness.spec.ts` |
+| 9 | 規定の縦画面サイズで薬液名・液面・操作対象・封入の接触部が読み取れ、キーボード不要 | `test/e2e/robustness.spec.ts`／`evidence/shots/50-layout-*.png` |
+| 10 | 出典・加工表示、原手順と教材係数の区別、実測と未確認事項が成果物内にある | [SOURCE_MANIFEST.md](SOURCE_MANIFEST.md), [PROTOCOL.md](PROTOCOL.md), 本 README の「確認した環境」 |
+
+`evidence/` の内容:
+
+- `evidence/case-*.png` — 因果モデルの検証用に、同じ視野・同じ表示条件で生成した完成画像
+  （基準／過分別／核染色不足／部分浸漬／エオジン後の水／脱水省略／脱パラフィン不足／色出し不足／乾燥／
+  カバーガラスを速く下ろした／封入剤不足）。`test/unit/render-preview.spec.ts` が生成します。
+- `evidence/shots/*.png` — Playwright（Chromium モバイルエミュレーション）で実際に操作して取得した画面。

@@ -41,7 +41,7 @@ async function grabPoint(page: Page): Promise<{ x: number; y: number }> {
 }
 
 /** 実際のポインタ経路でラックを上下に動かす。内部状態は書き換えない。 */
-export async function dragRack(page: Page, dyPx: number, steps = 8): Promise<void> {
+export async function dragRack(page: Page, dyPx: number, steps = 4): Promise<void> {
   const p = await grabPoint(page);
   await page.mouse.move(p.x, p.y);
   await page.mouse.down();
@@ -52,7 +52,7 @@ export async function dragRack(page: Page, dyPx: number, steps = 8): Promise<voi
 export async function submerge(page: Page): Promise<void> {
   for (let i = 0; i < 10; i++) {
     if ((await read(page, 'level')) >= 1.05) return;
-    await dragRack(page, 260, 6);
+    await dragRack(page, 260, 4);
   }
   throw new Error('切片を液面下に入れられませんでした');
 }
@@ -60,7 +60,7 @@ export async function submerge(page: Page): Promise<void> {
 export async function lift(page: Page, toTransport = false): Promise<void> {
   for (let i = 0; i < 10; i++) {
     if (toTransport ? (await read(page, 'rackY')) >= 90 : (await read(page, 'level')) <= -0.02) return;
-    await dragRack(page, -260, 6);
+    await dragRack(page, -260, 4);
   }
   throw new Error('ラックを引き上げられませんでした');
 }
