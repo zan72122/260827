@@ -1,6 +1,8 @@
+import * as THREE from 'three';
 import type { StageBehaviour, StageContext } from '../app/StageContext';
 import type { ChoiceButton } from '../ui/Overlay';
 import type { SeatId } from '../core/CakeState';
+import { TABLE_CENTRE, TABLE_TOP_Y } from '../build/Room';
 
 /**
  * Afterwards.
@@ -20,8 +22,39 @@ export class AfterStage implements StageBehaviour {
 
   enter(): void {
     this.clock = 0;
-    this.ctx.camera.goTo('admire', 1.5);
     this.ctx.lights.setMode('table');
+    this.frameTheWholeThing();
+  }
+
+  /**
+   * Both halves of what just happened belong in this shot: the slice on its
+   * plate and the cake it came out of. Where the plate is depends on which
+   * place was chosen, so the framing is worked out rather than fixed.
+   */
+  private frameTheWholeThing(): void {
+    const { world, state, viewport } = this.ctx;
+    const plate = new THREE.Vector3();
+    world.plates[state.seat].getWorldPosition(plate);
+    const target = new THREE.Vector3(
+      (plate.x + TABLE_CENTRE.x) / 2,
+      TABLE_TOP_Y + 0.075,
+      (plate.z + TABLE_CENTRE.z) / 2,
+    );
+    // Stand back towards the pastry bench, where the cake came from.
+    const dir = new THREE.Vector3(-0.52, 0, -0.86).normalize();
+    const dist = viewport.portrait ? 1.24 : 0.94;
+    this.ctx.camera.goToCustom(
+      {
+        position: new THREE.Vector3(
+          target.x + dir.x * dist,
+          target.y + (viewport.portrait ? 0.52 : 0.42),
+          target.z + dir.z * dist,
+        ),
+        target,
+        fov: viewport.portrait ? 48 : 40,
+      },
+      1.6,
+    );
   }
 
   exit(): void {

@@ -63,7 +63,7 @@ export class App {
   private raf = 0;
   private audioStarted = false;
   private devShotIndex = -1;
-  private hiddenForDev: THREE.Object3D[] = [];
+  private wasInDevShot = false;
   private devLightIndex = 0;
   private showInfo = false;
   private fps = 60;
@@ -219,19 +219,6 @@ export class App {
       const name = this.devShotIndex >= 0 ? DEV_SHOT_ORDER[this.devShotIndex] : undefined;
       const pair = name ? DEV_SHOTS[name] : null;
       this.director.setDevShot(pair ? (this.viewport.portrait ? pair.portrait : pair.landscape) : null);
-      // The hands and the bag are exactly where they should be during play,
-      // which is also exactly in the way when the point is to inspect the
-      // flower itself from every side. They come back when the dev view does.
-      for (const o of this.hiddenForDev) o.visible = true;
-      this.hiddenForDev = [];
-      if (pair) {
-        for (const o of [this.world.nailHand, this.world.pipingRig]) {
-          if (o.visible) {
-            o.visible = false;
-            this.hiddenForDev.push(o);
-          }
-        }
-      }
     } else if (k === 'l') {
       this.devLightIndex = (this.devLightIndex + 1) % DEV_LIGHTING.length;
       this.lights.setDev(DEV_LIGHTING[this.devLightIndex]);
@@ -351,6 +338,7 @@ export class App {
     this.lights.focus(focus);
 
     this.overlay.setChoices(this.stages[this.stage].choices());
+    this.applyDevVisibility();
     this.renderer.render(this.world.scene, this.director.camera);
 
     if (this.showInfo) {
@@ -369,6 +357,25 @@ export class App {
       );
     }
   };
+
+  /**
+   * The hands and the bag are exactly where they should be during play, which
+   * is also exactly in the way when the point is to look at the flower itself
+   * from every side. Applied per frame rather than on the key press, so nothing
+   * a stage does afterwards can put them back mid-inspection.
+   */
+  private applyDevVisibility(): void {
+    const dev = this.director.inDevShot;
+    if (dev) {
+      this.world.nailHand.visible = false;
+      this.world.pipingRig.visible = false;
+      this.wasInDevShot = true;
+    } else if (this.wasInDevShot) {
+      this.wasInDevShot = false;
+      this.world.nailHand.visible = true;
+      this.world.pipingRig.visible = this.stage === 'piping';
+    }
+  }
 
   /**
    * Keep the frame rate up by giving ground on resolution and on the parts of

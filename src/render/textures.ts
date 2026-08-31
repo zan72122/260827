@@ -339,9 +339,9 @@ export function buildTextures(): TextureLibrary {
     for (let i = 0; i < skinField.length; i++) {
       const v = 0.93 + skinField[i] * 0.14;
       const o = i * 4;
-      img.data[o] = clamp(0.95 * v, 0, 1) * 255;
-      img.data[o + 1] = clamp(0.80 * v, 0, 1) * 255;
-      img.data[o + 2] = clamp(0.73 * v, 0, 1) * 255;
+      img.data[o] = clamp(0.86 * v, 0, 1) * 255;
+      img.data[o + 1] = clamp(0.68 * v, 0, 1) * 255;
+      img.data[o + 2] = clamp(0.60 * v, 0, 1) * 255;
       img.data[o + 3] = 255;
     }
     g.putImageData(img, 0, 0);

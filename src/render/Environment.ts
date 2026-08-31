@@ -74,9 +74,9 @@ function proxyRoom(): THREE.Scene {
   panel(2.6, 2.1, 0.08, 0.2, 1.3, 3.3, 0xeef4ff, 3.2);
 
   // Warm pendant over the birthday table.
-  panel(0.5, 0.08, 0.5, 1.9, 2.0, 1.4, 0xffcf9a, 5.0);
+  panel(0.5, 0.08, 0.5, 1.9, 1.55, 1.4, 0xffdcb4, 4.2);
   // warm wall bounce beside the table
-  panel(0.06, 1.4, 3.0, 3.28, 1.2, 1.4, 0xf3d8b6, 0.35);
+  panel(0.06, 1.4, 3.0, 3.28, 1.2, 1.4, 0xf0dcc4, 0.3);
   // a shelf line, so reflections keep a readable horizontal
   panel(2.6, 0.06, 0.4, 0.4, 1.9, -3.2, 0xd4c6ae, 0.05);
 
@@ -97,11 +97,23 @@ export function buildEnvMap(renderer: THREE.WebGLRenderer): THREE.Texture {
   return target.texture;
 }
 
+/**
+ * Light levels.
+ *
+ * three.js works in physical units: a directional light's intensity *is* the
+ * irradiance it delivers, while a point light's is candela, so what actually
+ * lands on a surface is intensity divided by distance squared. The pendant
+ * hangs about 310 mm above the table, which divides its value by roughly ten.
+ * The numbers below are chosen so a white cloth under the pendant and white
+ * buttercream under the window both come out just below one, instead of
+ * clipping to paper white.
+ */
 interface RigTargets {
   windowIntensity: number;
   pendantIntensity: number;
   fillIntensity: number;
   nearIntensity: number;
+  bounceIntensity: number;
   windowColor: number;
   pendantColor: number;
   envIntensity: number;
@@ -109,28 +121,34 @@ interface RigTargets {
 
 const MODES: Record<string, RigTargets> = {
   'bench/default': {
-    windowIntensity: 3.8, pendantIntensity: 0.45, fillIntensity: 0.3,
-    nearIntensity: 0.4, windowColor: 0xf3f6ff, pendantColor: 0xffc98d, envIntensity: 0.95,
+    windowIntensity: 2.2, pendantIntensity: 0.25, fillIntensity: 0.26,
+    nearIntensity: 0.24, bounceIntensity: 0.05,
+    windowColor: 0xf3f6ff, pendantColor: 0xffc98d, envIntensity: 0.9,
   },
   'table/default': {
-    windowIntensity: 0.65, pendantIntensity: 2.4, fillIntensity: 0.3,
-    nearIntensity: 0.3, windowColor: 0xdfe7f7, pendantColor: 0xffd3a6, envIntensity: 0.85,
+    windowIntensity: 0.40, pendantIntensity: 2.2, fillIntensity: 0.22,
+    nearIntensity: 0.22, bounceIntensity: 0.16,
+    windowColor: 0xdfe7f7, pendantColor: 0xffe6cf, envIntensity: 0.8,
   },
   'bench/overcast': {
-    windowIntensity: 2.2, pendantIntensity: 0.0, fillIntensity: 1.05,
-    nearIntensity: 0.7, windowColor: 0xeaeef6, pendantColor: 0xffffff, envIntensity: 1.25,
+    windowIntensity: 1.7, pendantIntensity: 0.0, fillIntensity: 0.85,
+    nearIntensity: 0.50, bounceIntensity: 0.10,
+    windowColor: 0xeaeef6, pendantColor: 0xffffff, envIntensity: 1.2,
   },
   'table/overcast': {
-    windowIntensity: 1.9, pendantIntensity: 0.0, fillIntensity: 1.0,
-    nearIntensity: 0.6, windowColor: 0xeaeef6, pendantColor: 0xffffff, envIntensity: 1.25,
+    windowIntensity: 1.5, pendantIntensity: 0.0, fillIntensity: 0.80,
+    nearIntensity: 0.45, bounceIntensity: 0.10,
+    windowColor: 0xeaeef6, pendantColor: 0xffffff, envIntensity: 1.2,
   },
   'bench/evening': {
-    windowIntensity: 0.25, pendantIntensity: 3.6, fillIntensity: 0.24,
-    nearIntensity: 0.22, windowColor: 0x9fb2d8, pendantColor: 0xffb066, envIntensity: 0.7,
+    windowIntensity: 0.15, pendantIntensity: 2.6, fillIntensity: 0.18,
+    nearIntensity: 0.14, bounceIntensity: 0.20,
+    windowColor: 0x9fb2d8, pendantColor: 0xffd2a6, envIntensity: 0.6,
   },
   'table/evening': {
-    windowIntensity: 0.2, pendantIntensity: 3.0, fillIntensity: 0.2,
-    nearIntensity: 0.18, windowColor: 0x9fb2d8, pendantColor: 0xffbe86, envIntensity: 0.7,
+    windowIntensity: 0.12, pendantIntensity: 2.9, fillIntensity: 0.16,
+    nearIntensity: 0.13, bounceIntensity: 0.22,
+    windowColor: 0x9fb2d8, pendantColor: 0xffd6ae, envIntensity: 0.6,
   },
 };
 
@@ -168,8 +186,11 @@ export class LightRig {
     this.group.add(this.windowLight);
     this.group.add(this.windowLight.target);
 
-    this.pendant = new THREE.PointLight(0xffc07a, 3.2, 6, 2);
-    this.pendant.position.set(1.9, 1.05, 1.4);
+    // 780 mm above the table, which is where a pendant actually hangs. Sitting
+    // it 300 mm up, as it was, put the bulb inside the cake's airspace and blew
+    // out everything directly under it.
+    this.pendant = new THREE.PointLight(0xffc07a, 2.2, 7, 2);
+    this.pendant.position.set(1.9, 1.52, 1.4);
     this.pendant.castShadow = true;
     this.pendant.shadow.mapSize.set(1024, 1024);
     this.pendant.shadow.camera.near = 0.08;
@@ -178,7 +199,7 @@ export class LightRig {
     this.pendant.shadow.normalBias = 0.008;
     this.group.add(this.pendant);
 
-    this.bounce = new THREE.DirectionalLight(0xffe6cf, 0.35);
+    this.bounce = new THREE.DirectionalLight(0xfff0e2, 0.16);
     this.bounce.position.set(1.6, 0.6, 1.8);
     this.group.add(this.bounce);
 
@@ -227,7 +248,7 @@ export class LightRig {
     this.windowLight.intensity = ap(this.windowLight.intensity, t.windowIntensity);
     this.pendant.intensity = ap(this.pendant.intensity, t.pendantIntensity);
     this.fill.intensity = ap(this.fill.intensity, t.fillIntensity);
-    this.bounce.intensity = ap(this.bounce.intensity, t.pendantIntensity * 0.12);
+    this.bounce.intensity = ap(this.bounce.intensity, t.bounceIntensity);
     this.nearFill.intensity = ap(this.nearFill.intensity, t.nearIntensity);
     this.windowLight.color.lerp(new THREE.Color(t.windowColor), instant ? 1 : 1 - Math.exp(-3.2 * dt));
     this.pendant.color.lerp(new THREE.Color(t.pendantColor), instant ? 1 : 1 - Math.exp(-3.2 * dt));

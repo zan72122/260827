@@ -108,7 +108,7 @@ export class Materials {
         roughnessMap: tex.steelRough,
         normalMap: tex.steelNormal,
         normalScale: new THREE.Vector2(0.22, 0.22),
-        envMapIntensity: 2.1,
+        envMapIntensity: 2.4,
         side: THREE.DoubleSide,
       }),
     );
@@ -194,13 +194,17 @@ export class Materials {
         metalness: 0,
       }),
     );
+    // The cloth's UVs run once around the whole tablecloth, so the weave has to
+    // tile hard or it reads as wood grain rather than linen.
+    tex.clothColor.repeat.set(10, 10);
+    tex.clothNormal.repeat.set(10, 10);
     this.cloth = keep(
       new THREE.MeshStandardMaterial({
-        color: 0xe6e0d5,
+        color: 0xe8e3da,
         map: tex.clothColor,
         normalMap: tex.clothNormal,
-        normalScale: new THREE.Vector2(0.6, 0.6),
-        roughness: 0.85,
+        normalScale: new THREE.Vector2(0.45, 0.45),
+        roughness: 0.88,
         metalness: 0,
       }),
     );

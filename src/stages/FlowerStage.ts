@@ -144,7 +144,10 @@ export class FlowerStage implements StageBehaviour {
   }
 
   onDown(f: PointerFrame): void {
-    if (this.finished || this.ctx.camera.moving) return;
+    if (this.finished) return;
+    // A finger that goes down while the camera is still arriving is still a
+    // finger going down. The stroke is tracked from here; `canPipe` decides
+    // when cream may actually start leaving the tip.
     this.idle = 0;
     this.stillFor = 0;
     this.strokeTravel = 0;
@@ -226,12 +229,17 @@ export class FlowerStage implements StageBehaviour {
           builder.endPetal();
           this.petalsDone += 1;
           this.ctx.audio.petalDone(this.petalsDone - 1);
-          this.afterPetal(builder);
         }
       }
     } else {
       this.extrusion = damp(this.extrusion, 0, 10, dt);
     }
+
+    // Whether a whorl is finished is checked here rather than only when a
+    // petal runs its full sweep, because a child who lifts their finger part
+    // way through the last petal has still made that petal — and would
+    // otherwise be left with a finished flower and no way to say so.
+    this.checkWhorls(builder);
 
     this.ctx.world.nailSpin.rotation.y = this.theta;
     this.ctx.audio.setPiping(this.extrusion * 0.9, this.flow - 0.8);
@@ -242,7 +250,15 @@ export class FlowerStage implements StageBehaviour {
       if (this.settle <= 0) this.ctx.goTo('placing');
     }
 
-    const wantHint = !this.finished && !this.awaitingSize && this.idle > 3.2 && builder.petalCount < 2;
+    // The first flower gets a nudge if a child hesitates. By the second one the
+    // question has changed from "what is this?" to "how big can I make it?", so
+    // the prompt stops.
+    const wantHint =
+      !this.finished &&
+      !this.awaitingSize &&
+      this.idle > 3.2 &&
+      builder.petalCount < 2 &&
+      this.ctx.placedFlowers().length === 0;
     this.ctx.overlay.setHint(wantHint ? 'arc' : null);
     // If the child is only hesitating, move the tool a little to show what it
     // is for — but never make the flower for them.
@@ -256,13 +272,14 @@ export class FlowerStage implements StageBehaviour {
     return true;
   }
 
-  private afterPetal(builder: FlowerBuilder): void {
-    if (builder.innerComplete() && builder.record.size !== 'large') {
-      this.awaitingSize = true;
+  private checkWhorls(builder: FlowerBuilder): void {
+    if (this.finished || builder.hasLivePetal()) return;
+    if (builder.record.size === 'large' && builder.outerComplete()) {
+      this.complete('large');
       return;
     }
-    if (builder.outerComplete()) {
-      this.complete('large');
+    if (builder.record.size !== 'large' && builder.innerComplete()) {
+      this.awaitingSize = true;
     }
   }
 
@@ -295,7 +312,9 @@ export class FlowerStage implements StageBehaviour {
     const rig = world.pipingRig;
     // Idle: the tip stands off the work by a few millimetres, the way a hand
     // waiting to start actually holds it.
-    const standoff = this.finished ? 0.032 : hasLive ? 0 : 0.008 + this.nudge * 0.004 * Math.sin(performance.now() * 0.004);
+    // Once the flower is finished the bag is drawn well clear, so that the
+    // hand holding it is not lying across the thing the child just made.
+    const standoff = this.finished ? 0.115 : hasLive ? 0 : 0.008 + this.nudge * 0.004 * Math.sin(performance.now() * 0.004);
     rig.position.copy(_frame.pos).addScaledVector(_frame.body, standoff);
 
     _y.copy(_frame.body);

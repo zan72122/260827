@@ -1,0 +1,38 @@
+[
+  {
+    "viewport": "replay",
+    "errors": [],
+    "samples": [
+      {
+        "geometries": 127,
+        "textures": 22,
+        "programs": 32,
+        "flowers": 1
+      },
+      {
+        "geometries": 127,
+        "textures": 22,
+        "programs": 35,
+        "flowers": 1
+      },
+      {
+        "geometries": 127,
+        "textures": 22,
+        "programs": 35,
+        "flowers": 1
+      },
+      {
+        "geometries": 127,
+        "textures": 22,
+        "programs": 35,
+        "flowers": 1
+      },
+      {
+        "geometries": 127,
+        "textures": 22,
+        "programs": 35,
+        "flowers": 1
+      }
+    ]
+  }
+]

@@ -307,13 +307,13 @@ export function buildRoom(materials: Materials): THREE.Group {
       ),
       new THREE.MeshStandardMaterial({ color: 0xf0e2cc, roughness: 0.6, side: THREE.DoubleSide }),
     );
-    shade.position.set(TABLE_CENTRE.x, 1.62, TABLE_CENTRE.z);
+    shade.position.set(TABLE_CENTRE.x, 1.58, TABLE_CENTRE.z);
     room.add(shade);
     const flex = new THREE.Mesh(
       new THREE.CylinderGeometry(mm(2), mm(2), 0.92, 6),
       materials.wick,
     );
-    flex.position.set(TABLE_CENTRE.x, 2.24, TABLE_CENTRE.z);
+    flex.position.set(TABLE_CENTRE.x, 2.20, TABLE_CENTRE.z);
     room.add(flex);
     shade.userData.disposeMaterial = true;
   }

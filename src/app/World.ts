@@ -143,7 +143,9 @@ export class World {
       this.nailHand,
       new THREE.Vector3(0, -mm(52), 0),
       new THREE.Vector3(0, 1, 0),
-      new THREE.Vector3(-0.78, -0.52, 0.35),
+      // Out of the left of the frame rather than towards the camera: what a
+      // child needs to see is the fingers on the shaft, not a forearm.
+      new THREE.Vector3(-0.92, -0.36, 0.10),
     );
     this.nailPivot.add(this.nailHand);
 

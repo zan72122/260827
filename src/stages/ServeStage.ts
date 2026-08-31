@@ -172,7 +172,8 @@ export class ServeStage implements StageBehaviour {
         grow * wobble,
       );
       world.candleFlame.rotation.z = lean * 0.9;
-      world.candleLight.intensity = grow * (0.85 + Math.sin(this.flicker * 1.7) * 0.09) * (1 - this.gust * 0.5);
+      world.candleLight.intensity =
+        grow * (0.014 + Math.sin(this.flicker * 1.7) * 0.0016) * (1 - this.gust * 0.5);
       this.gust = damp(this.gust, 0, 3.4, dt);
       this.breath = Math.max(0, this.breath - dt * 0.22);
     } else {

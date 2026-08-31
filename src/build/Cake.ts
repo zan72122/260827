@@ -34,7 +34,7 @@ const SIDE_ROWS = 18;
 
 /** Where the unevenness of a hand-applied coat actually sits. */
 function ampProfile(t: number): number {
-  return mm(6.0) * Math.pow(Math.sin(Math.PI * clamp(t, 0, 1)), 0.5) + mm(0.4);
+  return mm(6.5) * Math.pow(Math.sin(Math.PI * clamp(t, 0, 1)), 0.5) + mm(0.5);
 }
 
 function sampleRoughness(rough: Float32Array, angle: number): number {
@@ -385,10 +385,12 @@ export function initialCoat(columns: number, seed = 7): Float32Array {
   const lumps = 6;
   const centres = Array.from({ length: lumps }, () => rnd() * TAU);
   const widths = Array.from({ length: lumps }, () => 0.18 + rnd() * 0.42);
-  const heights = Array.from({ length: lumps }, () => 0.6 + rnd() * 0.6);
+  const heights = Array.from({ length: lumps }, () => 0.5 + rnd() * 0.55);
+  // A crumb coat is uneven all the way round, not smooth with one lump on it,
+  // so there is a base level of surplus everywhere and high spots on top of it.
   for (let i = 0; i < columns; i++) {
     const a = (i / columns) * TAU;
-    let v = 0.12;
+    let v = 0.40 + 0.16 * ringNoise(a * 2.1, 331, 4);
     for (let k = 0; k < lumps; k++) {
       let d = Math.abs(a - centres[k]);
       d = Math.min(d, TAU - d);

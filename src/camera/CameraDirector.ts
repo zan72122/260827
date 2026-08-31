@@ -88,28 +88,28 @@ export const DEV_SHOTS: Record<string, ShotPair> = {
   // Far enough out that a 38 mm flower fits across a narrow portrait frame,
   // which is the point of these: to check the solid from every side.
   'flower-side': {
-    portrait: shot(0.045, 1.048, 0.405, 0.045, 1.0465, 0.105, 26),
-    landscape: shot(0.045, 1.048, 0.405, 0.045, 1.0465, 0.105, 26),
+    portrait: shot(0.045, 1.048, 0.255, 0.045, 1.0465, 0.105, 22),
+    landscape: shot(0.045, 1.048, 0.255, 0.045, 1.0465, 0.105, 22),
   },
   'flower-back': {
-    portrait: shot(0.075, 1.098, -0.190, 0.045, 1.046, 0.105, 26),
-    landscape: shot(0.075, 1.098, -0.190, 0.045, 1.046, 0.105, 26),
+    portrait: shot(0.062, 1.078, -0.035, 0.045, 1.046, 0.105, 22),
+    landscape: shot(0.062, 1.078, -0.035, 0.045, 1.046, 0.105, 22),
   },
   'flower-top': {
-    portrait: shot(0.049, 1.295, 0.113, 0.045, 1.043, 0.105, 26),
-    landscape: shot(0.049, 1.295, 0.113, 0.045, 1.043, 0.105, 26),
+    portrait: shot(0.047, 1.190, 0.109, 0.045, 1.043, 0.105, 22),
+    landscape: shot(0.047, 1.190, 0.109, 0.045, 1.043, 0.105, 22),
   },
   'flower-far-side': {
-    portrait: shot(-0.205, 1.075, 0.170, 0.045, 1.046, 0.105, 26),
-    landscape: shot(-0.205, 1.075, 0.170, 0.045, 1.046, 0.105, 26),
+    portrait: shot(-0.100, 1.062, 0.145, 0.045, 1.046, 0.105, 22),
+    landscape: shot(-0.100, 1.062, 0.145, 0.045, 1.046, 0.105, 22),
   },
   'cake-low': {
-    portrait: shot(-0.128, 0.985, 0.325, -0.152, 0.992, 0.0, 34),
-    landscape: shot(-0.128, 0.985, 0.325, -0.152, 0.992, 0.0, 34),
+    portrait: shot(-0.115, 0.995, 0.620, -0.152, 0.992, 0.0, 38),
+    landscape: shot(-0.115, 0.995, 0.620, -0.152, 0.992, 0.0, 38),
   },
   'cake-top': {
-    portrait: shot(-0.152, 1.28, 0.02, -0.152, 1.03, 0.0, 34),
-    landscape: shot(-0.152, 1.28, 0.02, -0.152, 1.03, 0.0, 34),
+    portrait: shot(-0.152, 1.680, 0.060, -0.152, 1.030, 0.0, 40),
+    landscape: shot(-0.152, 1.680, 0.060, -0.152, 1.030, 0.0, 40),
   },
   'room-wide': {
     portrait: shot(1.15, 1.95, 2.45, 0.6, 0.92, 0.35, 46),

@@ -5,7 +5,7 @@ import { buildCakeSector, CAKE_H, CAKE_R, cakeRadiusAt } from '../build/Cake';
 import { SEATS, TABLE_CENTRE, TABLE_TOP_Y } from '../build/Room';
 import { orientHand } from '../app/World';
 import { mm } from '../core/units';
-import { TAU, clamp, easeInOut, easeOut, wrapAngle } from '../util/math';
+import { TAU, clamp, easeInOut, easeOut, makeRandom, wrapAngle } from '../util/math';
 import type { FlowerBuilder } from '../flower/FlowerBuilder';
 
 /**
@@ -267,6 +267,28 @@ export class ServingCut implements StageBehaviour {
     this.wedgeTarget.copy(_v).sub(rotated);
     this.wedgeYawFrom = 0;
     this.wedgeYawTo = yaw;
+
+    this.dropCrumbs(mid);
+  }
+
+  /** A knife through sponge leaves crumbs. They fall where the cut was. */
+  private dropCrumbs(mid: number): void {
+    const { world, materials, state } = this.ctx;
+    const rnd = makeRandom(Math.round(mid * 1000) + state.sessionsServed * 17);
+    const group = new THREE.Group();
+    group.name = 'crumbs';
+    for (let i = 0; i < 14; i++) {
+      const geo = new THREE.SphereGeometry(mm(0.6 + rnd() * 1.4), 5, 4);
+      geo.scale(1, 0.5 + rnd() * 0.3, 0.8 + rnd() * 0.4);
+      const a = mid + (rnd() - 0.5) * 1.1;
+      const d = CAKE_R * (1.02 + rnd() * 0.28);
+      geo.translate(Math.cos(a) * d, mm(0.6), Math.sin(a) * d);
+      const m = new THREE.Mesh(geo, rnd() > 0.45 ? materials.sponge : materials.crust);
+      m.castShadow = true;
+      group.add(m);
+    }
+    world.cakeCarrier.add(group);
+    world.cakePieces.push(group);
   }
 
   /** The plate is at whichever place was chosen, so this shot is worked out. */

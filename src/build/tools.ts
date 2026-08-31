@@ -385,7 +385,9 @@ export function buildCandle(materials: Materials): {
   flame.position.y = DIM.candleHeight + mm(3);
   group.add(flame);
 
-  const light = new THREE.PointLight(0xffb46a, 1.6, 0.7, 2);
+  // Candela: what lands on the icing a few centimetres away is this divided by
+  // the square of that distance. A candle is a small light seen very close to.
+  const light = new THREE.PointLight(0xffb46a, 0.014, 0.6, 2);
   light.position.y = DIM.candleHeight + mm(10);
   group.add(light);
 
