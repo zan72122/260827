@@ -287,7 +287,14 @@ function updateMountTools(p: MountPhase): void {
 // ポインタ操作
 // ---------------------------------------------------------------------------
 
+let pointerAbort: AbortController | null = null;
+
 function bindPointer(g: Game): void {
+  // 前回のゲームの購読を必ず解除する（再挑戦を繰り返しても二重に反応しない）
+  pointerAbort?.abort();
+  const ac = new AbortController();
+  pointerAbort = ac;
+  const opts = { signal: ac.signal } as AddEventListenerOptions;
   let downX = 0;
   let downY = 0;
   let lastX = 0;
@@ -372,18 +379,18 @@ function bindPointer(g: Game): void {
     updateHud();
   };
 
-  canvas.addEventListener('pointerdown', onDown);
-  canvas.addEventListener('pointermove', onMove);
-  canvas.addEventListener('pointerup', onUp);
-  canvas.addEventListener('pointercancel', onCancel);
-  canvas.addEventListener('lostpointercapture', onCancel);
-  canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+  canvas.addEventListener('pointerdown', onDown, opts);
+  canvas.addEventListener('pointermove', onMove, opts);
+  canvas.addEventListener('pointerup', onUp, opts);
+  canvas.addEventListener('pointercancel', onCancel, opts);
+  canvas.addEventListener('lostpointercapture', onCancel, opts);
+  canvas.addEventListener('contextmenu', (e) => e.preventDefault(), opts);
 
   const squeezeLoop = (): void => {
-    if (!game) return;
+    if (ac.signal.aborted || game !== g) return;
     if (squeezing) {
       const now = performance.now();
-      game.squeeze(Math.min(0.15, (now - squeezeLast) / 1000));
+      g.squeeze(Math.min(0.15, (now - squeezeLast) / 1000));
       squeezeLast = now;
     }
     requestAnimationFrame(squeezeLoop);

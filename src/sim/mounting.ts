@@ -35,7 +35,11 @@ const GAP_MAX = 0.045;
 const K_SPREAD = 900;
 const V_MAX = 60; // mm/s
 
-export function simulateMounting(p: MountParams): MountResult {
+/**
+ * @param stopAtSec 指定すると、その時刻までの状態で打ち切る（下ろしている最中の表示に使う）。
+ *                  最終結果と同じモデル・同じ経路をそのまま途中で止めたもの。
+ */
+export function simulateMounting(p: MountParams, stopAtSec?: number): MountResult {
   const volMm3 = Math.max(0, p.volumeUl); // 1 µL = 1 mm^3
   const gap = clamp(volMm3 / (L * W), GAP_MIN, GAP_MAX);
   const capacityArea = Math.min(L * W, volMm3 / gap);
@@ -71,7 +75,7 @@ export function simulateMounting(p: MountParams): MountResult {
 
   const acc = new Map<number, number>();
   const samples = normalizeSamples(p.angleSamples);
-  const tEnd = samples[samples.length - 1].t + 0.4;
+  const tEnd = Math.min(samples[samples.length - 1].t + 0.4, stopAtSec ?? Infinity);
   const dt = 0.01;
   for (let t = 0; t <= tEnd; t += dt) {
     const deg = angleAt(samples, t);
@@ -114,8 +118,10 @@ export function simulateMounting(p: MountParams): MountResult {
     if (closedIdx >= NU && stepsNext.length === 0) break;
   }
 
-  // 未到達セル（容量不足など）
-  for (let k = 0; k < filled.length; k++) if (!filled[k] && !airLocked[k]) airLocked[k] = 2; // 2 = 未充填(乾いた面)
+  // 未到達セル（容量不足など）。途中経過の表示では「まだ届いていない」だけなので印を付けない。
+  if (stopAtSec === undefined) {
+    for (let k = 0; k < filled.length; k++) if (!filled[k] && !airLocked[k]) airLocked[k] = 2; // 2 = 未充填(乾いた面)
+  }
 
   // --- 切片グリッドへ写像
   const coverage = new Float32Array(GW * GH);

@@ -127,6 +127,16 @@ npm test             # 因果モデルの単体テスト（vitest）
 npm run e2e          # 実際のポインタ操作を通す操作テスト（Playwright）
 ```
 
+`npm run e2e` は Chromium を `/opt/pw-browsers` から起動します（`playwright.config.ts` の `executablePath`）。
+工程を最後まで通す `playthrough.spec.ts` は、ソフトウェア WebGL の環境で 10〜12 分かかります。
+
+URL パラメータ:
+
+| パラメータ | 効果 |
+|-----------|------|
+| `?q=low` / `?q=medium` / `?q=high` | 描画品質を固定する（既定は端末に応じた自動判定） |
+| `?test` | 自動テスト用の読み取り専用 API `window.__he` を公開する（開発サーバーでは常に有効） |
+
 - **単体テスト**（`test/unit/`）は内部状態へ直接アクセスして因果モデルを検証します。
 - **操作テスト**（`test/e2e/`）は実際のポインタ経路とボタンだけで進めます。
   ページ側が公開する `window.__he` は**読み取り専用**（座標と現在値を返すだけ）で、
@@ -165,9 +175,11 @@ evidence/      取得した画面・画像
 
 - ビルド: `tsc --noEmit` と `vite build` が通ること（配信サイズ gzip 約 168 KB）
 - 因果モデル: `npm test` の 20 件（下記の受け入れ条件 2〜7 に対応）
-- 操作: Chromium 141（`/opt/pw-browsers/chromium-1194`、SwiftShader によるソフトウェア WebGL）を
-  390×844 / 375×667 / 430×932 のモバイルエミュレーションで動かし、
-  実際のポインタ操作で工程の完遂・pointercancel・中断復帰・画面回転・連続再挑戦を確認
+- 操作: Chromium（`/opt/pw-browsers/chromium-1194`、SwiftShader によるソフトウェア WebGL）を
+  390×844 / 375×667 / 430×932 のモバイルエミュレーションで動かし、実際のポインタ操作で確認
+  - `playthrough.spec.ts`: S1 の全工程 → 封入 → 顕微鏡画像 → 所見 → 原因候補 → 解説 → 反実仮想 → 再挑戦（11.6 分で完走）
+  - `mounting.spec.ts`: 封入剤の量・接触位置・下ろす速度の操作と振り返りの全ステップ
+  - `robustness.spec.ts`: pointercancel・中断復帰・画面回転・連続再挑戦、および 3 つの縦画面サイズのレイアウト
 
 **確認していないこと（重要）**
 
@@ -205,5 +217,10 @@ evidence/      取得した画面・画像
 
 - `evidence/case-*.png` — 因果モデルの検証用に、同じ視野・同じ表示条件で生成した完成画像
   （基準／過分別／核染色不足／部分浸漬／エオジン後の水／脱水省略／脱パラフィン不足／色出し不足／乾燥／
-  カバーガラスを速く下ろした／封入剤不足）。`test/unit/render-preview.spec.ts` が生成します。
-- `evidence/shots/*.png` — Playwright（Chromium モバイルエミュレーション）で実際に操作して取得した画面。
+  カバーガラスを速く下ろした／封入剤不足）。
+  **これはブラウザで撮った画面ではなく、ブラウザと同じ画像生成コード（`src/micro/compose.ts`）を
+  Node 上の vitest から呼んで書き出したもの**です（`test/unit/render-preview.spec.ts`）。
+  条件だけを変えた比較を並べるために、この形で残しています。
+- `evidence/shots/*.png` — **Playwright（Chromium のモバイルエミュレーション）で実際に操作して取得した画面**。
+  番号の意味: 01〜11 起動と浸漬、20〜29 工程の完遂から振り返り・再挑戦まで、
+  40 画面回転、50 縦画面サイズ別のレイアウト、60〜66 封入操作と振り返りの各段階。

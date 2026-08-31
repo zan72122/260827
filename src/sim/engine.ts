@@ -234,6 +234,9 @@ export interface RunSummary {
   mount: MountParams | null;
 }
 
+/** 同じ槽での作業を 1 回の滞在にまとめるときに許す、液面から出ていた時間(秒)。 */
+const MERGE_AIR_SEC = 3;
+
 export function summarize(log: RunLog): RunSummary {
   const visits: BathVisit[] = [];
   let cur: BathVisit | null = null;
@@ -265,10 +268,8 @@ export function summarize(log: RunLog): RunSummary {
     if (b === AIR) {
       airRun += TICK;
       maxAirSec = Math.max(maxAirSec, airRun);
-      if (cur) {
-        cur.endTick = i;
-        cur = null;
-      }
+      // ディップの往復や液切りで一度液面から出ても、同じ槽での作業は 1 回の滞在として数える
+      if (cur && airRun > MERGE_AIR_SEC) cur = null;
       continue;
     }
     airRun = 0;

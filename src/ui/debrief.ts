@@ -203,7 +203,11 @@ export class Debrief {
     b.append(
       el('div', { class: `verdict ${chosenNo.length === 0 && missedCause.length === 0 ? 'ok' : 'info'}` },
         el('p', {}, chosenOk.length ? `履歴に支持される原因を選べています: ${chosenOk.map((c) => causeById(c).ja).join(' / ')}` : '履歴に支持される原因は選ばれていません。'),
-        el('p', {}, chosenNo.length ? `履歴では支持が弱い原因: ${chosenNo.map((c) => causeById(c).ja).join(' / ')}（画像だけからは候補になり得ます）` : ''),
+        el('p', {}, chosenNo.length
+          ? `履歴では支持が弱い原因: ${chosenNo
+              .map((c) => causeById(c).ja + (imageCands.includes(c) ? '（画像だけからは候補になり得ます）' : '（今回の像からも候補になりません）'))
+              .join(' / ')}`
+          : ''),
         el('p', {}, missedCause.length ? `見落とした原因: ${missedCause.map((c) => causeById(c).ja).join(' / ')}` : ''),
       ),
     );
@@ -323,11 +327,28 @@ export class Debrief {
       host.append(grid);
       const gone = this.truth.filter((x) => !f2.includes(x) && x !== 'no_major_issue');
       const added = f2.filter((x) => !this.truth.includes(x) && x !== 'no_major_issue');
+      const supported = new Set(
+        historySupport(this.summaryData, this.input.state, this.metrics)
+          .filter((x) => x.strength > 0.15)
+          .map((x) => x.cause),
+      );
+      const aimed = supported.has(fix.cause);
+      const verdict = gone.length && !added.length
+        ? aimed
+          ? '妥当: 履歴が支持する原因に対する修正で、モデル上も所見が解消しました。'
+          : 'モデル上は所見が解消しましたが、この原因は今回の履歴からは強く支持されていません。他の原因も考えてください。'
+        : added.length
+          ? '注意: 別の所見が新たに出ました。1 条件の変更が他の工程に影響しています。'
+          : aimed
+            ? '履歴はこの原因を支持しますが、この変更幅ではモデル上の所見は変わりませんでした。'
+            : 'この変更ではモデル上の所見は変わりませんでした。原因の見立てを見直してください。';
       host.append(
-        el('div', { class: `verdict ${gone.length && !added.length ? 'ok' : added.length ? 'warn' : 'info'}` },
+        el('h3', {}, '3) 修正の妥当性'),
+        el('div', { class: `verdict ${gone.length && !added.length && aimed ? 'ok' : added.length ? 'warn' : 'info'}` },
+          el('p', {}, verdict),
           el('p', {}, gone.length ? `解消した所見: ${gone.map(nameOf).join(' / ')}` : '解消した所見はありません。'),
           el('p', {}, added.length ? `新たに出た所見: ${added.map(nameOf).join(' / ')}` : '新たな所見は出ていません。'),
-          el('p', { class: 'dim' }, '比較画像は同じ視野・同じ表示条件です。実際の再染色実験ではありません。'),
+          el('p', { class: 'dim' }, '比較画像は同じ視野・同じ表示条件です。実際に染め直した対照標本ではなく、モデル上の反実仮想です。'),
         ),
       );
     }, 30);

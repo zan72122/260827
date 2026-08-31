@@ -157,7 +157,13 @@ test('S1 の工程を最後まで通して封入・観察・振り返りまで�
   await page.mouse.up();
   await page.waitForTimeout(600);
   expect(await read(page, 'mountPhase')).toBe('done');
+
+  // 振り返りが自動的に開く。いったん閉じて封入後の作業台を記録し、また開く。
+  await expect(page.locator('#sheet')).toBeVisible({ timeout: 30000 });
+  await page.click('#sheet-close');
+  await page.waitForTimeout(600);
   await page.screenshot({ path: 'evidence/shots/24-mounted.png' });
+  await page.click('#mount-tools button.primary');
 
   // --- 16. 顕微鏡画像 → 所見 → 原因候補 → 解説 → 次の1条件
   await expect(page.locator('#sheet')).toBeVisible({ timeout: 20000 });

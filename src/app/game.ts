@@ -7,7 +7,7 @@ import { expectedBaths, expectedStepText } from '../sim/progress';
 import { BATHS, BATH_INDEX, STATIONS, bathById, TEACHING, type StationId } from '../sim/protocol';
 import { DIM, SECTION } from '../sim/geometry';
 import { jarLayout } from '../render3d/jar';
-import type { MountParams } from '../sim/mounting';
+import { simulateMounting, type MountParams } from '../sim/mounting';
 import { Audio } from './audio';
 
 const SECTION_H = SECTION.y1 - SECTION.y0;
@@ -67,6 +67,7 @@ export class Game {
   };
   private coverAngle = 30;
   private coverStartedAt = -1;
+  private lastFrontPreview = -1;
   blockMistakes = false;
   statusText = '';
   private cb: GameCallbacks;
@@ -455,6 +456,7 @@ export class Game {
     if (this.mountPhase !== 'lower') return;
     if (this.coverStartedAt < 0) {
       this.coverStartedAt = this.clock.opSec;
+      this.lastFrontPreview = -1;
       this.mount.angleSamples.push({ t: 0, deg: this.coverAngle });
     }
     this.coverAngle = Math.max(0, Math.min(45, this.coverAngle + deltaDeg));
@@ -462,6 +464,11 @@ export class Game {
     const t = this.clock.opSec - this.coverStartedAt;
     const last = this.mount.angleSamples[this.mount.angleSamples.length - 1];
     if (!last || t - last.t > 0.02) this.mount.angleSamples.push({ t, deg: this.coverAngle });
+    // 下ろしている最中も、同じモデルを途中で止めて封入剤の前線を見せる
+    if (t - this.lastFrontPreview > 0.12) {
+      this.lastFrontPreview = t;
+      this.lab.mountStage.showResult(simulateMounting({ ...this.mount, angleSamples: this.mount.angleSamples.slice() }, t));
+    }
     if (this.coverAngle <= 0.01) this.completeMount();
   }
 
@@ -543,9 +550,14 @@ export class Game {
       jar?.nudge((this.rackX - prevX) / Math.max(dt, 1e-3) * 0.02, (this.rackY - prevY) / Math.max(dt, 1e-3) * 0.02);
     }
 
-    this.lab.rack.updateSection(this.run.state);
+    // 切片のテクスチャは毎フレーム作り直さない（1 秒あたり 5 回で十分）
+    this.sectionRefresh += dt;
+    if (this.sectionRefresh > 0.2) {
+      this.sectionRefresh = 0;
+      this.lab.rack.updateSection(this.run.state);
+      if (this.phase === 'mount') this.lab.mountStage.updateSection(this.run.state);
+    }
     this.lab.rack.updateFilm(this.run.state);
-    if (this.phase === 'mount') this.lab.mountStage.updateSection(this.run.state);
 
     // --- カメラ
     const focus = this.isDragging || this.phase === 'mount' ? 1 : 0.75;
@@ -563,6 +575,7 @@ export class Game {
   }
 
   private dripAccum = 0;
+  private sectionRefresh = 0;
   private prevLevelForSound: number | null = null;
   private hitBottom = false;
 
