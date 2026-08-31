@@ -38,6 +38,8 @@ export interface NozzleSpec {
   rollLock: number;
   /** base extrusion speed multiplier */
   flowScale: number;
+  /** how narrow the section gets as the flow dies — a star peaks, a ball domes */
+  tipScale: number;
 }
 
 function buildProfile(u: number[], v: number[]): Profile {
@@ -242,6 +244,7 @@ export function buildNozzles(q: ProfileQuality): Record<NozzleId, NozzleSpec> {
       topRadius: 0.0092,
       rollLock: 0.25,
       flowScale: 1,
+      tipScale: 0.06,
     },
     round: {
       id: 'round',
@@ -253,6 +256,7 @@ export function buildNozzles(q: ProfileQuality): Record<NozzleId, NozzleSpec> {
       topRadius: 0.009,
       rollLock: 0,
       flowScale: 0.95,
+      tipScale: 0.34,
     },
     petal: {
       id: 'petal',
@@ -264,6 +268,7 @@ export function buildNozzles(q: ProfileQuality): Record<NozzleId, NozzleSpec> {
       topRadius: 0.0092,
       rollLock: 1,
       flowScale: 0.82,
+      tipScale: 0.13,
     },
   };
 }

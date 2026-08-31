@@ -101,7 +101,7 @@ export class CameraDirector {
       target: (c, o) => o.set(c.tip.x * 0.92, CAKE_TOP + 0.010, c.tip.z * 0.92),
     },
     inspect: {
-      radius: 0.042,
+      radius: 0.055,
       elevation: 0.40,
       azimuth: null,
       fov: 30,
@@ -120,7 +120,7 @@ export class CameraDirector {
       target: (_c, o) => o.set(0.03, 0.030, -0.048),
     },
     topDown: {
-      radius: 0.046,
+      radius: 0.052,
       elevation: 1.14,
       azimuth: null,
       fov: 30,
@@ -129,8 +129,10 @@ export class CameraDirector {
       target: (c, o) => o.set(c.tip.x, CAKE_TOP + 0.006, c.tip.z),
     },
     lowSide: {
-      radius: 0.044,
-      elevation: 0.115,
+      radius: 0.050,
+      // low enough to read the belly and the tail, high enough that the cake
+      // top is still a surface you can draw a circle on
+      elevation: 0.27,
       azimuth: null,
       fov: 30,
       tau: 0.6,

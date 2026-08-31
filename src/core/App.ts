@@ -173,12 +173,12 @@ export class App {
       },
       {
         id: 'round',
-        stow: new THREE.Vector3(0.176, BENCH_Y, -0.038),
+        stow: new THREE.Vector3(0.104, BENCH_Y, -0.088),
         row: new THREE.Vector3(0.108, BENCH_Y, -0.098),
       },
       {
         id: 'petal',
-        stow: new THREE.Vector3(0.204, BENCH_Y, -0.006),
+        stow: new THREE.Vector3(0.142, BENCH_Y, -0.058),
         row: new THREE.Vector3(0.156, BENCH_Y, -0.066),
       },
     ];
@@ -405,11 +405,16 @@ export class App {
 
   private onStrokeFinished(d: import('../state/DecorationHistory').Decoration): void {
     this.history.add(d);
+    // only the two shapes whose structure needs a special angle get one;
+    // everything else stays in the working three-quarter view
     if (this.flow.beat === 'free' || this.flow.beat === 'finale') {
-      if (d.kind === 'rosette') this.director.set('topDown');
-      else if (d.kind === 'shell') this.director.set('lowSide');
-      else this.director.set('inspect');
-      this.holdShotUntil = this.elapsed + 1.8;
+      if (d.kind === 'rosette') {
+        this.director.set('topDown');
+        this.holdShotUntil = this.elapsed + 1.4;
+      } else if (d.kind === 'shell') {
+        this.director.set('lowSide');
+        this.holdShotUntil = this.elapsed + 1.4;
+      }
     }
     this.latestMeshRef =
       this.history.group.children[this.history.group.children.length - 1] ?? null;
@@ -632,11 +637,20 @@ export class App {
     this.toolGroup.updateMatrixWorld(true);
   }
 
-  /** Screen anchors for the spare tips: bottom band, left to right. */
-  private readonly rowNdc: [number, number][] = [
-    [-0.58, -0.74],
-    [-0.16, -0.82],
-    [0.26, -0.88],
+  /**
+   * Screen anchors for the spare tips. A tall screen has room for a row along
+   * the bottom; a wide one does not, so they sit down the near-right edge where
+   * a thumb still reaches them.
+   */
+  private readonly rowNdcPortrait: [number, number][] = [
+    [-0.58, -0.72],
+    [-0.17, -0.80],
+    [0.24, -0.87],
+  ];
+  private readonly rowNdcLandscape: [number, number][] = [
+    [0.80, -0.72],
+    [0.87, -0.36],
+    [0.92, -0.02],
   ];
   private benchPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -BENCH_Y);
   private benchHit = new THREE.Vector3();
@@ -648,12 +662,13 @@ export class App {
    * onto the bench.
    */
   private resolveRowTarget(i: number, out: THREE.Vector3): boolean {
-    this.benchNdc.set(this.rowNdc[i][0], this.rowNdc[i][1]);
+    const row = this.height >= this.width ? this.rowNdcPortrait : this.rowNdcLandscape;
+    this.benchNdc.set(row[i][0], row[i][1]);
     this.raycaster.setFromCamera(this.benchNdc, this.camera);
     if (!this.raycaster.ray.intersectPlane(this.benchPlane, this.benchHit)) return false;
     const r = Math.hypot(this.benchHit.x, this.benchHit.z);
-    if (r < 0.115) this.benchHit.multiplyScalar(0.115 / Math.max(r, 1e-4)).setY(BENCH_Y);
-    if (r > 0.34) this.benchHit.multiplyScalar(0.34 / r).setY(BENCH_Y);
+    if (r < 0.118) this.benchHit.multiplyScalar(0.118 / Math.max(r, 1e-4)).setY(BENCH_Y);
+    if (r > 0.40) this.benchHit.multiplyScalar(0.40 / r).setY(BENCH_Y);
     out.copy(this.benchHit);
     out.y = BENCH_Y;
     return true;

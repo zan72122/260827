@@ -24,7 +24,7 @@ export interface GestureResult {
   radius: number;
   /** signed, in turns */
   turns: number;
-  /** how many times the stroke crossed its own mean direction */
+  /** how many times the stroke reversed its turn direction */
   oscillations: number;
 }
 

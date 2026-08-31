@@ -148,7 +148,8 @@ export function buildNozzle(spec: NozzleSpec, rings = 22): NozzleObject {
   const outer = offsetProfile(spec.opening, spec.wall);
 
   const metal = makeStainless({ roughness: 0.27 });
-  const innerMetal = makeStainless({ roughness: 0.34, color: 0xbfc3c6, drawn: 0.5 });
+  const innerMetal = makeStainless({ roughness: 0.44, color: 0xd8dbdd, drawn: 0.4 });
+  innerMetal.metalness = 0.62;
   innerMetal.side = THREE.BackSide;
 
   const outerGeo = toGeometry(loft(outer, spec.topRadius + spec.wall, spec.length, rings, 0, false));

@@ -171,10 +171,10 @@ export class PipingController {
         {
           c: new THREE.Vector3(x, y, z),
           t: _up,
-          su: lerp(0.62, 0.95, u),
-          sv: lerp(0.62, 0.95, u),
+          su: lerp(0.94, 1.0, u),
+          sv: lerp(0.94, 1.0, u),
           roll: 0,
-          flare: Math.pow(1 - u, 1.4) * 0.0019,
+          flare: Math.pow(1 - u, 1.3) * 0.0023,
           lift: u * 0.15,
           time: now,
         },
@@ -223,7 +223,7 @@ export class PipingController {
     let targetScale = s > vE ? clamp(Math.sqrt(vE / s), 0.55, 1.0) : 1.0;
     if (this.phase === 'release') {
       const r = clamp(this.releaseT / RELEASE, 0, 1);
-      targetScale = Math.min(targetScale, lerp(1, 0.055, Math.pow(r, 0.7)));
+      targetScale = Math.min(targetScale, lerp(1, this.spec.tipScale, Math.pow(r, 0.7)));
     }
     this.scale = damp(this.scale, targetScale, 0.065, dt);
 
@@ -278,7 +278,7 @@ export class PipingController {
       dir.normalize();
       this.lastTangent.lerp(dir, 0.55).normalize();
     }
-    const near = clamp((this.tip.y - ground) / 0.0062, 0, 1);
+    const near = clamp((this.tip.y - ground) / 0.0060, 0, 1);
     const ribbonRoll = this.ribbon * 0.55 * clamp(this.latSmooth / 0.06, -1, 1);
     // a ribbon flattens the section into a band as well as rolling it
     const su = this.scale * (1 + this.ribbon * 0.34);
@@ -289,7 +289,7 @@ export class PipingController {
       su,
       sv,
       roll: ribbonRoll,
-      flare: Math.pow(1 - near, 1.5) * 0.0017 * (0.5 + 0.5 * this.flow),
+      flare: Math.pow(1 - near, 1.6) * 0.0021 * (0.5 + 0.5 * this.flow),
       lift: clamp((this.tip.y - ground) / 0.012, 0, 1),
       time: now,
     };
@@ -364,6 +364,34 @@ export class PipingController {
     this.liveKind = g.kind;
   }
 
+  /**
+   * Close the strand off. A star tip is already down to a peak by now, so this
+   * is a whisker; a round tip is still fat, so the same code rounds it into the
+   * dome a real dot ends with.
+   */
+  private appendCap(last: RingSample, now: number): void {
+    const steps = 4;
+    const reach = this.spec.cream.maxR * last.su * 0.85;
+    for (let i = 1; i <= steps; i++) {
+      const u = i / steps;
+      const k = Math.pow(Math.cos((u * Math.PI) / 2), 0.62);
+      _capC.copy(last.c).addScaledVector(last.t, reach * Math.sin((u * Math.PI) / 2));
+      this.builder.commit(
+        {
+          c: _capC,
+          t: last.t,
+          su: Math.max(0.02, last.su * k),
+          sv: Math.max(0.02, last.sv * k),
+          roll: last.roll,
+          flare: 0,
+          lift: last.lift,
+          time: now,
+        },
+        this.spec.rollLock,
+      );
+    }
+  }
+
   private finish(now: number): void {
     const g = classifyGesture(this.path, this.oscTotal);
     const groundLookup = this.makeGroundLookup();
@@ -380,6 +408,7 @@ export class PipingController {
     if (rebuilt && rebuilt.length > 6) {
       this.builder.begin(this.spec.cream);
       for (const r of rebuilt) this.builder.commit(r, this.spec.rollLock);
+      this.appendCap(rebuilt[rebuilt.length - 1], now);
       for (const r of rebuilt) {
         this.contact.addDeposit(
           r.c.x,
@@ -388,6 +417,22 @@ export class PipingController {
           r.c.y - this.contact.surfaceY(r.c.x, r.c.z),
         );
       }
+    }
+
+    if (!rebuilt) {
+      this.appendCap(
+        {
+          c: _capLast.copy(this.lastCommit),
+          t: this.lastTangent,
+          su: this.scale,
+          sv: this.scale,
+          roll: 0,
+          flare: 0,
+          lift: 1,
+          time: now,
+        },
+        now,
+      );
     }
 
     const geo = this.builder.finalize(now);
@@ -443,3 +488,5 @@ export class PipingController {
 const _tmp = new THREE.Vector3();
 const _tmpC = new THREE.Vector3();
 const _axisTarget = new THREE.Vector3();
+const _capC = new THREE.Vector3();
+const _capLast = new THREE.Vector3();

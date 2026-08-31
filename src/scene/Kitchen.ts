@@ -36,9 +36,10 @@ export function buildKitchen(): { group: THREE.Group; turntable: THREE.Group; wi
   // ---- turntable ----------------------------------------------------------
   const turntable = new THREE.Group();
   const steel = new THREE.MeshStandardMaterial({
-    color: 0xb4b8bb,
-    metalness: 0.92,
-    roughness: 0.36,
+    color: 0x9aa0a4,
+    metalness: 0.78,
+    roughness: 0.44,
+    envMapIntensity: 0.85,
   });
   const plate = new THREE.Mesh(new THREE.CylinderGeometry(0.107, 0.105, 0.007, 96), steel);
   plate.position.y = -0.003;
@@ -89,8 +90,8 @@ export function buildKitchen(): { group: THREE.Group; turntable: THREE.Group; wi
     rim.rotation.z = tilt;
     group.add(rim);
   };
-  bowl(0.092, -0.315, 0.315, 0.0);
-  bowl(0.058, 0.375, 0.430, 0.05);
+  bowl(0.088, -0.335, 0.485, 0.0);
+  bowl(0.056, 0.330, 0.545, 0.05);
 
   // a small wire shelf standing on the bench: reads as a kitchen at any angle
   const shelfMat = makeStainless({ roughness: 0.44, color: 0xa9aeb1, drawn: 0.2 });
@@ -115,14 +116,14 @@ export function buildKitchen(): { group: THREE.Group; turntable: THREE.Group; wi
       benchShelf.add(post);
     }
   }
-  benchShelf.position.set(0.56, 0, 0.60);
+  benchShelf.position.set(0.53, 0, 0.70);
   group.add(benchShelf);
 
   const board = new THREE.Mesh(
-    new THREE.BoxGeometry(0.20, 0.012, 0.14),
+    new THREE.BoxGeometry(0.17, 0.011, 0.12),
     new THREE.MeshStandardMaterial({ color: 0xa87d52, roughness: 0.72 }),
   );
-  board.position.set(-0.185, 0.006, 0.275);
+  board.position.set(-0.235, 0.0055, 0.455);
   board.receiveShadow = true;
   group.add(board);
 
@@ -131,7 +132,7 @@ export function buildKitchen(): { group: THREE.Group; turntable: THREE.Group; wi
     new THREE.BoxGeometry(0.085, 0.0016, 0.062),
     new THREE.MeshStandardMaterial({ color: 0xdad6cc, roughness: 0.35, metalness: 0.05 }),
   );
-  scraper.position.set(-0.17, 0.013, 0.268);
+  scraper.position.set(-0.225, 0.0122, 0.448);
   scraper.rotation.set(0, 0.5, 0.06);
   group.add(scraper);
 

@@ -51,10 +51,10 @@ export function buildShell(path: PathPoint[], g: GestureResult, ctx: GenContext)
     out.push({
       c: new THREE.Vector3(p0.x, ground0 - 0.0004 + foot * 0.7 * u, p0.z),
       t: new THREE.Vector3(0, 1, 0),
-      su: lerp(0.45, 0.8, u),
-      sv: lerp(0.45, 0.8, u),
+      su: lerp(0.90, 1.0, u),
+      sv: lerp(0.90, 1.0, u),
       roll: 0,
-      flare: Math.pow(1 - u, 1.4) * 0.0018,
+      flare: Math.pow(1 - u, 1.3) * 0.0022,
       lift: 0,
       time: t0,
     });
@@ -89,7 +89,7 @@ export function buildShell(path: PathPoint[], g: GestureResult, ctx: GenContext)
       su: s,
       sv: s,
       roll: 0,
-      flare: Math.pow(1 - near, 1.5) * 0.0016,
+      flare: Math.pow(1 - near, 1.6) * 0.0020,
       lift: clamp(rise / head, 0, 1),
       time: t0,
     });

@@ -50,10 +50,10 @@ export function buildRosette(
     out.push({
       c: new THREE.Vector3(p0.x, ground0 - 0.0004 + foot * u, p0.z),
       t: new THREE.Vector3(0, 1, 0),
-      su: lerp(0.5, 1, u),
-      sv: lerp(0.5, 1, u),
+      su: lerp(0.92, 1, u),
+      sv: lerp(0.92, 1, u),
       roll: 0,
-      flare: Math.pow(1 - u, 1.4) * 0.0017,
+      flare: Math.pow(1 - u, 1.3) * 0.0022,
       lift: u * 0.2,
       time: t0,
     });
@@ -80,7 +80,7 @@ export function buildRosette(
       su: s,
       sv: s,
       roll: 0,
-      flare: Math.pow(1 - near, 1.5) * 0.0016,
+      flare: Math.pow(1 - near, 1.6) * 0.0020,
       lift: clamp(climb / rise, 0, 1),
       time: t0,
     });
