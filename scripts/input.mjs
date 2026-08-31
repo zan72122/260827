@@ -8,6 +8,8 @@ const b = await launch()
 const p = await openGame(b, { viewport: { width: 430, height: 932 }, query: '?auto=1' })
 await settle(p, 20)
 
+const C = await p.evaluate(() => window.__reifen.constants)
+
 const st = () =>
   p.evaluate(() => {
     const s = window.__reifen.state
@@ -19,6 +21,7 @@ const st = () =>
       yaw: +((s.yaw * 180) / Math.PI).toFixed(1),
       yawTarget: +((s.yawTarget * 180) / Math.PI).toFixed(1),
       parted: s.parted,
+      bladeR: +s.bladeR.toFixed(4),
     }
   })
 
@@ -82,7 +85,7 @@ h = await handlePos()
 await dragTo(h, [{ x: h.x - 3, y: h.y - 16 }, { x: h.x - 5, y: h.y - 32 }], 4)
 let s1 = await st()
 check('a drag on the handle starts the cut', s1.cut !== null && s1.cut < 0.2042, JSON.stringify(s1))
-check('the kerf never leads the blade', s1.cut === null || s1.cut >= s1.carriage - 0.135 - 1e-9)
+check('the kerf never leads the blade', s1.cut === null || s1.cut >= s1.bladeR - 1e-9, JSON.stringify(s1))
 check('the wedge is still joined', !s1.parted)
 
 // ---- 2. stopping holds the state ----------------------------------------
