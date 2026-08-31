@@ -54,12 +54,12 @@ const piecePos = async () => {
   return project(...w)
 }
 
-async function dragTo(from, steps) {
+async function dragTo(from, steps, hold = 1) {
   await p.mouse.move(from.x, from.y)
   await p.mouse.down()
   for (const s of steps) {
     await p.mouse.move(s.x, s.y)
-    await settle(p, 1)
+    await settle(p, hold)
   }
   await p.mouse.up()
   await settle(p, 2)
@@ -72,12 +72,14 @@ const check = (name, ok, extra = '') => {
 }
 
 // ---- 1. feed the saw a little, with the finger on the handle -------------
+// Short strokes with the camera allowed to keep up, the way a child drags.
+// A fast flick at the very first frame gets the wide establishing framing's
+// gain, which is why this holds a few frames between moves.
 let h = await handlePos()
-await dragTo(h, [
-  { x: h.x - 6, y: h.y - 30 },
-  { x: h.x - 12, y: h.y - 60 },
-  { x: h.x - 18, y: h.y - 90 },
-])
+await dragTo(h, [{ x: h.x - 3, y: h.y - 16 }, { x: h.x - 5, y: h.y - 32 }], 4)
+await settle(p, 8)
+h = await handlePos()
+await dragTo(h, [{ x: h.x - 3, y: h.y - 16 }, { x: h.x - 5, y: h.y - 32 }], 4)
 let s1 = await st()
 check('a drag on the handle starts the cut', s1.cut !== null && s1.cut < 0.2042, JSON.stringify(s1))
 check('the kerf never leads the blade', s1.cut === null || s1.cut >= s1.carriage - 0.135 - 1e-9)
@@ -98,8 +100,8 @@ check('a joined wedge cannot be pulled out', s3.slide === 0, JSON.stringify(s3))
 h = await handlePos()
 await p.mouse.move(h.x, h.y)
 await p.mouse.down()
-await p.mouse.move(h.x - 8, h.y - 40)
-await settle(p, 1)
+await p.mouse.move(h.x - 4, h.y - 20)
+await settle(p, 2)
 const midCut = (await st()).cut
 await p.evaluate(() => {
   const c = window.__reifen.renderer.domElement
@@ -116,8 +118,8 @@ check('pointercancel ends the gesture and keeps the state', s4.cut === midCut, `
 h = await handlePos()
 await p.mouse.move(h.x, h.y)
 await p.mouse.down()
-await p.mouse.move(h.x - 10, h.y - 40)
-await settle(p, 1)
+await p.mouse.move(h.x - 4, h.y - 20)
+await settle(p, 2)
 const beforeRotate = await st()
 await p.setViewportSize({ width: 932, height: 430 })
 await settle(p, 8)

@@ -40,6 +40,10 @@ export const COLLAR = (0.9 * Math.PI) / 180
 /** Angular sampling of the swept surface. */
 export const STEP_HIGH = (2.0 * Math.PI) / 180
 export const STEP_LOW = (3.6 * Math.PI) / 180
+/** The wedge is the hero object and only 7.5 degrees wide, so it is swept
+ *  much finer than the ring: at 2 degrees its 24 mm of width would be four
+ *  facets, and the faceting shows on the one thing the child looks at. */
+export const STEP_PIECE = (0.75 * Math.PI) / 180
 
 export type Quality = 'high' | 'low'
 
@@ -60,7 +64,7 @@ export function buildPieceBulk(q: Quality = 'high'): SectorMesh {
   return buildSector({
     a: sawn(THETA0, +1),
     b: seam(THETA1 - COLLAR),
-    step: q === 'high' ? STEP_HIGH : STEP_LOW,
+    step: q === 'high' ? STEP_PIECE : STEP_HIGH,
     capA: true,
     capB: false,
   })
