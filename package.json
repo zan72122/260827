@@ -1,0 +1,23 @@
+{
+  "name": "paper-honeycomb-tree",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "A realistic 3D mobile web toy: open and close a paper honeycomb Christmas tree with one finger.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host 127.0.0.1 --port 4173",
+    "typecheck": "tsc --noEmit",
+    "verify": "node tests/verify.mjs"
+  },
+  "dependencies": {
+    "three": "^0.185.1"
+  },
+  "devDependencies": {
+    "@types/three": "^0.180.0",
+    "playwright": "^1.56.0",
+    "typescript": "^5.7.3",
+    "vite": "^6.0.7"
+  }
+}

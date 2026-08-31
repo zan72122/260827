@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no"
+    />
+    <meta name="theme-color" content="#2b2620" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="description" content="紙のハニカムツリーを指で開いたり閉じたりする 3D おもちゃ" />
+    <title>かみのツリー</title>
+    <style>
+      :root { color-scheme: dark; }
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0; padding: 0; height: 100%; overflow: hidden;
+        background: #23201b; color: #f2ece1;
+        font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", sans-serif;
+        -webkit-user-select: none; user-select: none;
+        -webkit-tap-highlight-color: transparent;
+        overscroll-behavior: none;
+        touch-action: none;
+      }
+      #stage { position: fixed; inset: 0; }
+      canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+
+      #hint {
+        position: fixed; left: 0; top: 0; pointer-events: none;
+        opacity: 0; transition: opacity .45s ease;
+        will-change: transform, opacity;
+      }
+      #hint.on { opacity: 1; }
+      #hint .pad {
+        position: absolute; left: -19px; top: -19px;
+        width: 38px; height: 38px; border-radius: 50%;
+        background: rgba(255,255,255,.30);
+        box-shadow: 0 0 0 2px rgba(255,255,255,.55) inset;
+        animation: nudge 2.4s ease-in-out infinite;
+      }
+      #hint .trail {
+        position: absolute; left: -46px; top: -2px;
+        width: 92px; height: 4px; border-radius: 2px;
+        background: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.42), rgba(255,255,255,0));
+      }
+      @keyframes nudge {
+        0%,100% { transform: translateX(30px); }
+        45%     { transform: translateX(-26px); }
+        60%     { transform: translateX(-26px); }
+      }
+
+      #meter {
+        position: fixed; left: 50%; transform: translateX(-50%);
+        bottom: max(12px, env(safe-area-inset-bottom)); width: min(46vw, 190px); height: 6px;
+        border-radius: 3px; background: rgba(255,255,255,.14); overflow: hidden;
+        pointer-events: none; opacity: .0; transition: opacity .3s ease;
+      }
+      #meter.on { opacity: .85; }
+      #meter i { display: block; height: 100%; width: 0%; background: #e6dcc4; border-radius: 3px; }
+
+      #gear {
+        position: fixed; right: max(10px, env(safe-area-inset-right));
+        bottom: max(10px, env(safe-area-inset-bottom));
+        width: 40px; height: 40px; border-radius: 20px; border: 0;
+        background: rgba(20,18,15,.42); color: #efe6d3; font-size: 11px; line-height: 1;
+        opacity: .5; touch-action: manipulation;
+      }
+      #gear:active { opacity: .9; }
+
+      #boot {
+        position: fixed; inset: 0; display: grid; place-items: center;
+        background: #23201b; font-size: 14px; letter-spacing: .08em; opacity: .8;
+        transition: opacity .5s ease;
+      }
+      #boot.gone { opacity: 0; pointer-events: none; }
+    </style>
+  </head>
+  <body>
+    <div id="stage"></div>
+    <div id="hint"><div class="trail"></div><div class="pad"></div></div>
+    <div id="meter"><i></i></div>
+    <button id="gear" type="button" aria-label="画質">画質</button>
+    <div id="boot">よういちゅう…</div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
