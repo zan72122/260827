@@ -10,11 +10,14 @@ import { radiusAbove, radiusBelow, rowY } from './profile';
  */
 export function makeCoverGeometry(halfThickness: number): THREE.BufferGeometry {
   const half = GLUE_BAND * 0.5;
+  // The covers are trimmed a hair inside the tissue, the way a bound stack is,
+  // so the layered paper edge shows all round the shut book.
+  const inset = 0.0014;
   const outline: { y: number; r: number }[] = [];
   for (let j = 0; j < ROWS; j++) {
     const y = rowY(j);
-    outline.push({ y: y - half, r: radiusBelow(j) });
-    outline.push({ y: y + half, r: radiusAbove(j) });
+    outline.push({ y: y - half, r: Math.max(0.004, radiusBelow(j) - inset) });
+    outline.push({ y: y + half, r: Math.max(0.004, radiusAbove(j) - inset) });
   }
 
   const pos: number[] = [];

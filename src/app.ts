@@ -25,7 +25,7 @@ import { CLASP_ON } from './config';
  * the two covers finally meet comes back round to the front of the tree where
  * the child can see it close.
  */
-const TREE_YAW = THREE.MathUtils.degToRad(-26);
+const TREE_YAW = THREE.MathUtils.degToRad(-37);
 
 const INTRO_SECONDS = 1.5;
 const BLACK = new THREE.Color(0, 0, 0);

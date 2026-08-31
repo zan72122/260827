@@ -19,8 +19,8 @@ export type Framing = {
 const HULL: THREE.Vector3[] = (() => {
   const pts: THREE.Vector3[] = [];
   const ring = (y: number, r: number) => {
-    for (let i = 0; i < 12; i++) {
-      const a = (i / 12) * Math.PI * 2;
+    for (let i = 0; i < 24; i++) {
+      const a = (i / 24) * Math.PI * 2;
       pts.push(new THREE.Vector3(Math.cos(a) * r, y, Math.sin(a) * r));
     }
   };
@@ -129,7 +129,7 @@ export function frameFor(width: number, height: number): Framing {
         azimuth: THREE.MathUtils.degToRad(-44),
         elevation: THREE.MathUtils.degToRad(19),
         fov: 40,
-        marginX: 0.055,
+        marginX: 0.06,
         marginTop: 0.07,
         minBottom: 0.13,
       },
@@ -142,8 +142,8 @@ export function frameFor(width: number, height: number): Framing {
       azimuth: THREE.MathUtils.degToRad(-19),
       elevation: THREE.MathUtils.degToRad(17),
       fov: 46,
-      marginX: 0.05,
-      marginTop: 0.15,
+      marginX: 0.065,
+      marginTop: 0.14,
       minBottom: 0.24,
     },
     aspect,

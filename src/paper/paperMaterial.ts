@@ -135,13 +135,12 @@ const FRAG_AO = /* glsl */ `
   float ambientOcclusion = mix(0.30, 1.0, pow(cellDepth, 0.65));
   ambientOcclusion = mix(1.0, ambientOcclusion, step(vRimKind, 0.5) * uOpenAmount);
   reflectedLight.indirectDiffuse *= ambientOcclusion;
-  #if defined( USE_CLEARCOAT )
-    clearcoatSpecularIndirect *= ambientOcclusion;
+  // Direct light is shadowed by the neighbouring leaf too, but only partly:
+  // the window still reaches into a cell that faces it.
+  reflectedLight.directDiffuse *= mix(1.0, ambientOcclusion, 0.5);
+  #if defined( USE_ENVMAP ) && defined( STANDARD )
+    reflectedLight.indirectSpecular *= ambientOcclusion;
   #endif
-  #if defined( USE_SHEEN )
-    sheenSpecularIndirect *= ambientOcclusion;
-  #endif
-  material.diffuseColor.rgb *= mix(1.0, ambientOcclusion, 0.55);
 `;
 
 const FRAG_TAIL = /* glsl */ `

@@ -11,6 +11,9 @@ export class PaperAudio {
   private grainBuf: AudioBuffer | null = null;
   private lastGrain = 0;
   private lastCell = 0;
+  private lastResume = 0;
+  private lastGain = -1;
+  private lastFreq = -1;
   private failed = false;
   enabled = true;
 
@@ -75,12 +78,31 @@ export class PaperAudio {
   /** speed is |d(openness)/dt| in units of full-open per second. */
   update(speed: number, openness: number) {
     if (!this.ctx || !this.gain || !this.band) return;
-    if (this.ctx.state === 'suspended') void this.ctx.resume().catch(() => undefined);
+    const t = this.ctx.currentTime;
+
+    // A context that is not running has a clock that does not advance, so
+    // scheduling into it would pile events onto the parameter timeline for
+    // ever. Nudge it back awake now and then and otherwise stay out of it.
+    if (this.ctx.state !== 'running') {
+      if (t - this.lastResume > 0.5 || this.lastResume === 0) {
+        this.lastResume = t;
+        void this.ctx.resume().catch(() => undefined);
+      }
+      return;
+    }
+
     const s = Math.min(1, speed / 1.5);
     const target = this.enabled ? Math.min(0.16, s * 0.19) : 0;
-    const t = this.ctx.currentTime;
-    this.gain.gain.setTargetAtTime(target, t, 0.045);
-    this.band.frequency.setTargetAtTime(1500 + s * 2600, t, 0.06);
+    // Only touch the parameter when it has actually moved.
+    if (Math.abs(target - this.lastGain) > 0.004) {
+      this.lastGain = target;
+      this.gain.gain.setTargetAtTime(target, t, 0.045);
+    }
+    const freq = 1500 + s * 2600;
+    if (Math.abs(freq - this.lastFreq) > 40) {
+      this.lastFreq = freq;
+      this.band.frequency.setTargetAtTime(freq, t, 0.06);
+    }
 
     // one small tick per cell that passes: the sound of cells letting go
     const cell = Math.floor(openness * 46);

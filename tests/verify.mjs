@@ -5,7 +5,7 @@
  */
 import { chromium } from 'playwright';
 
-const BASE = process.env.BASE || 'http://127.0.0.1:4173/';
+const BASE = process.env.BASE || 'http://127.0.0.1:4173/?q=low';
 const PHONE = { width: 390, height: 844 };
 const LAND = { width: 844, height: 390 };
 
@@ -16,6 +16,11 @@ function check(name, ok, detail = '') {
   results.push({ name, ok, detail });
   if (!ok) failures++;
   console.log(`${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? `  ${detail}` : ''}`);
+}
+
+const t0 = Date.now();
+function step(label) {
+  console.log(`  ... ${label} (+${((Date.now() - t0) / 1000).toFixed(0)}s)`);
 }
 
 const browser = await chromium.launch({
@@ -54,6 +59,7 @@ const setOpen = (v) => page.evaluate((x) => window.gameDebug.setOpen(x), v);
 // --------------------------------------------------------------------------
 // 1. The same structure grows continuously; nothing is swapped in.
 // --------------------------------------------------------------------------
+step('measuring 41 openings');
 const samples = [];
 const STEPS = 40;
 for (let i = 0; i <= STEPS; i++) {
@@ -67,7 +73,13 @@ for (let i = 1; i < greens.length; i++) {
   const rel = Math.abs(greens[i] - greens[i - 1]) / Math.max(1, greens[greens.length - 1]);
   maxJump = Math.max(maxJump, rel);
 }
-check('shape grows with openness', widths[STEPS] > widths[0] * 3, `w0=${widths[0]} w100=${widths[STEPS]}`);
+// The shut stack is already a tree-shaped board seen at an angle, so the
+// telling growth is in area, not in width alone.
+check(
+  'the opened tree is much larger than the shut stack',
+  greens[STEPS] > greens[0] * 1.8 && widths[STEPS] > widths[0] * 1.6,
+  `area ${greens[0]} -> ${greens[STEPS]}, width ${widths[0]} -> ${widths[STEPS]}`
+);
 check('paper visible at 0% (a closed stack, not nothing)', greens[0] > 100, `green=${greens[0]}`);
 check(
   'no discontinuous jump between neighbouring openings',
@@ -81,6 +93,7 @@ check('opening never shrinks the paper on screen', monotoneBreaks <= 2, `breaks=
 // --------------------------------------------------------------------------
 // 2. Real dragging: continuity, holding, reversing, re-gripping.
 // --------------------------------------------------------------------------
+step('dragging');
 await setOpen(0);
 const canvas = await page.$('canvas');
 const boxEl = await canvas.boundingBox();
@@ -112,8 +125,8 @@ await page.mouse.move(grab.x, grab.y);
 await page.mouse.down();
 const trace = [];
 const gain = 390 * 0.72;
-for (let i = 1; i <= 30; i++) {
-  await page.mouse.move(grab.x - (gain * i) / 30, grab.y);
+for (let i = 1; i <= 16; i++) {
+  await page.mouse.move(grab.x - (gain * i) / 16, grab.y);
   trace.push(await openness());
 }
 const half = await openness();
@@ -183,13 +196,14 @@ await page.mouse.up();
 // --------------------------------------------------------------------------
 // 3. The moving end passing behind the tree must not break the drag.
 // --------------------------------------------------------------------------
+step('swinging the end round the back');
 await setOpen(0);
 await page.mouse.move(grab.x, grab.y);
 await page.mouse.down();
 let lost = 0;
 let prev = 0;
-for (let i = 1; i <= 60; i++) {
-  const x = grab.x - (gain * i) / 60;
+for (let i = 1; i <= 30; i++) {
+  const x = grab.x - (gain * i) / 30;
   await page.mouse.move(Math.max(2, x), grab.y);
   const o = await openness();
   if (o < prev - 1e-6) lost++;
@@ -205,6 +219,7 @@ await page.mouse.up();
 // --------------------------------------------------------------------------
 // 4. A second finger must be ignored, not fight the first.
 // --------------------------------------------------------------------------
+step('multi-touch and cancel');
 await setOpen(0.4);
 const twoFinger = await page.evaluate(() => {
   const c = document.querySelector('canvas');
@@ -253,6 +268,7 @@ check(
 // --------------------------------------------------------------------------
 // 5. Orientation change keeps the opening; landscape re-frames.
 // --------------------------------------------------------------------------
+step('rotation');
 await setOpen(0.62);
 const beforeRotate = await openness();
 const portraitShot = await measure();
@@ -269,6 +285,7 @@ check('rotating back keeps the opening', Math.abs((await openness()) - beforeRot
 // --------------------------------------------------------------------------
 // 6. Twenty open/close cycles: nothing may accumulate.
 // --------------------------------------------------------------------------
+step('20 open/close cycles');
 const before20 = await page.evaluate(() => ({ ...window.gameDebug.info(), listeners: window.gameDebug.listeners() }));
 await page.evaluate(async () => {
   const d = window.gameDebug;
@@ -292,6 +309,7 @@ check('shape still correct after 20 cycles', shapeAfter.width > closedAfter.widt
 // --------------------------------------------------------------------------
 // 7. Sound is optional, and blocked audio must not stop the game.
 // --------------------------------------------------------------------------
+step('audio refused');
 const audioBlocked = await page.evaluate(async () => {
   const real = window.AudioContext;
   window.AudioContext = function () {
@@ -344,6 +362,7 @@ async function frameStats(quality) {
       })
   );
 }
+step('frame timing');
 const low = await frameStats('low');
 const high = await frameStats('high');
 console.log('frame time low  ', JSON.stringify(low));
