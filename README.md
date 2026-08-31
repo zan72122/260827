@@ -42,13 +42,22 @@ play with one finger. Nothing else is needed: no login, no network, no WebGPU.
 ## Checking it
 
 ```bash
-npm test                       # 30 geometry / motion / state assertions
-npx tsx scripts/perf-geometry.ts   # mesh sizes and per-frame rebuild cost
-node scripts/flow.mjs          # screenshots of the whole flow, both orientations
-node scripts/soak.mjs          # 20 replays back to back
-node scripts/seq.mjs           # bare-environment shape verification frames
+npm test                            # 36 geometry / motion / view assertions
+npx tsx scripts/perf-geometry.ts    # mesh sizes and per-frame rebuild cost
 ```
-The screenshot scripts need the preview server running (`BASE=http://localhost:4173`).
+
+The browser scripts drive a running build; point them at it with `BASE`, and
+turn the render scale down with `SCALE` if you are on software rendering:
+
+```bash
+BASE=http://localhost:4173 node scripts/verify.mjs   # bare-environment shape evidence
+BASE=http://localhost:4173 node scripts/flow.mjs     # the whole flow, both orientations
+BASE=http://localhost:4173 node scripts/input.mjs    # play it with pointer events only
+BASE=http://localhost:4173 node scripts/reset.mjs    # the replay, frame by frame
+BASE=http://localhost:4173 node scripts/stroke.mjs   # how much finger travel the cut takes
+BASE=http://localhost:4173 node scripts/perf-runtime.mjs
+BASE=http://localhost:4173 node scripts/soak.mjs     # 20 replays back to back
+```
 
 ## How the shape identity is guaranteed
 
@@ -80,3 +89,5 @@ Design values for this prototype, not measurements of any historical piece:
 | lamb blank length | 99 mm |
 | wedge angle | 7.5° — 48 animals per ring |
 | saw kerf | 1.6 mm |
+
+A full verification write-up, including what is **not** verified, is in `REPORT.md`.

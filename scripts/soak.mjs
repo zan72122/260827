@@ -3,7 +3,7 @@ import { launch, openGame, settle } from './shots.mjs'
 
 const b = await launch()
 const p = await openGame(b, { viewport: { width: 430, height: 932 }, query: '?auto=1' })
-await settle(p, 30)
+await settle(p, 12)
 const C = await p.evaluate(() => window.__reifen.constants)
 const call = (fn, v) => p.evaluate(([fn, v]) => window.__reifen[fn](v), [fn, v])
 
@@ -20,7 +20,7 @@ for (let i = 0; i < ROUNDS; i++) {
   const yt = await p.evaluate(() => window.__reifen.state.yawTarget)
   for (let y = 0; y <= yt; y += yt / 12) await call('setYaw', y)
   await call('setYaw', yt)
-  await settle(p, 20)
+  await settle(p, 24)
   const phase = await p.evaluate(() => window.__reifen.phase())
   const info = await p.evaluate(() => window.__reifen.info())
   const heap = await p.evaluate(() => performance.memory?.usedJSHeapSize ?? 0)
@@ -30,7 +30,7 @@ for (let i = 0; i < ROUNDS; i++) {
   console.log('round', JSON.stringify(row))
   if (phase !== 'done') { console.error('round', i, 'did not finish:', phase); break }
   await p.evaluate(() => window.__reifen.replay())
-  await settle(p, 90)
+  await settle(p, 50)
   const after = await p.evaluate(() => window.__reifen.phase())
   if (after !== 'cut') { console.error('round', i, 'reset left phase', after); break }
 }

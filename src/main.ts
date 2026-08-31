@@ -7,9 +7,7 @@ import {
   SAW_CARRIAGE_END,
   SAW_CARRIAGE_PARK,
   SAW_CARRIAGE_START,
-  SAW_TILT_PARK,
   SAW_LEAD,
-  SAW_RAIL_SIDE,
   SLIDE_MAX,
   SLIDE_TURN_UNLOCK,
   TRAY_TOP,
@@ -177,10 +175,15 @@ function shotFor(): { shot: ShotSpec; pts: THREE.Vector3[] } {
     case 'title':
     case 'cut':
     case 'reset': {
-      // The whole ring, the tool, and where the blade is going.  During a
-      // reset the blank is off the bench, so it is deliberately left out of
-      // the framing: the camera holds still and the new blank arrives into it.
-      const pts = ringBoxPts.concat(state.phase === 'reset' ? [] : focusPoints())
+      // Before the first stroke the whole ring is in shot, so the child sees
+      // a grooved wheel and nothing animal about it.  Once the saw bites, the
+      // camera glides in to the working half: it puts the tool, the cut line
+      // and both edges of the wedge on screen at a size where a comfortable
+      // finger stroke, not a flick, carries the blade all the way through.
+      const started = state.cut !== NO_CUT && state.phase === 'cut'
+      const pts = started
+        ? ringPoints(-0.06, R_OUTER, 0.115)
+        : ringBoxPts.concat(state.phase === 'reset' ? [] : focusPoints())
       pts.push(saw.handleWorld(_v.clone()))
       pts.push(
         new THREE.Vector3(
@@ -191,7 +194,7 @@ function shotFor(): { shot: ShotSpec; pts: THREE.Vector3[] } {
       )
       return {
         shot: {
-          target: new THREE.Vector3(0.08, 0.055, 0),
+          target: new THREE.Vector3(started ? 0.115 : 0.08, 0.055, 0),
           azimuthDeg: az,
           elevationDeg: p ? 46 : 42,
           pad: 0.03,
@@ -216,7 +219,9 @@ function shotFor(): { shot: ShotSpec; pts: THREE.Vector3[] } {
           target: new THREE.Vector3(0.19, 0.05, 0),
           azimuthDeg: az,
           elevationDeg: p ? 31 : 27,
-          pad: 0.03,
+          // Enough standoff that the parked saw ends up behind the camera
+          // instead of lying across the finished blank.
+          pad: 0.09,
         },
         pts: ringPoints(-0.02, R_OUTER, 0.11).concat(focusPoints()),
       }
@@ -229,7 +234,7 @@ function shotFor(): { shot: ShotSpec; pts: THREE.Vector3[] } {
           target: new THREE.Vector3(0.21, 0.050, 0),
           azimuthDeg: az,
           elevationDeg: p ? 27 : 24,
-          pad: 0.04,
+          pad: 0.10,
         },
         pts: ringPoints(-0.02, R_OUTER, 0.10).concat(focusPoints()),
       }
@@ -253,12 +258,8 @@ let touched = false
 
 const ray = new THREE.Raycaster()
 const ndc = new THREE.Vector2()
-const railDir = new THREE.Vector3(Math.cos(THETA1), 0, Math.sin(THETA1))
-const railOrigin = new THREE.Vector3(
-  -Math.sin(THETA1) * SAW_RAIL_SIDE,
-  0,
-  Math.cos(THETA1) * SAW_RAIL_SIDE,
-)
+/** The saw only travels along the radius of the cut plane. */
+const feedDir = new THREE.Vector3(Math.cos(THETA1), 0, Math.sin(THETA1))
 
 function setNdc(e: PointerEvent) {
   const r = renderer.domElement.getBoundingClientRect()
@@ -277,7 +278,8 @@ function planeHit(h: number, out = new THREE.Vector3()) {
 }
 
 const _hit = new THREE.Vector3()
-const _pivot = new THREE.Vector3()
+/** Distance from the wedge's turning axis out to its muzzle. */
+const TURN_LEVER = R_OUTER - PIVOT_R
 
 function onDown(e: PointerEvent) {
   if (drag || state.phase === 'title' || state.phase === 'reset') return
@@ -295,7 +297,7 @@ function onDown(e: PointerEvent) {
       id: e.pointerId,
       mode: 'saw',
       planeY: _v.y,
-      grabOffset: state.carriage - h.clone().sub(railOrigin).dot(railDir),
+      grabOffset: state.carriage - h.dot(feedDir),
       last: new THREE.Vector2(e.clientX, e.clientY),
     }
   } else if (state.phase === 'pull' || state.phase === 'turn') {
@@ -337,20 +339,17 @@ function onMove(e: PointerEvent) {
   const h = planeHit(drag.planeY, _hit)
   if (!h) return
   if (drag.mode === 'saw') {
-    const along = h.clone().sub(railOrigin).dot(railDir)
-    state.setCarriage(along + drag.grabOffset, lastDt)
+    state.setCarriage(h.dot(feedDir) + drag.grabOffset, lastDt)
   } else if (drag.mode === 'slide') {
     state.setSlide(h.x + drag.grabOffset)
   } else {
-    // Tangential drag around the wedge's own axis; the effective radius is
-    // clamped so grabbing near the middle does not spin it wildly.
-    _pivot.set(PIVOT_R + state.slide, drag.planeY, 0)
-    const vx = drag.last.x - _pivot.x
-    const vz = drag.last.y - _pivot.z
-    const R = Math.max(Math.hypot(vx, vz), 0.065)
-    const tx = -vz / R
-    const tz = vx / R
-    const dPsi = -((h.x - drag.last.x) * tx + (h.z - drag.last.y) * tz) / R
+    // Push the wedge round the way its muzzle wants to go.  Using the muzzle
+    // as a fixed lever arm keeps the sense of the gesture the same wherever
+    // the finger lands: a hand on the middle of the piece would otherwise sit
+    // on the turning axis, where the direction of a push is undefined.
+    const nx = -Math.sin(state.yaw)
+    const nz = -Math.cos(state.yaw)
+    const dPsi = ((h.x - drag.last.x) * nx + (h.z - drag.last.y) * nz) / TURN_LEVER
     state.setYaw(state.yaw + dPsi)
     drag.last.set(h.x, h.z)
   }
@@ -446,7 +445,7 @@ let prev = performance.now()
 let lastDt = 1 / 60
 let slowFrames = 0
 let settleFrom = 0
-let sawTilt = 0
+let sawStow = 0
 const stageOffset = new THREE.Vector3()
 
 function frame(now: number) {
@@ -494,7 +493,7 @@ function step(dt: number) {
         state.plays++
         settleFrom = 0
         prevSlide = 0
-        sawTilt = 0
+        sawStow = 0
         blank.setCut(NO_CUT)
       }
       carry(1 - ease(t - 1))
@@ -505,16 +504,21 @@ function step(dt: number) {
       touched = false
       sfx.tock(0.8)
     }
+    // The saw is bench furniture: it stays put and slides back to where the
+    // next cut starts rather than being carried off with the blank.
+    sawStow = Math.max(0, sawStow - dt * 1.9)
+    if (sawStow <= 0) state.carriage = Math.max(SAW_CARRIAGE_START, state.carriage - dt * 0.55)
   }
 
   // ---- the saw is drawn back out of the kerf once the wedge is parted -----
   // The craftsman withdraws the saw before lifting the piece out; until it is
   // clear the bench is cluttered and the child cannot see what they have made.
-  if (state.parted && drag?.mode !== 'saw') {
+  if (state.parted && state.phase !== 'reset' && drag?.mode !== 'saw') {
+    // first draw the blade back out of the kerf, then set the saw down
     state.carriage = Math.min(SAW_CARRIAGE_PARK, state.carriage + dt * 0.42)
-    sawTilt = Math.min(SAW_TILT_PARK, sawTilt + dt * 1.9)
+    if (state.carriage >= SAW_CARRIAGE_PARK - 1e-4) sawStow = Math.min(1, sawStow + dt * 1.25)
   } else if (!state.parted) {
-    sawTilt = 0
+    sawStow = 0
   }
 
   // ---- the wedge settles onto the table once it is clear ------------------
@@ -542,10 +546,8 @@ function step(dt: number) {
   // ---- push state into the scene ------------------------------------------
   blank.setCut(state.cut)
   blank.setPiecePose(state.slide, state.yaw)
-  saw.setPose(state.carriage, sawTilt)
+  saw.setPose(state.carriage, sawStow)
   blank.root.position.copy(stageOffset)
-  saw.root.position.copy(stageOffset)
-  workshop.root.position.set(0, 0, 0)
 
   // grab volume follows the lower part of the wedge
   const pb = blank.pieceBox()

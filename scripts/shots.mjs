@@ -27,7 +27,7 @@ export async function launch() {
 }
 
 export async function openGame(browser, { viewport = PORTRAIT, query = '' } = {}) {
-  const page = await browser.newPage({ viewport, deviceScaleFactor: 1.6 })
+  const page = await browser.newPage({ viewport, deviceScaleFactor: Number(process.env.SCALE ?? 1.6) })
   const errors = []
   page.on('pageerror', (e) => errors.push(String(e)))
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()) })

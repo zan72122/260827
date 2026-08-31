@@ -212,3 +212,22 @@ describe('bench geometry', () => {
     expect(volume / (Math.PI * (0.218 ** 2 - 0.089 ** 2) * 0.0293)).toBeGreaterThan(0.97)
   })
 })
+
+describe('the saw that is put down', () => {
+  it('ends up clear of everything the wedge can reach', async () => {
+    const { SAW_CARRIAGE_PARK, SAW_LEAD, SLIDE_MAX, PIVOT_R } = await import('../src/core/layout')
+    const { R_OUTER, R_INNER } = await import('../src/core/profile')
+    // Before it is set down, the blade must already be radially outboard of
+    // anything the turned wedge can occupy.
+    const bladeEdge = SAW_CARRIAGE_PARK - SAW_LEAD
+    const reach = PIVOT_R + SLIDE_MAX + Math.max(R_OUTER - PIVOT_R, PIVOT_R - R_INNER)
+    expect(bladeEdge).toBeGreaterThan(R_OUTER)
+    expect(bladeEdge).toBeLessThan(reach) // it is drawn back, not teleported away
+  })
+
+  it('can reach right through the blank and back out again', async () => {
+    const { SAW_CARRIAGE_START, SAW_CARRIAGE_END, SAW_LEAD } = await import('../src/core/layout')
+    expect(SAW_CARRIAGE_END - SAW_LEAD).toBeLessThan(R_INNER)
+    expect(SAW_CARRIAGE_START - SAW_LEAD).toBeGreaterThan(R_OUTER)
+  })
+})

@@ -124,7 +124,12 @@ await settle(p, 8)
 const afterRotate = await st()
 check(
   'rotating the screen mid-drag keeps the cut',
-  afterRotate.cut === beforeRotate.cut && afterRotate.carriage === beforeRotate.carriage,
+  afterRotate.cut === beforeRotate.cut &&
+    afterRotate.slide === beforeRotate.slide &&
+    afterRotate.yaw === beforeRotate.yaw &&
+    // the carriage only moves on its own once the wedge is parted, when the
+    // saw withdraws itself
+    (beforeRotate.parted || afterRotate.carriage === beforeRotate.carriage),
   `${JSON.stringify(beforeRotate)} -> ${JSON.stringify(afterRotate)}`,
 )
 check('the turn target follows the new orientation', afterRotate.yawTarget !== beforeRotate.yawTarget,
@@ -134,13 +139,16 @@ await p.setViewportSize({ width: 430, height: 932 })
 await settle(p, 8)
 
 // ---- 6. finish the cut with the finger ----------------------------------
-for (let i = 0; i < 14; i++) {
+let strokes = 0
+for (let i = 0; i < 24; i++) {
+  strokes++
   h = await handlePos()
   await dragTo(h, [{ x: h.x - 4, y: h.y - 45 }])
   if ((await st()).parted) break
 }
 const s6 = await st()
 check('the finger can part the wedge right through', s6.parted, JSON.stringify(s6))
+console.log(`      (45 px strokes needed to finish the cut: ${strokes})`)
 check('parting moves the game on to pulling', s6.phase === 'pull' || s6.phase === 'turn')
 
 // ---- 7. pull it out ------------------------------------------------------
@@ -155,9 +163,9 @@ check('the finger can pull the wedge out', s7.slide > 0.10, JSON.stringify(s7))
 
 // ---- 8. turn it ----------------------------------------------------------
 await settle(p, 30)
-for (let i = 0; i < 14; i++) {
+for (let i = 0; i < 20; i++) {
   pp = await piecePos()
-  await dragTo(pp, [{ x: pp.x + 26, y: pp.y + 3 }])
+  await dragTo(pp, [{ x: pp.x + 30, y: pp.y + 3 }])
   if ((await st()).phase === 'done') break
 }
 await settle(p, 60)

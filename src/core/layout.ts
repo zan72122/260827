@@ -26,25 +26,18 @@ export const SLIDE_CLEAR = R_OUTER - R_INNER + 0.004
 export const SLIDE_TURN_UNLOCK = 0.128
 
 /** Saw: distance from the carriage centre to the blade's cutting edge. */
-export const SAW_LEAD = 0.135
-export const SAW_RAIL_Y = 0.176
-/** The rail is offset sideways so it never hides the cut line, and the
- *  child's finger is never over the wood that is opening. */
-export const SAW_RAIL_SIDE = 0.148
-export const SAW_RAIL_R0 = 0.205
-export const SAW_RAIL_R1 = 0.545
-export const SAW_CARRIAGE_START = R_OUTER + 0.014 + SAW_LEAD
+/** Length of the saw plate: the handle sits this far outboard of the
+ *  cutting edge, so the child's finger is always well outside the ring. */
+export const SAW_LEAD = 0.150
+export const SAW_CARRIAGE_START = R_OUTER + 0.020 + SAW_LEAD
 export const SAW_CARRIAGE_END = R_INNER - 0.012 + SAW_LEAD
-/** Where the saw is drawn back to once the wedge is parted, so the bench is
- *  clear for taking it out. */
-export const SAW_CARRIAGE_PARK = 0.500
-/** How far the hinged arm swings up when the saw is put out of the way. */
-export const SAW_TILT_PARK = (14 * Math.PI) / 180
+/** Drawn back this far once the wedge is parted, before being set down. */
+export const SAW_CARRIAGE_PARK = R_OUTER + 0.055 + SAW_LEAD
 /** The blade clears the top of the ring and runs a little into the jig's
  *  relief slot, so it really does pass right through the wood. */
-export const BLADE_TOP = JIG_TOP + LAMB_HEIGHT + 0.016
+export const BLADE_TOP = JIG_TOP + LAMB_HEIGHT + 0.010
 export const BLADE_BOTTOM = JIG_TOP - 0.005
-export const HANDLE_Y = SAW_RAIL_Y + 0.046
+export const HANDLE_Y = JIG_TOP + LAMB_HEIGHT * 0.62
 
 export const TRAY_R0 = R_OUTER + 0.012
 export const TRAY_R1 = R_OUTER + 0.236
