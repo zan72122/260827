@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no, maximum-scale=1" />
+    <meta name="theme-color" content="#2a2723" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <title>紙がひらく、クリスマス工房</title>
+    <link rel="icon" href="data:," />
+    <style>
+      :root { color-scheme: dark; }
+      html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #2a2723; }
+      body { font-family: system-ui, -apple-system, "Hiragino Sans", sans-serif; -webkit-text-size-adjust: 100%; }
+      #stage { position: fixed; inset: 0; }
+      /* スクロール抑止はゲームの操作面だけに掛ける */
+      canvas#view { display: block; width: 100%; height: 100%; touch-action: none; -webkit-user-select: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+      #hud { position: fixed; inset: 0; pointer-events: none; }
+      #mute {
+        pointer-events: auto; position: absolute; top: max(10px, env(safe-area-inset-top)); right: max(10px, env(safe-area-inset-right));
+        width: 46px; height: 46px; border-radius: 23px; border: 0; background: rgba(28,26,23,0.42);
+        display: grid; place-items: center; cursor: pointer; -webkit-tap-highlight-color: transparent;
+      }
+      #mute svg { width: 24px; height: 24px; fill: #f0e9dc; }
+      #mute .off { display: none; }
+      #mute[data-muted="true"] .on { display: none; }
+      #mute[data-muted="true"] .off { display: block; }
+      #hint { position: absolute; left: 0; top: 0; width: 52px; height: 52px; opacity: 0; transition: opacity .35s; will-change: transform; }
+      #hint.show { opacity: .85; animation: nudge 1.9s ease-in-out infinite; }
+      #hint svg { width: 52px; height: 52px; }
+      @keyframes nudge { 0%,100% { margin-left: 0 } 45% { margin-left: 40px } 60% { margin-left: 40px } }
+      @media (prefers-reduced-motion: reduce) { #hint.show { animation-duration: 3.2s; } }
+      #fallback {
+        position: fixed; inset: 0; display: none; place-items: center; background: #2a2723; color: #f0e9dc;
+        text-align: center; padding: 24px; font-size: 17px; line-height: 1.7;
+      }
+      #fallback.show { display: grid; }
+      #fallback button { margin-top: 18px; font-size: 17px; padding: 12px 26px; border-radius: 10px; border: 0; background: #6f8f7c; color: #14201a; }
+      #boot { position: fixed; inset: 0; display: grid; place-items: center; background: #2a2723; color: #cfc6b6; transition: opacity .4s; }
+      #boot.done { opacity: 0; pointer-events: none; }
+      #boot .dot { width: 12px; height: 12px; border-radius: 6px; background: #cfc6b6; animation: pulse 1.1s infinite ease-in-out; }
+      @keyframes pulse { 0%,100% { transform: scale(.7); opacity: .5 } 50% { transform: scale(1.1); opacity: 1 } }
+    </style>
+  </head>
+  <body>
+    <div id="stage"><canvas id="view"></canvas></div>
+    <div id="hud">
+      <button id="mute" data-muted="false" aria-label="おとを けす">
+        <svg class="on" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4zm12.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4zM14 3.2v2.1a6.8 6.8 0 0 1 0 13.4v2.1a8.9 8.9 0 0 0 0-17.6z"/></svg>
+        <svg class="off" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9H4zm15.5 3 2.3-2.3-1.4-1.4-2.3 2.3-2.3-2.3-1.4 1.4 2.3 2.3-2.3 2.3 1.4 1.4 2.3-2.3 2.3 2.3 1.4-1.4z"/></svg>
+      </button>
+      <div id="hint" aria-hidden="true">
+        <svg viewBox="0 0 52 52"><g fill="#f4ead6" stroke="#7d6b4e" stroke-width="1.4"><path d="M20 14c0-2 1.4-3.4 3-3.4S26 12 26 14v11h1.4v-3.6c0-1.8 1.3-3 2.8-3s2.8 1.2 2.8 3V25h1.3v-2.3c0-1.7 1.2-2.9 2.7-2.9s2.7 1.2 2.7 2.9v9.6c0 5.4-3.8 9.4-9.3 9.4h-3.2c-4.2 0-6.4-1.9-8.5-5.3l-4.1-6.7c-.8-1.3-.4-2.9.9-3.6 1.2-.7 2.7-.3 3.5.8l2 2.8z"/></g></svg>
+      </div>
+    </div>
+    <div id="boot"><div class="dot"></div></div>
+    <div id="fallback">
+      <div>
+        <div id="fallback-msg">よみこみに しっぱいしました</div>
+        <button id="retry" type="button">もういちど</button>
+      </div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

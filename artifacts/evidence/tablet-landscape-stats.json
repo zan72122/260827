@@ -1,0 +1,31 @@
+{
+  "viewport": {
+    "width": 1180,
+    "height": 820
+  },
+  "closed": {
+    "triangles": 66448,
+    "calls": 16,
+    "geometries": 27,
+    "textures": 8,
+    "programs": 15
+  },
+  "open": {
+    "triangles": 66484,
+    "calls": 19,
+    "geometries": 28,
+    "textures": 8,
+    "programs": 15
+  },
+  "finalState": {
+    "open": 1,
+    "openSpeed": 0,
+    "clipT": 1,
+    "clipAttached": true,
+    "phase": "clipped",
+    "paperColor": 0,
+    "muted": false,
+    "everCompleted": true,
+    "everClipped": true
+  }
+}

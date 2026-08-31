@@ -1,2 +1,8 @@
 .DS_Store
 **/.DS_Store
+node_modules/
+dist/
+# 検査の中間生成物（画面証拠は artifacts/evidence と artifacts/dev-views に残す）
+artifacts/e2e-output/
+artifacts/e2e-report.json
+artifacts/shots/
