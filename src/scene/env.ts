@@ -79,8 +79,8 @@ export function makeLights(shadowMapSize: number): Lights {
   cam.bottom = -0.46
   cam.near = 0.20
   cam.far = 2.1
-  win.shadow.bias = -0.00016
-  win.shadow.normalBias = 0.0024
+  win.shadow.bias = -0.00022
+  win.shadow.normalBias = 0.0022
   win.shadow.radius = 3.0
   group.add(win, win.target)
 

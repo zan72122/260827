@@ -11,20 +11,24 @@ for (const [tag, viewport] of [
   ['l', { width: 932, height: 430 }],
 ]) {
   const p = await openGame(b, { viewport, query: '?auto=1' })
-  await settle(p, 30)
+  await settle(p, 10)
   const C = await p.evaluate(() => window.__reifen.constants)
   const LEAD = C.SAW_LEAD
   const set = (fn, v) => p.evaluate(([fn, v]) => window.__reifen[fn](v), [fn, v])
-  const shot = (n) => p.screenshot({ path: `shots/f-${tag}-${n}.png` })
+  const shot = async (n) => {
+    await p.evaluate(() => window.__reifen.snap()) // jump the camera to its target
+    await settle(p, 2)
+    await p.screenshot({ path: `shots/f-${tag}-${n}.png` })
+  }
 
   await shot('1-start')
-  await set('setCarriage', 0.170 + LEAD); await settle(p, 20); await shot('2-cut-half')
-  await set('setCarriage', C.R_INNER - 0.012 + LEAD); await settle(p, 30); await shot('3-parted')
-  await set('setSlide', 0.055); await settle(p, 25); await shot('4-pull-gap')
-  await set('setSlide', C.SLIDE_TURN_UNLOCK); await settle(p, 45); await shot('5-out')
+  await set('setCarriage', 0.170 + LEAD); await settle(p, 4); await shot('2-cut-half')
+  await set('setCarriage', C.R_INNER - 0.012 + LEAD); await settle(p, 45); await shot('3-parted')
+  await set('setSlide', 0.055); await settle(p, 4); await shot('4-pull-gap')
+  await set('setSlide', C.SLIDE_TURN_UNLOCK); await settle(p, 20); await shot('5-out')
   const yt = await p.evaluate(() => window.__reifen.state.yawTarget)
-  await set('setYaw', yt * 0.55); await settle(p, 25); await shot('6-turning')
-  await set('setYaw', yt); await settle(p, 60); await shot('7-revealed')
+  await set('setYaw', yt * 0.55); await settle(p, 4); await shot('6-turning')
+  await set('setYaw', yt); await settle(p, 45); await shot('7-revealed')
   console.log(tag, 'phase', await p.evaluate(() => window.__reifen.phase()),
               'errors', p.__errors.filter((e) => !e.includes('404')))
   await p.close()

@@ -23,8 +23,11 @@ export function annularSector(
     }
     return base
   }
+  // Wound so the face normal agrees with the vertex normals: an inside-out
+  // plate renders its back faces into the shadow map and stripes everything
+  // that stands on it.
   const strip = (a: number, b: number) => {
-    for (let i = 0; i < n; i++) idx.push(a + i, b + i, a + i + 1, a + i + 1, b + i, b + i + 1)
+    for (let i = 0; i < n; i++) idx.push(a + i, a + i + 1, b + i, a + i + 1, b + i + 1, b + i)
   }
   // top
   strip(ring(r0, y1, 1, 0), ring(r1, y1, 1, 0))

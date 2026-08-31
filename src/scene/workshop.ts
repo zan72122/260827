@@ -6,7 +6,7 @@
 
 import * as THREE from 'three'
 import { R_INNER, R_OUTER } from '../core/profile'
-import { JIG_TOP, RING_TOP, TRAY_HALF_DEG, TRAY_R0, TRAY_R1, TRAY_TOP } from '../core/layout'
+import { RING_TOP, SUPPORT_TOP, TRAY_HALF_DEG, TRAY_R0, TRAY_R1, TRAY_TOP } from '../core/layout'
 import { THETA1 } from '../core/blank'
 import { annularSector, box } from './geom'
 
@@ -82,7 +82,7 @@ export function makeWorkshop(): Workshop {
         THETA1 + slotHalf,
         THETA1 + Math.PI * 2 - slotHalf,
         0,
-        JIG_TOP,
+        SUPPORT_TOP,
         128,
       ),
     ),

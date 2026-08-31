@@ -26,6 +26,10 @@ import { box } from './geom'
 export class Saw {
   readonly root = new THREE.Group()
   readonly carriage = new THREE.Group()
+  /** The hinged part: blade, its post and the arm. Swings up clear of the
+   *  work once the cut is finished, the way you would flip a saw out of a
+   *  kerf before lifting the piece out. */
+  readonly swing = new THREE.Group()
   readonly handle: THREE.Mesh
   readonly grab: THREE.Mesh
   private disposables: Array<{ dispose(): void }> = []
@@ -38,7 +42,7 @@ export class Saw {
       new THREE.MeshStandardMaterial({ color: 0xa8adb3, roughness: 0.32, metalness: 0.92 }),
     )
     const dark = keep(
-      new THREE.MeshStandardMaterial({ color: 0x70757b, roughness: 0.48, metalness: 0.85 }),
+      new THREE.MeshStandardMaterial({ color: 0x5f6469, roughness: 0.55, metalness: 0.8 }),
     )
     const wood = keep(
       new THREE.MeshStandardMaterial({ color: 0x92643b, roughness: 0.62, metalness: 0 }),
@@ -47,18 +51,29 @@ export class Saw {
     // ---- rail, entirely outboard of the ring --------------------------------
     const railLen = SAW_RAIL_R1 - SAW_RAIL_R0
     const rail = new THREE.Mesh(
-      keep(box(railLen, 0.014, 0.014, (SAW_RAIL_R0 + SAW_RAIL_R1) / 2, SAW_RAIL_Y, SAW_RAIL_SIDE)),
-      steel,
+      keep(box(railLen, 0.013, 0.013, (SAW_RAIL_R0 + SAW_RAIL_R1) / 2, SAW_RAIL_Y, SAW_RAIL_SIDE)),
+      dark,
     )
     rail.castShadow = true
     this.root.add(rail)
-    const postGeo = keep(new THREE.CylinderGeometry(0.0085, 0.011, SAW_RAIL_Y, 12))
-    for (const r of [SAW_RAIL_R0 + 0.022, SAW_RAIL_R1 - 0.012]) {
-      const p = new THREE.Mesh(postGeo, dark)
-      p.position.set(r, SAW_RAIL_Y / 2, SAW_RAIL_SIDE)
-      p.castShadow = true
-      this.root.add(p)
-    }
+    // One post, at the outboard end only: a second one beside the ring would
+    // stand straight through the child's view of the work.
+    const post0 = new THREE.Mesh(
+      keep(new THREE.CylinderGeometry(0.010, 0.013, SAW_RAIL_Y, 12)),
+      dark,
+    )
+    post0.position.set(SAW_RAIL_R1 - 0.014, SAW_RAIL_Y / 2, SAW_RAIL_SIDE)
+    post0.castShadow = true
+    const base = new THREE.Mesh(
+      keep(new THREE.CylinderGeometry(0.030, 0.034, 0.010, 18)),
+      dark,
+    )
+    base.position.set(SAW_RAIL_R1 - 0.014, 0.005, SAW_RAIL_SIDE)
+    base.castShadow = true
+    const brace = new THREE.Mesh(keep(box(0.115, 0.010, 0.010, 0, 0, 0)), dark)
+    brace.position.set(SAW_RAIL_R1 - 0.070, SAW_RAIL_Y - 0.052, SAW_RAIL_SIDE)
+    brace.rotation.z = 0.72
+    this.root.add(post0, base, brace)
 
     // ---- the moving part ----------------------------------------------------
     // blade: a plate exactly as thick as the kerf it leaves behind, standing in
@@ -92,7 +107,7 @@ export class Saw {
     )
     block.castShadow = true
 
-    this.handle = new THREE.Mesh(keep(new THREE.SphereGeometry(0.024, 20, 14)), wood)
+    this.handle = new THREE.Mesh(keep(new THREE.SphereGeometry(0.021, 20, 14)), wood)
     this.handle.position.set(0, HANDLE_Y, SAW_RAIL_SIDE)
     this.handle.scale.set(1, 0.88, 1)
     this.handle.castShadow = true
@@ -105,12 +120,19 @@ export class Saw {
     )
     this.grab.position.set(0, HANDLE_Y - 0.010, SAW_RAIL_SIDE)
 
-    this.carriage.add(blade, spine, post, arm, block, neck, this.handle, this.grab)
+    const inner = new THREE.Group()
+    inner.position.set(0, -SAW_RAIL_Y, -SAW_RAIL_SIDE)
+    inner.add(blade, spine, post, arm)
+    this.swing.position.set(0, SAW_RAIL_Y, SAW_RAIL_SIDE)
+    this.swing.add(inner)
+
+    this.carriage.add(this.swing, block, neck, this.handle, this.grab)
     this.root.add(this.carriage)
   }
 
-  setCarriage(carriageR: number) {
+  setPose(carriageR: number, tilt: number) {
     this.carriage.position.x = carriageR
+    this.swing.rotation.x = tilt
   }
 
   handleWorld(target = new THREE.Vector3()) {

@@ -18,8 +18,8 @@ import type { SectorMesh } from '../core/sector'
 import { JIG_TOP, PIVOT_R } from '../core/layout'
 import { createWoodMaterial } from '../materials/wood'
 
-function toGeometry(m: SectorMesh, target?: THREE.BufferGeometry) {
-  const g = target ?? new THREE.BufferGeometry()
+function toGeometry(m: SectorMesh) {
+  const g = new THREE.BufferGeometry()
   g.setAttribute('position', new THREE.BufferAttribute(m.position, 3))
   g.setAttribute('normal', new THREE.BufferAttribute(m.normal, 3))
   g.setAttribute('aFresh', new THREE.BufferAttribute(m.fresh, 1))
@@ -29,27 +29,62 @@ function toGeometry(m: SectorMesh, target?: THREE.BufferGeometry) {
   return g
 }
 
-/** Copy a rebuilt sector into an existing geometry when the layout matches. */
-function update(mesh: THREE.Mesh, m: SectorMesh) {
-  const g = mesh.geometry
-  const pos = g.getAttribute('position') as THREE.BufferAttribute
-  const idx = g.getIndex()
-  if (pos && idx && pos.array.length === m.position.length && idx.array.length === m.index.length) {
-    ;(pos.array as Float32Array).set(m.position)
+/**
+ * A collar geometry with room to spare.  The vertex count changes every time
+ * the cut front crosses another edge of the profile, so a freshly allocated
+ * buffer per frame would churn hundreds of kilobytes a second while the child
+ * is sawing.  Instead the buffers are sized once for the worst case and the
+ * draw range is moved.
+ */
+class CollarGeometry {
+  readonly geometry = new THREE.BufferGeometry()
+  private capacityV = 0
+  private capacityI = 0
+  reallocations = 0
+
+  constructor(first: SectorMesh) {
+    this.allocate(Math.ceil((first.position.length / 3) * 1.6) + 512, first.index.length * 2 + 1536)
+    this.set(first)
+  }
+
+  private allocate(verts: number, indices: number) {
+    this.capacityV = verts
+    this.capacityI = indices
+    this.geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(verts * 3), 3))
+    this.geometry.setAttribute('normal', new THREE.BufferAttribute(new Float32Array(verts * 3), 3))
+    this.geometry.setAttribute('aFresh', new THREE.BufferAttribute(new Float32Array(verts), 1))
+    this.geometry.setIndex(new THREE.BufferAttribute(new Uint32Array(indices), 1))
+    this.reallocations++
+  }
+
+  set(m: SectorMesh) {
+    const nv = m.position.length / 3
+    if (nv > this.capacityV || m.index.length > this.capacityI) {
+      this.geometry.dispose()
+      this.allocate(Math.ceil(nv * 1.6), Math.ceil(m.index.length * 1.6))
+    }
+    const g = this.geometry
+    ;(g.getAttribute('position').array as Float32Array).set(m.position)
     ;(g.getAttribute('normal').array as Float32Array).set(m.normal)
     ;(g.getAttribute('aFresh').array as Float32Array).set(m.fresh)
-    ;(idx.array as Uint32Array).set(m.index)
-    pos.needsUpdate = true
+    ;(g.getIndex()!.array as Uint32Array).set(m.index)
+    g.getAttribute('position').needsUpdate = true
     g.getAttribute('normal').needsUpdate = true
     g.getAttribute('aFresh').needsUpdate = true
-    idx.needsUpdate = true
-    g.computeBoundingSphere()
-    g.computeBoundingBox()
-    return
+    g.getIndex()!.needsUpdate = true
+    g.setDrawRange(0, m.index.length)
+
+    // Bounds over the live vertices only: the tail of the buffer is stale.
+    const p = m.position
+    const box = (g.boundingBox ??= new THREE.Box3())
+    box.makeEmpty()
+    for (let i = 0; i < p.length; i += 3) box.expandByPoint(_v.set(p[i], p[i + 1], p[i + 2]))
+    g.boundingSphere ??= new THREE.Sphere()
+    box.getBoundingSphere(g.boundingSphere)
   }
-  g.dispose()
-  mesh.geometry = toGeometry(m)
 }
+
+const _v = new THREE.Vector3()
 
 export class BlankView {
   readonly root = new THREE.Group()
@@ -62,6 +97,8 @@ export class BlankView {
   private ringCollar: THREE.Mesh
   private pieceBulk: THREE.Mesh
   private pieceCollar: THREE.Mesh
+  private pieceCollarGeo: CollarGeometry
+  private ringCollarGeo: CollarGeometry
   private lastCut = Number.POSITIVE_INFINITY
   private quality: Quality
 
@@ -74,9 +111,18 @@ export class BlankView {
       return mesh
     }
     this.ringBulk = mk(buildRingBulk(quality))
-    this.ringCollar = mk(buildRingCollar(Number.POSITIVE_INFINITY))
     this.pieceBulk = mk(buildPieceBulk(quality))
-    this.pieceCollar = mk(buildPieceCollar(Number.POSITIVE_INFINITY))
+    // The collars are sized for a full-depth cut, which is the worst case.
+    this.pieceCollarGeo = new CollarGeometry(buildPieceCollar(0))
+    this.ringCollarGeo = new CollarGeometry(buildRingCollar(0))
+    this.pieceCollarGeo.set(buildPieceCollar(Number.POSITIVE_INFINITY))
+    this.ringCollarGeo.set(buildRingCollar(Number.POSITIVE_INFINITY))
+    this.ringCollar = new THREE.Mesh(this.ringCollarGeo.geometry, this.material)
+    this.pieceCollar = new THREE.Mesh(this.pieceCollarGeo.geometry, this.material)
+    for (const m of [this.ringCollar, this.pieceCollar]) {
+      m.castShadow = true
+      m.receiveShadow = true
+    }
 
     this.ringGroup.add(this.ringBulk, this.ringCollar)
     this.ringGroup.position.set(0, JIG_TOP, 0)
@@ -98,8 +144,8 @@ export class BlankView {
     const q = Number.isFinite(cutR) ? Math.round(cutR / 0.0003) * 0.0003 : cutR
     if (q === this.lastCut) return
     this.lastCut = q
-    update(this.pieceCollar, buildPieceCollar(q))
-    update(this.ringCollar, buildRingCollar(q))
+    this.pieceCollarGeo.set(buildPieceCollar(q))
+    this.ringCollarGeo.set(buildRingCollar(q))
   }
 
   /** slide: metres radially outward along +X. yaw: radians about the wedge's
@@ -128,11 +174,17 @@ export class BlankView {
     return [this.pieceBulk, this.pieceCollar]
   }
 
+  /** Diagnostics: how often the collar buffers had to be resized. */
+  get collarReallocations() {
+    return this.pieceCollarGeo.reallocations + this.ringCollarGeo.reallocations
+  }
+
   triangleCount() {
     let n = 0
     for (const m of [this.ringBulk, this.ringCollar, this.pieceBulk, this.pieceCollar]) {
+      const r = m.geometry.drawRange
       const i = m.geometry.getIndex()
-      if (i) n += i.count / 3
+      if (i) n += Math.min(r.count === Infinity ? i.count : r.count, i.count) / 3
     }
     return n
   }

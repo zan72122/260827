@@ -4,9 +4,13 @@ import { LAMB_HEIGHT, R_INNER, R_OUTER, polygonCentroid, lambProfile } from './p
 export const BENCH_TOP = 0
 /** Top face of the jig plate: the ring's hooves rest here. */
 export const JIG_TOP = 0.030
+/** The jig and the receiving table are modelled a fraction of a millimetre
+ *  below the wood that rests on them.  Coplanar faces fight in the shadow map
+ *  and stripe the bench; 0.7 mm is far below anything the eye resolves. */
+export const SUPPORT_TOP = JIG_TOP - 0.0007
 export const RING_TOP = JIG_TOP + LAMB_HEIGHT
 /** The receiving table is flush with the jig so the wedge can slide across. */
-export const TRAY_TOP = JIG_TOP
+export const TRAY_TOP = SUPPORT_TOP
 
 const c = polygonCentroid(lambProfile())
 /** Radius of the wedge's area centroid — the axis it is turned about. */
@@ -26,14 +30,16 @@ export const SAW_LEAD = 0.135
 export const SAW_RAIL_Y = 0.176
 /** The rail is offset sideways so it never hides the cut line, and the
  *  child's finger is never over the wood that is opening. */
-export const SAW_RAIL_SIDE = 0.088
+export const SAW_RAIL_SIDE = 0.148
 export const SAW_RAIL_R0 = 0.205
 export const SAW_RAIL_R1 = 0.545
 export const SAW_CARRIAGE_START = R_OUTER + 0.014 + SAW_LEAD
 export const SAW_CARRIAGE_END = R_INNER - 0.012 + SAW_LEAD
 /** Where the saw is drawn back to once the wedge is parted, so the bench is
  *  clear for taking it out. */
-export const SAW_CARRIAGE_PARK = 0.470
+export const SAW_CARRIAGE_PARK = 0.500
+/** How far the hinged arm swings up when the saw is put out of the way. */
+export const SAW_TILT_PARK = (14 * Math.PI) / 180
 /** The blade clears the top of the ring and runs a little into the jig's
  *  relief slot, so it really does pass right through the wood. */
 export const BLADE_TOP = JIG_TOP + LAMB_HEIGHT + 0.016

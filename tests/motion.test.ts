@@ -175,3 +175,40 @@ describe('the three moves cannot be short-circuited', () => {
     expect(SAW_CARRIAGE_START - SAW_LEAD).toBeGreaterThan(R_OUTER)
   })
 })
+
+// ---------------------------------------------------------------------------
+
+describe('bench geometry', () => {
+  it('the jig and the receiving table are not inside out', async () => {
+    // An inside-out plate renders its back faces into the shadow map and
+    // stripes everything standing on it, which is how this was found.
+    const { annularSector } = await import('../src/scene/geom')
+    const g = annularSector(0.089, 0.218, 0.1, 0.1 + Math.PI * 2 - 0.08, 0, 0.0293, 128)
+    const pos = g.getAttribute('position').array as Float32Array
+    const nor = g.getAttribute('normal').array as Float32Array
+    const idx = g.getIndex()!.array as ArrayLike<number>
+    let volume = 0
+    let disagreeing = 0
+    for (let i = 0; i < idx.length; i += 3) {
+      const a = idx[i] * 3
+      const b = idx[i + 1] * 3
+      const c = idx[i + 2] * 3
+      volume +=
+        (pos[a] * (pos[b + 1] * pos[c + 2] - pos[c + 1] * pos[b + 2]) -
+          pos[a + 1] * (pos[b] * pos[c + 2] - pos[c] * pos[b + 2]) +
+          pos[a + 2] * (pos[b] * pos[c + 1] - pos[c] * pos[b + 1])) /
+        6
+      const e1 = [pos[b] - pos[a], pos[b + 1] - pos[a + 1], pos[b + 2] - pos[a + 2]]
+      const e2 = [pos[c] - pos[a], pos[c + 1] - pos[a + 1], pos[c + 2] - pos[a + 2]]
+      const n = [
+        e1[1] * e2[2] - e1[2] * e2[1],
+        e1[2] * e2[0] - e1[0] * e2[2],
+        e1[0] * e2[1] - e1[1] * e2[0],
+      ]
+      if (n[0] * nor[a] + n[1] * nor[a + 1] + n[2] * nor[a + 2] < 0) disagreeing++
+    }
+    expect(disagreeing).toBe(0)
+    expect(volume).toBeGreaterThan(0)
+    expect(volume / (Math.PI * (0.218 ** 2 - 0.089 ** 2) * 0.0293)).toBeGreaterThan(0.97)
+  })
+})

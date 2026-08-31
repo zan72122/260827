@@ -4,8 +4,10 @@ import {
   JIG_TOP,
   PIVOT_R,
   RING_TOP,
+  SAW_CARRIAGE_END,
   SAW_CARRIAGE_PARK,
   SAW_CARRIAGE_START,
+  SAW_TILT_PARK,
   SAW_LEAD,
   SAW_RAIL_SIDE,
   SLIDE_MAX,
@@ -110,7 +112,7 @@ function radialTexture() {
   return t
 }
 const hint = new THREE.Mesh(
-  new THREE.PlaneGeometry(0.20, 0.20),
+  new THREE.PlaneGeometry(0.17, 0.17),
   new THREE.MeshBasicMaterial({
     map: radialTexture(),
     transparent: true,
@@ -175,8 +177,10 @@ function shotFor(): { shot: ShotSpec; pts: THREE.Vector3[] } {
     case 'title':
     case 'cut':
     case 'reset': {
-      // the whole ring, the tool, and where the blade is going
-      const pts = ringBoxPts.concat(focusPoints())
+      // The whole ring, the tool, and where the blade is going.  During a
+      // reset the blank is off the bench, so it is deliberately left out of
+      // the framing: the camera holds still and the new blank arrives into it.
+      const pts = ringBoxPts.concat(state.phase === 'reset' ? [] : focusPoints())
       pts.push(saw.handleWorld(_v.clone()))
       pts.push(
         new THREE.Vector3(
@@ -442,6 +446,7 @@ let prev = performance.now()
 let lastDt = 1 / 60
 let slowFrames = 0
 let settleFrom = 0
+let sawTilt = 0
 const stageOffset = new THREE.Vector3()
 
 function frame(now: number) {
@@ -476,18 +481,23 @@ function step(dt: number) {
   // ---- reset: the notched ring and the lamb are carried off, a freshly
   // prepared blank is brought in.  No rewinding of the cut. -----------------
   if (state.phase === 'reset') {
-    state.resetT += dt / 0.55
+    state.resetT += dt / 0.6
     const t = state.resetT
+    const carry = (u: number) => stageOffset.set(-1.45 * u, 0.055 * Math.sin(Math.PI * u), -0.30 * u)
     if (t < 1) {
-      stageOffset.set(-1.55 * ease(t), 0, -0.35 * ease(t))
+      carry(ease(t)) // the finished blank and the notched ring are taken away
     } else if (t < 2) {
       if (state.cut !== NO_CUT) {
+        // Out of shot, a freshly prepared blank is put on the jig.  The cut is
+        // never played backwards and the lamb is never glued back in.
         state.reset()
         state.plays++
+        settleFrom = 0
+        prevSlide = 0
+        sawTilt = 0
         blank.setCut(NO_CUT)
       }
-      const u = ease(t - 1)
-      stageOffset.set(-1.55 * (1 - u), 0, -0.35 * (1 - u))
+      carry(1 - ease(t - 1))
     } else {
       stageOffset.set(0, 0, 0)
       state.phase = 'cut'
@@ -500,8 +510,11 @@ function step(dt: number) {
   // ---- the saw is drawn back out of the kerf once the wedge is parted -----
   // The craftsman withdraws the saw before lifting the piece out; until it is
   // clear the bench is cluttered and the child cannot see what they have made.
-  if (state.parted && drag?.mode !== 'saw' && state.carriage < SAW_CARRIAGE_PARK) {
-    state.carriage = Math.min(SAW_CARRIAGE_PARK, state.carriage + dt * 0.45)
+  if (state.parted && drag?.mode !== 'saw') {
+    state.carriage = Math.min(SAW_CARRIAGE_PARK, state.carriage + dt * 0.42)
+    sawTilt = Math.min(SAW_TILT_PARK, sawTilt + dt * 1.9)
+  } else if (!state.parted) {
+    sawTilt = 0
   }
 
   // ---- the wedge settles onto the table once it is clear ------------------
@@ -529,7 +542,7 @@ function step(dt: number) {
   // ---- push state into the scene ------------------------------------------
   blank.setCut(state.cut)
   blank.setPiecePose(state.slide, state.yaw)
-  saw.setCarriage(state.carriage)
+  saw.setPose(state.carriage, sawTilt)
   blank.root.position.copy(stageOffset)
   saw.root.position.copy(stageOffset)
   workshop.root.position.set(0, 0, 0)
@@ -550,13 +563,14 @@ function step(dt: number) {
   )
 
   // ---- sound tied to real contact -----------------------------------------
+  const vSlide = Math.abs(slideSpeed(dt))
   sfx.saw(drag?.mode === 'saw' ? state.cutSpeed : 0)
-  sfx.slide(drag?.mode === 'slide' ? Math.abs(slideSpeed(dt)) : 0)
+  sfx.slide(drag?.mode === 'slide' ? vSlide : 0)
 
   // ---- hint ----------------------------------------------------------------
-  const wantHint = !touched && (state.phase === 'cut' || state.phase === 'pull')
+  const wantHint = !PLAIN && !touched && (state.phase === 'cut' || state.phase === 'pull')
   const hm = hint.material as THREE.MeshBasicMaterial
-  const pulse = 0.16 + 0.10 * Math.sin(state.t * 3.1)
+  const pulse = 0.11 + 0.06 * Math.sin(state.t * 3.1)
   hm.opacity += ((wantHint ? pulse : 0) - hm.opacity) * Math.min(1, dt * 5)
   if (state.phase === 'cut') {
     saw.handleWorld(_v)
@@ -631,6 +645,7 @@ window.__reifen = {
     R_OUTER,
     PIVOT_R,
     SAW_CARRIAGE_START,
+    SAW_CARRIAGE_END,
     SAW_CARRIAGE_PARK,
     SAW_LEAD,
     SLIDE_MAX,

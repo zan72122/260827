@@ -24,14 +24,17 @@ for (let i = 0; i < ROUNDS; i++) {
   const phase = await p.evaluate(() => window.__reifen.phase())
   const info = await p.evaluate(() => window.__reifen.info())
   const heap = await p.evaluate(() => performance.memory?.usedJSHeapSize ?? 0)
-  samples.push({ i, phase, geometries: info.geometries, textures: info.textures, programs: info.programs, heapMB: +(heap / 1048576).toFixed(1) })
+  const realloc = await p.evaluate(() => window.__reifen.blank.collarReallocations)
+  const row = { i, phase, geometries: info.geometries, textures: info.textures, programs: info.programs, collarAllocs: realloc, heapMB: +(heap / 1048576).toFixed(1) }
+  samples.push(row)
+  console.log('round', JSON.stringify(row))
   if (phase !== 'done') { console.error('round', i, 'did not finish:', phase); break }
   await p.evaluate(() => window.__reifen.replay())
   await settle(p, 90)
   const after = await p.evaluate(() => window.__reifen.phase())
   if (after !== 'cut') { console.error('round', i, 'reset left phase', after); break }
 }
-console.table(samples)
+
 const first = samples[1], last = samples[samples.length - 1]
 console.log('rounds completed:', samples.length)
 console.log('geometry delta:', last.geometries - first.geometries)
